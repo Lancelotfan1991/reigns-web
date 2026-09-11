@@ -7,6 +7,12 @@ import type { ResourceKey, Side } from './types'
 
 type Screen = 'start' | 'play' | 'over'
 
+const VERDICT_LABEL: Record<'doom' | 'neutral' | 'glory', string> = {
+  doom: '国祚断送',
+  neutral: '宿命轮回',
+  glory: '续命中兴',
+}
+
 const game = useGame()
 const screen = ref<Screen>('start')
 const cardRef = ref<InstanceType<typeof GameCard> | null>(null)
@@ -52,22 +58,23 @@ onUnmounted(() => window.removeEventListener('keydown', onKey))
     <!-- 开始界面 -->
     <section v-if="screen === 'start'" class="screen start-screen">
       <div class="crown">👑</div>
-      <h1 class="title">王权</h1>
-      <p class="subtitle">REIGNS · 移动版</p>
+      <h1 class="title">崇祯十七年</h1>
+      <p class="subtitle">穿越明末 · 卡牌挽天倾</p>
 
       <div class="intro">
-        <p>你是新登基的君主。</p>
-        <p>左右滑动卡牌做出抉择，平衡四方势力：</p>
+        <p>你一觉醒来，成了刚刚登基的大明皇帝朱由检。</p>
+        <p>内有党争、大旱、瘟疫、空虚的国库；外有建州铁骑、流亡驿卒。</p>
+        <p>左右滑动卡牌做出抉择，守住四大国势：</p>
         <div class="factions">
           <span v-for="key in RESOURCE_KEYS" :key="key" class="faction">
             {{ RESOURCE_META[key].icon }} {{ RESOURCE_META[key].name }}
           </span>
         </div>
-        <p class="warning">任何一项归零或拉满，你的统治都将终结。</p>
+        <p class="warning">任何一项归零或过极，国祚立崩；撑到崇祯十七年，甲申抉择终将由你亲手落下。</p>
       </div>
 
-      <button class="btn" @click="start">登基执政</button>
-      <p v-if="game.bestYears.value > 0" class="best">最长统治：{{ game.bestYears.value }} 年</p>
+      <button class="btn" @click="start">入宫即位</button>
+      <p v-if="game.bestYears.value > 0" class="best">前世最多撑了 {{ game.bestYears.value }} 年</p>
     </section>
 
     <!-- 游戏界面 -->
@@ -83,8 +90,8 @@ onUnmounted(() => window.removeEventListener('keydown', onKey))
           :active="isActive(key)"
         />
         <div class="year">
-          <span class="year-label">王历</span>
-          <span class="year-value">第 {{ game.year.value }} 年</span>
+          <span class="year-label">大明</span>
+          <span class="year-value">{{ game.yearText.value }}</span>
         </div>
         <ResourceBadge
           v-for="key in RESOURCE_KEYS.slice(2)"
@@ -98,7 +105,7 @@ onUnmounted(() => window.removeEventListener('keydown', onKey))
       </header>
 
       <Transition name="toast">
-        <div v-if="game.lastResponse.value" :key="game.year.value" class="toast">
+        <div v-if="game.lastResponse.value" :key="game.currentCard.value?.id" class="toast">
           {{ game.lastResponse.value }}
         </div>
       </Transition>
@@ -130,23 +137,27 @@ onUnmounted(() => window.removeEventListener('keydown', onKey))
     <!-- 结局界面 -->
     <section v-else class="screen over-screen">
       <div class="skull">{{ game.ending.value?.avatar }}</div>
+      <p class="verdict" :class="`verdict-${game.ending.value?.kind ?? 'doom'}`">
+        {{ VERDICT_LABEL[game.ending.value?.kind ?? 'doom'] }}
+      </p>
       <h2 class="over-title">{{ game.ending.value?.title }}</h2>
       <p class="over-desc">{{ game.ending.value?.description }}</p>
 
       <div class="over-stats">
         <div class="stat">
-          <span class="stat-value">{{ game.year.value }}</span>
+          <span class="stat-value">{{ game.reignedYears.value }}</span>
           <span class="stat-label">在位年数</span>
         </div>
         <div class="stat">
           <span class="stat-value">{{ game.bestYears.value }}</span>
-          <span class="stat-label">最长纪录</span>
+          <span class="stat-label">最多撑过年数</span>
         </div>
       </div>
 
-      <p v-if="game.isNewRecord.value" class="new-record">🎉 新纪录！</p>
+      <p v-if="game.reachedFinale.value" class="finale-badge">🕯️ 你走到了甲申终章</p>
+      <p v-else-if="game.isNewRecord.value" class="new-record">🎉 比前世撑得更久！</p>
 
-      <button class="btn" @click="start">再登王位</button>
+      <button class="btn" @click="start">再着龙袍</button>
     </section>
   </div>
 </template>
@@ -292,9 +303,10 @@ onUnmounted(() => window.removeEventListener('keydown', onKey))
 }
 
 .year-value {
-  font-size: 17px;
+  font-size: 15px;
   font-weight: 700;
   color: #f0d9a0;
+  white-space: nowrap;
 }
 
 .toast {
@@ -396,6 +408,31 @@ onUnmounted(() => window.removeEventListener('keydown', onKey))
 
 .skull {
   font-size: 64px;
+}
+
+.verdict {
+  margin-top: 14px;
+  font-size: 13px;
+  letter-spacing: 4px;
+}
+
+.verdict-doom {
+  color: #e08573;
+}
+
+.verdict-neutral {
+  color: #9fb6d4;
+}
+
+.verdict-glory {
+  color: #ffd66e;
+}
+
+.finale-badge {
+  margin-top: 8px;
+  color: #d9c49a;
+  font-size: 14px;
+  letter-spacing: 2px;
 }
 
 .over-title {
