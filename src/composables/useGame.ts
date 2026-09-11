@@ -1,6 +1,6 @@
 import { computed, ref } from 'vue'
 import { FINALE_EVENT, RANDOM_EVENTS, SCRIPT_EVENTS } from '../data/events'
-import type { Ending, Effects, GameEvent, ResourceKey, Side } from '../types'
+import type { Decision, Ending, Effects, GameEvent, ResourceKey, Side } from '../types'
 
 export const RESOURCE_KEYS: ResourceKey[] = ['court', 'people', 'army', 'gold']
 
@@ -18,6 +18,12 @@ const START_VALUE = 50
 const BEST_KEY = 'chongzhen-best-years'
 
 const CN_YEAR = ['〇', '元', '二', '三', '四', '五', '六', '七', '八', '九', '十', '十一', '十二', '十三', '十四', '十五', '十六', '十七']
+
+/** 崇祯纪年短格式：0 及以前为天启七年，N 为崇祯N年，上限崇祯十七年 */
+export function yearLabel(y: number): string {
+  if (y <= 0) return '天启七年'
+  return `崇祯${CN_YEAR[Math.min(y, CN_YEAR.length - 1)]}年`
+}
 
 /** 时代重力：每做出一项决策，辽饷与武备都在缓慢失血 */
 const ERA_DRIFT: Partial<Record<ResourceKey, number>> = { army: -1, gold: -1 }
@@ -168,14 +174,14 @@ export function useGame() {
   const ending = ref<Ending | null>(null)
   const lastResponse = ref('')
   const bestYears = ref(loadBest())
+  /** 本局已做出的决策，供人物系统推导 */
+  const decisions = ref<Decision[]>([])
 
   /** 0 = 天启七年，N = 崇祯N年，17 = 甲申终章当年 */
   const year = computed(() => Math.floor(cardIndex.value / CARDS_PER_YEAR))
   const yearText = computed(() => {
     const y = year.value
-    if (y <= 0) return '天启七年（1627）'
-    if (y > LAST_SCRIPT_YEAR) return '崇祯十七年（1644）'
-    return `崇祯${CN_YEAR[y]}年（${1627 + y}）`
+    return `${yearLabel(y)}（${1627 + Math.min(Math.max(y, 0), 17)}）`
   })
   const currentCard = computed<GameEvent | null>(() => deck.value[cardIndex.value] ?? null)
   const isOver = computed(() => ending.value !== null)
@@ -185,12 +191,27 @@ export function useGame() {
   /** 终章是否被触发（区别于中途失衡而亡） */
   const reachedFinale = computed(() => isOver.value && cardIndex.value >= deck.value.length)
 
+  /** 事件 id → 该事件上做出的决策 */
+  const decisionByEvent = computed(() => {
+    const map: Record<string, Decision> = {}
+    for (const d of decisions.value) map[d.eventId] = d
+    return map
+  })
+
+  /** 本局已翻开过的卡（含手上这张），人物登场与事迹回顾以此为准 */
+  const seenEventIds = computed(() => {
+    const set = new Set(decisions.value.map((d) => d.eventId))
+    if (currentCard.value) set.add(currentCard.value.id)
+    return set
+  })
+
   function startGame() {
     resources.value = { court: START_VALUE, people: START_VALUE, army: START_VALUE, gold: START_VALUE }
     deck.value = buildDeck()
     cardIndex.value = 0
     ending.value = null
     lastResponse.value = ''
+    decisions.value = []
   }
 
   /** 预览某侧选择影响的指标（拖动时用于顶部图标提示） */
@@ -216,6 +237,7 @@ export function useGame() {
     if (!card || isOver.value) return
 
     const choice = side === 'left' ? card.left : card.right
+    decisions.value.push({ eventId: card.id, side, year: year.value })
     lastResponse.value = choice.response
     const next = applyEffects(choice.effects)
 
@@ -269,6 +291,9 @@ export function useGame() {
     reachedFinale,
     isOver,
     isNewRecord,
+    decisions,
+    decisionByEvent,
+    seenEventIds,
     startGame,
     choose,
     previewEffects,

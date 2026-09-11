@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref } from 'vue'
+import CharacterPanel from './components/CharacterPanel.vue'
 import GameCard from './components/GameCard.vue'
 import ResourceBadge from './components/ResourceBadge.vue'
+import { useCharacters } from './composables/useCharacters'
 import { RESOURCE_KEYS, RESOURCE_META, useGame } from './composables/useGame'
 import type { ResourceKey, Side } from './types'
 
@@ -14,8 +16,10 @@ const VERDICT_LABEL: Record<'doom' | 'neutral' | 'glory', string> = {
 }
 
 const game = useGame()
+const chars = useCharacters(game)
 const screen = ref<Screen>('start')
 const cardRef = ref<InstanceType<typeof GameCard> | null>(null)
+const panelOpen = ref(false)
 
 /** 当前拖拽位移，用于顶部资源图标联动提示 */
 const dragDx = ref(0)
@@ -32,6 +36,7 @@ function isActive(key: ResourceKey) {
 function start() {
   game.startGame()
   dragDx.value = 0
+  panelOpen.value = false
   screen.value = 'play'
 }
 
@@ -44,6 +49,10 @@ function onChoose(side: Side) {
 }
 
 function onKey(e: KeyboardEvent) {
+  if (panelOpen.value) {
+    if (e.key === 'Escape') panelOpen.value = false
+    return
+  }
   if (screen.value !== 'play') return
   if (e.key === 'ArrowLeft') cardRef.value?.fly('left')
   if (e.key === 'ArrowRight') cardRef.value?.fly('right')
@@ -75,6 +84,7 @@ onUnmounted(() => window.removeEventListener('keydown', onKey))
 
       <button class="btn" @click="start">入宫即位</button>
       <p v-if="game.bestYears.value > 0" class="best">前世最多撑了 {{ game.bestYears.value }} 年</p>
+      <button class="btn-ghost" @click="panelOpen = true">先看看本朝人物</button>
     </section>
 
     <!-- 游戏界面 -->
@@ -103,6 +113,12 @@ onUnmounted(() => window.removeEventListener('keydown', onKey))
           :active="isActive(key)"
         />
       </header>
+
+      <div class="subhud">
+        <button class="people-btn" @click="panelOpen = true">
+          👥 朝中人物 <i>已识 {{ chars.appearedCount.value }} / {{ chars.views.value.length }}</i>
+        </button>
+      </div>
 
       <Transition name="toast">
         <div v-if="game.lastResponse.value" :key="game.currentCard.value?.id" class="toast">
@@ -158,7 +174,16 @@ onUnmounted(() => window.removeEventListener('keydown', onKey))
       <p v-else-if="game.isNewRecord.value" class="new-record">🎉 比前世撑得更久！</p>
 
       <button class="btn" @click="start">再着龙袍</button>
+      <button class="btn-ghost" @click="panelOpen = true">回看本朝人物</button>
     </section>
+
+    <!-- 人物抽屉：三屏共用一个入口 -->
+    <CharacterPanel
+      v-if="panelOpen"
+      :characters="chars.views.value"
+      :year-text="game.yearText.value"
+      @close="panelOpen = false"
+    />
   </div>
 </template>
 
@@ -184,7 +209,8 @@ onUnmounted(() => window.removeEventListener('keydown', onKey))
 /* ---------- 开始界面 ---------- */
 .start-screen {
   align-items: center;
-  justify-content: center;
+  justify-content: safe center;
+  overflow-y: auto;
   text-align: center;
   gap: 6px;
 }
@@ -277,6 +303,24 @@ onUnmounted(() => window.removeEventListener('keydown', onKey))
   transform: scale(0.96);
 }
 
+/* 次级入口：不与主行动按钮争视觉重心 */
+.btn-ghost {
+  margin-top: 16px;
+  padding: 8px 22px;
+  font-size: 13px;
+  letter-spacing: 2px;
+  color: #b8a382;
+  background: none;
+  border: 1px solid #4a3925;
+  border-radius: 20px;
+  cursor: pointer;
+}
+
+.btn-ghost:active {
+  color: #f0d9a0;
+  border-color: #6b5436;
+}
+
 /* ---------- 游戏界面 ---------- */
 .play-screen {
   gap: 10px;
@@ -307,6 +351,35 @@ onUnmounted(() => window.removeEventListener('keydown', onKey))
   font-weight: 700;
   color: #f0d9a0;
   white-space: nowrap;
+}
+
+.subhud {
+  display: flex;
+  justify-content: center;
+  margin-top: -4px;
+}
+
+.people-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 14px;
+  font-size: 12.5px;
+  letter-spacing: 1px;
+  color: #d9c49a;
+  background: rgba(240, 217, 160, 0.07);
+  border: 1px solid #4a3925;
+  border-radius: 16px;
+  cursor: pointer;
+}
+
+.people-btn i {
+  font-style: normal;
+  color: #8a755a;
+}
+
+.people-btn:active {
+  background: rgba(240, 217, 160, 0.16);
 }
 
 .toast {
@@ -390,7 +463,8 @@ onUnmounted(() => window.removeEventListener('keydown', onKey))
 /* ---------- 结局界面 ---------- */
 .over-screen {
   align-items: center;
-  justify-content: center;
+  justify-content: safe center;
+  overflow-y: auto;
   text-align: center;
   animation: fade-in 0.5s ease;
 }
