@@ -68,6 +68,10 @@ const cardStyle = computed(() => ({
 const leftOpacity = computed(() => (dx.value < 0 ? Math.min(1, -dx.value / 80) : 0))
 const rightOpacity = computed(() => (dx.value > 0 ? Math.min(1, dx.value / 80) : 0))
 
+/** 正文首字作朱印下沉；以引号等标点起手的塘报不强做 */
+const lead = computed(() => (/[\u4e00-\u9fff]/.test(props.event.text[0]) ? props.event.text[0] : ''))
+const body = computed(() => (lead.value ? props.event.text.slice(1) : props.event.text))
+
 defineExpose({ fly })
 </script>
 
@@ -80,14 +84,17 @@ defineExpose({ fly })
     @pointerup="onPointerUp"
     @pointercancel="onPointerUp"
   >
-    <div class="stamp stamp-left" :style="{ opacity: leftOpacity }">{{ event.left.label }}</div>
+    <span class="band"></span>
+    <span class="slip">提塘官敬述</span>
+
+    <div class="stamp stamp-left inked" :style="{ opacity: leftOpacity }">{{ event.left.label }}</div>
     <div class="stamp stamp-right" :style="{ opacity: rightOpacity }">{{ event.right.label }}</div>
 
-    <div class="avatar">{{ event.avatar }}</div>
+    <div class="ring-light">{{ event.avatar }}</div>
     <h2 class="name">{{ event.name }}</h2>
-    <div class="divider"><span>❦</span></div>
-    <p class="text">{{ event.text }}</p>
-    <div class="swipe-hint">◀ 左滑 · 右滑 ▶</div>
+    <div class="rule"><span class="fleuron"></span></div>
+    <p class="text"><span class="body"><span v-if="lead" class="lead-char">{{ lead }}</span>{{ body }}</span></p>
+    <div class="swipe-hint">◀ 左滑 ・ 右滑 ▶</div>
   </div>
 </template>
 
@@ -95,20 +102,23 @@ defineExpose({ fly })
 .game-card {
   position: absolute;
   inset: 0;
-  border-radius: 18px;
-  background:
-    radial-gradient(ellipse at 30% 20%, rgba(255, 255, 255, 0.25), transparent 60%),
-    linear-gradient(160deg, #f2e7c9 0%, #e6d5ab 55%, #d9c290 100%);
-  border: 1px solid #b49b6c;
-  box-shadow:
-    0 14px 34px rgba(0, 0, 0, 0.55),
-    inset 0 0 0 6px rgba(120, 90, 45, 0.08);
-  padding: 26px 22px 18px;
+  padding: 30px 24px 46px;
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: safe center;
   text-align: center;
-  color: #3a2c1c;
+  color: var(--ink);
+  border: 1.5px solid var(--line);
+  border-radius: 4px;
+  background:
+    var(--grain),
+    linear-gradient(168deg, var(--paper-hi) 0%, #f3e8d5 46%, #e7d6b6 100%);
+  box-shadow:
+    0 16px 34px rgba(41, 33, 26, 0.26),
+    0 2px 0 rgba(255, 255, 255, 0.5) inset,
+    0 0 0 1px rgba(171, 142, 95, 0.35) inset;
+  overflow: hidden;
   touch-action: none;
   cursor: grab;
   will-change: transform;
@@ -130,77 +140,202 @@ defineExpose({ fly })
   }
 }
 
-.avatar {
-  font-size: 64px;
+/* 版心：上沿回纹带 */
+.band {
+  position: absolute;
+  top: 5px;
+  left: 5px;
+  right: 5px;
+  height: 12px;
+  background: var(--meander) repeat-x;
+  opacity: 0.42;
+}
+
+/* 右上题签 */
+.slip {
+  position: absolute;
+  top: 22px;
+  right: 14px;
+  padding: 3px 6px;
+  font-family: var(--font-kai);
+  font-size: 10px;
+  letter-spacing: 1px;
+  color: var(--ink-3);
+  border: 1px solid var(--line-soft);
+  border-radius: 2px;
+  background: rgba(255, 250, 240, 0.5);
+}
+
+.ring-light {
+  margin-top: 16px;
+  width: 80px;
+  height: 80px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 42px;
   line-height: 1;
-  margin-top: 10px;
-  filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.25));
+  border-radius: 50%;
+  border: 1.5px solid var(--line);
+  background:
+    radial-gradient(circle at 50% 38%, rgba(168, 50, 42, 0.13), transparent 68%),
+    rgba(255, 252, 244, 0.72);
+  box-shadow: 0 0 0 4px rgba(171, 142, 95, 0.14), 0 3px 8px rgba(41, 33, 26, 0.12);
 }
 
 .name {
-  margin-top: 12px;
-  font-size: 24px;
-  font-weight: 900;
-  letter-spacing: 6px;
-  text-indent: 6px;
+  margin-top: 14px;
+  font-family: var(--font-kai);
+  font-size: 27px;
+  font-weight: 700;
+  letter-spacing: 8px;
+  text-indent: 8px;
+  color: var(--ink);
 }
 
-.divider {
-  margin: 10px 0 6px;
-  width: 70%;
+/* 朱砂界行 */
+.rule {
+  margin: 9px 0 12px;
+  width: 62%;
   display: flex;
   align-items: center;
-  gap: 10px;
-  color: #8a6d3f;
+  gap: 8px;
 }
 
-.divider::before,
-.divider::after {
+.rule::before,
+.rule::after {
   content: '';
   flex: 1;
   height: 1px;
-  background: linear-gradient(90deg, transparent, #8a6d3f, transparent);
+  background: linear-gradient(90deg, transparent, var(--line), transparent);
+}
+
+.fleuron {
+  width: 7px;
+  height: 7px;
+  background: var(--cinnabar);
+  transform: rotate(45deg);
+  opacity: 0.85;
 }
 
 .text {
+  flex: none;
+  width: 100%;
+  margin-top: 4px;
+  padding: 16px 14px;
+  border: 1px solid var(--line-soft);
+  border-radius: 2px;
+  background: rgba(255, 251, 242, 0.42);
+  box-shadow: inset 0 0 0 1px rgba(171, 142, 95, 0.16);
   font-size: 16px;
-  line-height: 1.9;
-  flex: 1;
-  display: flex;
-  align-items: center;
+  line-height: 2.05;
+  color: var(--ink-2);
+}
+
+.body {
+  display: block;
+  text-align: justify;
+}
+
+/* 首字朱印 */
+.lead-char {
+  float: left;
+  margin: 5px 9px 0 0;
+  padding: 3px 5px 4px;
+  font-family: var(--font-kai);
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1.1;
+  color: var(--paper-hi);
+  background: linear-gradient(150deg, var(--cinnabar-hi), #8d2620);
+  border-radius: 3px;
+  box-shadow: 0 1px 3px rgba(141, 38, 32, 0.35);
 }
 
 .swipe-hint {
-  font-size: 12px;
-  color: #8a6d3f;
-  letter-spacing: 3px;
+  position: absolute;
+  bottom: 18px;
+  left: 0;
+  right: 0;
+  font-size: 11.5px;
+  letter-spacing: 4px;
+  color: var(--ink-3);
 }
 
-/* 决策印章：拖动时浮现 */
+/* 批红双印：左用白文（朱底白字），右用朱文（白底朱字） */
 .stamp {
   position: absolute;
-  top: 18px;
-  padding: 6px 10px;
-  border: 3px solid;
-  border-radius: 8px;
-  font-size: 16px;
+  top: 26px;
+  padding: 7px 9px;
+  max-width: 128px;
+  font-family: var(--font-kai);
+  font-size: 15px;
   font-weight: 700;
-  letter-spacing: 2px;
+  letter-spacing: 1px;
+  line-height: 1.35;
+  color: var(--cinnabar);
+  background:
+    var(--grain),
+    linear-gradient(150deg, rgba(255, 255, 255, 0.6), rgba(255, 255, 255, 0.16));
+  border: 2.5px solid var(--cinnabar);
+  border-radius: 5px;
   opacity: 0;
   pointer-events: none;
 }
 
+.stamp.inked {
+  color: var(--paper-hi);
+  background:
+    var(--grain),
+    linear-gradient(150deg, var(--cinnabar-hi), var(--cinnabar) 62%, #8d2620);
+  border-color: #8d2620;
+}
+
 .stamp-left {
-  left: 16px;
-  color: #b03a2e;
-  border-color: #b03a2e;
-  transform: rotate(-12deg);
+  left: 14px;
+  transform: rotate(-7deg);
 }
 
 .stamp-right {
-  right: 16px;
-  color: #1e7a46;
-  border-color: #1e7a46;
-  transform: rotate(12deg);
+  right: 14px;
+  transform: rotate(7deg);
+}
+
+/* 矮屏压缩纵向节奏，保证最长塘报也落在版框内 */
+@media (max-height: 720px) {
+  .game-card {
+    padding: 22px 20px 38px;
+  }
+
+  .ring-light {
+    margin-top: 6px;
+    width: 62px;
+    height: 62px;
+    font-size: 32px;
+  }
+
+  .name {
+    margin-top: 10px;
+    font-size: 23px;
+  }
+
+  .rule {
+    margin: 6px 0 8px;
+  }
+
+  .text {
+    padding: 11px 12px;
+    font-size: 14.5px;
+    line-height: 1.85;
+  }
+
+  .lead-char {
+    margin-top: 3px;
+    font-size: 20px;
+  }
+
+  .swipe-hint {
+    bottom: 12px;
+  }
 }
 </style>

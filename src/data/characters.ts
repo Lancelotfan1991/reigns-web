@@ -556,20 +556,20 @@ export const CHAR_MAP: Record<string, Character> = Object.fromEntries(
 )
 
 export const STATUS_META: Record<CharStatus, { label: string; color: string }> = {
-  hidden: { label: '尚未登场', color: '#8a755a' },
-  alive: { label: '生', color: '#4ade80' },
-  ill: { label: '病', color: '#fbbf24' },
-  dead: { label: '死', color: '#e08573' },
+  hidden: { label: '尚未登场', color: '#a3937b' },
+  alive: { label: '生', color: '#4b7a5c' },
+  ill: { label: '病', color: '#ab8430' },
+  dead: { label: '死', color: '#7b4b3a' },
 }
 
 export const RELATION_META: Record<RelationType, { label: string; inverse: string; color: string }> = {
-  enemy: { label: '敌对', inverse: '敌对', color: '#e08573' },
-  friend: { label: '友善', inverse: '友善', color: '#7dd3fc' },
-  neutral: { label: '中立', inverse: '中立', color: '#9a8465' },
-  loyal: { label: '效忠于', inverse: '得其死力', color: '#4ade80' },
-  kin: { label: '宗亲', inverse: '宗亲', color: '#f0d9a0' },
-  rival: { label: '政争', inverse: '政争', color: '#eab308' },
-  suspicion: { label: '猜忌', inverse: '见疑于上', color: '#c084fc' },
+  enemy: { label: '敌对', inverse: '敌对', color: '#a8322a' },
+  friend: { label: '友善', inverse: '友善', color: '#4b7a5c' },
+  neutral: { label: '中立', inverse: '中立', color: '#7a6a55' },
+  loyal: { label: '效忠于', inverse: '得其死力', color: '#3a5f83' },
+  kin: { label: '宗亲', inverse: '宗亲', color: '#ab8430' },
+  rival: { label: '政争', inverse: '政争', color: '#9a6b1f' },
+  suspicion: { label: '猜忌', inverse: '见疑于上', color: '#6b4f86' },
 }
 
 export const CAMP_ORDER = ['内廷', '文官', '辽镇', '义军', '皇清', '塞外', '宗藩', '西学']

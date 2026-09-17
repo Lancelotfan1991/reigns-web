@@ -5,10 +5,10 @@ import type { Decision, Ending, Effects, GameEvent, ResourceKey, Side } from '..
 export const RESOURCE_KEYS: ResourceKey[] = ['court', 'people', 'army', 'gold']
 
 export const RESOURCE_META: Record<ResourceKey, { icon: string; name: string; color: string }> = {
-  court: { icon: '🏛️', name: '皇权', color: '#c084fc' },
-  people: { icon: '🌾', name: '民心', color: '#4ade80' },
-  army: { icon: '⚔️', name: '军心', color: '#f87171' },
-  gold: { icon: '💰', name: '国库', color: '#fbbf24' },
+  court: { icon: '🏛️', name: '皇权', color: '#a8322a' },
+  people: { icon: '🌾', name: '民心', color: '#4b7a5c' },
+  army: { icon: '⚔️', name: '军心', color: '#3a5f83' },
+  gold: { icon: '💰', name: '国库', color: '#ab8430' },
 }
 
 /** 每张卡约一个季度，3 张牌推进一年；天启七年 + 崇祯 1-16 年 + 1644 终章 */

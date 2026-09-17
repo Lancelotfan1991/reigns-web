@@ -46,7 +46,7 @@ function toggle(id: string) {
       <header class="ph">
         <div class="ph-titles">
           <h2>朝中人物</h2>
-          <p>{{ yearText }} · 已登场 {{ appeared.length }} 人，未知 {{ pending.length }} 人</p>
+          <p>{{ yearText }} ・ 已登场 {{ appeared.length }} 人，未知 {{ pending.length }} 人</p>
         </div>
         <button class="close" aria-label="关闭" @click="$emit('close')">✕</button>
       </header>
@@ -151,22 +151,25 @@ function toggle(id: string) {
   position: fixed;
   inset: 0;
   z-index: 30;
-  background: rgba(6, 4, 3, 0.72);
+  background: rgba(66, 52, 34, 0.42);
   backdrop-filter: blur(2px);
   display: flex;
   justify-content: center;
 }
 
+/* 一部名册：册页底色与装裱边 */
 .panel {
   width: 100%;
-  max-width: 480px;
+  max-width: 460px;
   height: 100dvh;
-  background: #1b1613;
-  border-left: 1px solid #3d2f20;
-  border-right: 1px solid #3d2f20;
   display: flex;
   flex-direction: column;
   padding-top: env(safe-area-inset-top);
+  background-color: #f4ead8;
+  background-image: var(--grain);
+  border-left: 1px solid var(--line);
+  border-right: 1px solid var(--line);
+  box-shadow: 0 0 34px rgba(41, 33, 26, 0.3);
   animation: rise 0.22s ease;
 }
 
@@ -183,64 +186,71 @@ function toggle(id: string) {
   justify-content: space-between;
   gap: 12px;
   padding: 16px 18px 10px;
-  border-bottom: 1px solid #3d2f20;
+  border-bottom: 1px solid var(--line-soft);
 }
 
 .ph-titles h2 {
-  font-size: 21px;
-  font-weight: 900;
-  letter-spacing: 4px;
-  color: #f0d9a0;
+  font-family: var(--font-kai);
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: 6px;
+  color: var(--ink);
 }
 
 .ph-titles p {
   margin-top: 4px;
-  font-size: 12px;
-  color: #9a8465;
+  font-size: 11.5px;
+  color: var(--ink-3);
 }
 
 .close {
   flex: none;
-  width: 34px;
-  height: 34px;
-  border: 1px solid #6b5436;
+  width: 32px;
+  height: 32px;
+  border: 1.5px solid var(--cinnabar);
   border-radius: 50%;
-  background: rgba(240, 217, 160, 0.06);
-  color: #e3cf9f;
-  font-size: 15px;
+  background: rgba(255, 253, 248, 0.7);
+  color: var(--cinnabar);
+  font-size: 14px;
   cursor: pointer;
 }
 
 .filters {
   display: flex;
-  gap: 7px;
-  padding: 10px 18px;
+  gap: 6px;
+  padding: 10px 14px;
   overflow-x: auto;
-  border-bottom: 1px solid #2e2419;
+  border-bottom: 1px solid var(--line-soft);
 }
 
 .chip {
   flex: none;
-  padding: 5px 11px;
+  padding: 4px 11px;
+  font-family: var(--font-kai);
   font-size: 12.5px;
-  color: #b8a382;
-  background: rgba(107, 84, 54, 0.16);
-  border: 1px solid #4a3925;
-  border-radius: 16px;
+  letter-spacing: 1px;
+  color: var(--ink-2);
+  background: rgba(255, 253, 248, 0.7);
+  border: 1px solid var(--line-soft);
+  border-radius: 2px;
   cursor: pointer;
 }
 
 .chip i {
   margin-left: 4px;
   font-style: normal;
-  opacity: 0.6;
+  color: var(--ink-3);
 }
 
 .chip.on {
-  color: #2a1f12;
-  background: linear-gradient(160deg, #f0d9a0, #d3b26a);
-  border-color: #d3b26a;
+  color: var(--paper-hi);
+  background: linear-gradient(150deg, var(--cinnabar-hi), #8d2620);
+  border-color: #8d2620;
   font-weight: 700;
+}
+
+.chip.on i {
+  color: rgba(251, 244, 230, 0.75);
 }
 
 .list {
@@ -248,16 +258,16 @@ function toggle(id: string) {
   min-height: 0;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
-  padding: 6px 18px calc(18px + env(safe-area-inset-bottom));
+  padding: 4px 18px calc(18px + env(safe-area-inset-bottom));
 }
 
 .row {
-  border-bottom: 1px solid #2e2419;
+  border-bottom: 1px solid rgba(171, 142, 95, 0.28);
   padding: 10px 0;
 }
 
 .row.dim {
-  opacity: 0.55;
+  opacity: 0.52;
 }
 
 .head {
@@ -268,31 +278,30 @@ function toggle(id: string) {
   padding: 0;
   background: none;
   border: none;
-  color: inherit;
   text-align: left;
   cursor: pointer;
 }
 
 .ava {
   flex: none;
-  width: 36px;
-  height: 36px;
-  border-radius: 10px;
-  background: rgba(240, 217, 160, 0.07);
-  border: 1px solid #4a3925;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: rgba(255, 252, 244, 0.8);
+  border: 1px solid var(--line);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 19px;
+  font-size: 17px;
 }
 
 .ava.dead {
   filter: grayscale(1);
-  opacity: 0.7;
+  opacity: 0.66;
 }
 
 .ava.ill {
-  filter: saturate(0.6);
+  border-color: var(--ochre);
 }
 
 .who {
@@ -304,14 +313,16 @@ function toggle(id: string) {
 }
 
 .nm {
-  font-size: 16px;
+  font-family: var(--font-kai);
+  font-size: 17px;
   font-weight: 700;
-  color: #f0d9a0;
+  letter-spacing: 1px;
+  color: var(--ink);
 }
 
 .al {
   font-size: 11.5px;
-  color: #9a8465;
+  color: var(--ink-3);
 }
 
 .meta {
@@ -324,32 +335,33 @@ function toggle(id: string) {
 }
 
 .st {
-  font-size: 12.5px;
+  font-family: var(--font-kai);
+  font-size: 13px;
   font-weight: 700;
 }
 
 .age {
   font-size: 11.5px;
-  color: #9a8465;
+  color: var(--ink-3);
 }
 
 .brief {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 8px;
+  gap: 7px;
   margin-top: 6px;
-  padding-left: 46px;
+  padding-left: 44px;
   font-size: 12px;
-  color: #a8916f;
+  color: var(--ink-3);
 }
 
 .camp,
 .fac {
   padding: 1px 7px;
-  border: 1px solid #43331f;
-  border-radius: 10px;
-  background: rgba(107, 84, 54, 0.12);
+  border: 1px solid var(--line-soft);
+  border-radius: 2px;
+  background: rgba(255, 253, 248, 0.6);
   white-space: nowrap;
 }
 
@@ -359,27 +371,32 @@ function toggle(id: string) {
 }
 
 .detail {
-  margin: 8px 0 2px 46px;
+  margin: 9px 0 2px 44px;
   padding: 10px 12px;
-  background: rgba(240, 217, 160, 0.05);
-  border: 1px dashed rgba(240, 217, 160, 0.22);
-  border-radius: 10px;
+  background: rgba(168, 50, 42, 0.05);
+  border: 1px dashed rgba(168, 50, 42, 0.3);
+  border-radius: 3px;
 }
 
 .note {
-  font-size: 13px;
-  line-height: 1.8;
-  color: #dcc79c;
+  font-family: var(--font-kai);
+  font-size: 13.5px;
+  line-height: 1.85;
+  color: var(--ink-2);
 }
 
 .block + .block {
   margin-top: 12px;
 }
 
+.note + .block {
+  margin-top: 12px;
+}
+
 .block h3 {
-  font-size: 11px;
-  letter-spacing: 3px;
-  color: #8a755a;
+  font-size: 10.5px;
+  letter-spacing: 4px;
+  color: var(--cinnabar);
   margin-bottom: 6px;
 }
 
@@ -387,6 +404,7 @@ function toggle(id: string) {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
+  list-style: none;
 }
 
 .rels li {
@@ -394,17 +412,23 @@ function toggle(id: string) {
   align-items: center;
   gap: 5px;
   padding: 3px 8px;
-  border-radius: 10px;
-  background: rgba(0, 0, 0, 0.28);
+  border: 1px solid var(--line-soft);
+  border-radius: 2px;
+  background: rgba(255, 253, 248, 0.75);
   font-size: 12px;
 }
 
 .rl {
+  font-family: var(--font-kai);
   font-weight: 700;
 }
 
 .rn {
-  color: #cbb794;
+  color: var(--ink-2);
+}
+
+.deeds {
+  list-style: none;
 }
 
 .deeds li {
@@ -413,7 +437,7 @@ function toggle(id: string) {
   gap: 8px;
   padding: 4px 0;
   font-size: 12.5px;
-  border-top: 1px dotted #34291c;
+  border-top: 1px dotted rgba(171, 142, 95, 0.5);
 }
 
 .deeds li:first-child {
@@ -422,40 +446,43 @@ function toggle(id: string) {
 
 .dy {
   flex: none;
-  color: #8a755a;
+  font-family: var(--font-kai);
   font-size: 11px;
+  letter-spacing: 1px;
+  color: var(--cinnabar);
 }
 
 .dt {
   flex: none;
-  color: #e3cf9f;
+  color: var(--ink);
   font-weight: 700;
 }
 
 .dl {
   flex: 1;
   text-align: right;
-  color: #a8916f;
+  color: var(--ink-3);
 }
 
 .dl.left {
-  color: #e8a090;
+  color: var(--cinnabar);
 }
 
 .dl.right {
-  color: #9fd8ae;
+  color: var(--jade);
 }
 
 .dl.todo {
-  color: #8a755a;
+  color: var(--ink-3);
   font-style: italic;
 }
 
 .sep {
-  margin: 16px 0 4px;
-  font-size: 11px;
-  letter-spacing: 4px;
-  color: #7c6a52;
+  margin: 18px 0 4px;
+  font-family: var(--font-kai);
+  font-size: 11.5px;
+  letter-spacing: 5px;
+  color: var(--ink-3);
   text-align: center;
 }
 
@@ -463,7 +490,20 @@ function toggle(id: string) {
   margin: 18px 6px 0;
   font-size: 11.5px;
   line-height: 1.8;
-  color: #7c6a52;
+  color: var(--ink-3);
   text-align: center;
+}
+
+/* 窄屏让五档筛选正好一行放平，避免末位被切 */
+@media (max-width: 400px) {
+  .filters {
+    gap: 5px;
+    padding: 10px 12px;
+  }
+
+  .chip {
+    padding: 4px 9px;
+    font-size: 12px;
+  }
 }
 </style>

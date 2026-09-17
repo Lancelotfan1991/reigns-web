@@ -1,5 +1,37 @@
 :root {
-  color-scheme: dark;
+  color-scheme: light;
+
+  /* 宣纸 */
+  --paper: #f1e5cf;
+  --paper-hi: #fbf4e6;
+  --paper-lo: #e0cdaa;
+
+  /* 墨 */
+  --ink: #29211a;
+  --ink-2: #4e4234;
+  --ink-3: #7a6a55;
+
+  /* 描金与界格 */
+  --line: #ab8e5f;
+  --line-soft: #cbaf83;
+
+  /* 朱砂：御笔与印信专用 */
+  --cinnabar: #a8322a;
+  --cinnabar-hi: #c2453a;
+
+  /* 四色国势（矿物颜料） */
+  --jade: #4b7a5c;
+  --azure: #3a5f83;
+  --ochre: #ab8430;
+
+  --font-serif: 'Noto Serif SC', 'Source Han Serif SC', 'Songti SC', 'STSong', 'SimSun', serif;
+  --font-kai: 'Kaiti SC', 'STKaiti', 'KaiTi', '楷体', 'TW-Kai', var(--font-serif);
+
+  /* 宣纸纤维：内联 SVG 噪声，无外部请求 */
+  --grain: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='g'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/><feColorMatrix type='saturate' values='0'/><feComponentTransfer><feFuncA type='linear' slope='0.06'/></feComponentTransfer></filter><rect width='180' height='180' filter='url(%23g)'/></svg>");
+
+  /* 回纹带 */
+  --meander: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='18' height='12' viewBox='0 0 18 12'><path d='M1 11V1h16v9H6V6h5' fill='none' stroke='%23ab8e5f' stroke-width='1.3'/></svg>");
 }
 
 * {
@@ -15,12 +47,14 @@ body,
 }
 
 body {
-  font-family: 'Noto Serif SC', 'Songti SC', 'STSong', 'SimSun', serif;
-  color: #e8dcc0;
-  background:
-    radial-gradient(ellipse at 50% -10%, rgba(240, 217, 160, 0.09), transparent 55%),
-    radial-gradient(ellipse at 85% 110%, rgba(120, 60, 30, 0.16), transparent 55%),
-    linear-gradient(180deg, #1d1712 0%, #161210 100%);
+  font-family: var(--font-serif);
+  color: var(--ink);
+  background-color: var(--paper);
+  background-image:
+    var(--grain),
+    radial-gradient(ellipse at 18% 8%, rgba(255, 252, 244, 0.85), transparent 52%),
+    radial-gradient(ellipse at 88% 96%, rgba(171, 142, 95, 0.26), transparent 58%),
+    linear-gradient(176deg, var(--paper-hi) 0%, var(--paper) 48%, var(--paper-lo) 100%);
   background-attachment: fixed;
   overscroll-behavior: none;
   -webkit-tap-highlight-color: transparent;
@@ -31,4 +65,36 @@ body {
 
 button {
   font-family: inherit;
+  color: inherit;
+}
+
+/* 印信：朱文（白底朱字）与白文（朱底白字） */
+.seal {
+  font-family: var(--font-kai);
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: var(--cinnabar);
+  background:
+    var(--grain),
+    linear-gradient(150deg, rgba(255, 255, 255, 0.66), rgba(255, 255, 255, 0.2));
+  border: 2.5px solid var(--cinnabar);
+  border-radius: 5px;
+  box-shadow: 0 1px 0 rgba(168, 50, 42, 0.18);
+}
+
+.seal.inked {
+  color: var(--paper-hi);
+  background:
+    var(--grain),
+    linear-gradient(150deg, var(--cinnabar-hi), var(--cinnabar) 62%, #8d2620);
+  border-color: #8d2620;
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(168, 50, 42, 0.32);
+  border-radius: 3px;
 }

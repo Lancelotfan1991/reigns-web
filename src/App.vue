@@ -4,7 +4,7 @@ import CharacterPanel from './components/CharacterPanel.vue'
 import GameCard from './components/GameCard.vue'
 import ResourceBadge from './components/ResourceBadge.vue'
 import { useCharacters } from './composables/useCharacters'
-import { RESOURCE_KEYS, RESOURCE_META, useGame } from './composables/useGame'
+import { RESOURCE_KEYS, RESOURCE_META, yearLabel, useGame } from './composables/useGame'
 import type { ResourceKey, Side } from './types'
 
 type Screen = 'start' | 'play' | 'over'
@@ -28,6 +28,13 @@ const dragSide = computed<Side | null>(() => {
   return dragDx.value > 0 ? 'right' : 'left'
 })
 const hoverEffects = computed(() => (dragSide.value ? game.previewEffects(dragSide.value) : {}))
+
+/** 宝玺印文：纪年分作两行钤刻 */
+const sealLines = computed(() => {
+  const label = yearLabel(game.year.value)
+  return [label.slice(0, 2), label.slice(2)]
+})
+const adYear = computed(() => 1627 + Math.min(Math.max(game.year.value, 0), 17))
 
 function isActive(key: ResourceKey) {
   return key in hoverEffects.value
@@ -66,23 +73,23 @@ onUnmounted(() => window.removeEventListener('keydown', onKey))
   <div class="app">
     <!-- 开始界面 -->
     <section v-if="screen === 'start'" class="screen start-screen">
-      <div class="crown">👑</div>
+      <div class="halo">👑</div>
       <h1 class="title">崇祯十七年</h1>
-      <p class="subtitle">穿越明末 · 卡牌挽天倾</p>
+      <p class="subtitle">穿越明末 ・ 塘报挽天倾</p>
 
-      <div class="intro">
+      <div class="memo">
         <p>你一觉醒来，成了刚刚登基的大明皇帝朱由检。</p>
         <p>内有党争、大旱、瘟疫、空虚的国库；外有建州铁骑、流亡驿卒。</p>
-        <p>左右滑动卡牌做出抉择，守住四大国势：</p>
+        <p>每一纸塘报递到御前，左右滑出批红，守这四大国势：</p>
         <div class="factions">
-          <span v-for="key in RESOURCE_KEYS" :key="key" class="faction">
+          <span v-for="key in RESOURCE_KEYS" :key="key" class="faction" :style="{ borderColor: RESOURCE_META[key].color }">
             {{ RESOURCE_META[key].icon }} {{ RESOURCE_META[key].name }}
           </span>
         </div>
         <p class="warning">任何一项归零或过极，国祚立崩；撑到崇祯十七年，甲申抉择终将由你亲手落下。</p>
       </div>
 
-      <button class="btn" @click="start">入宫即位</button>
+      <button class="btn seal inked" @click="start">入宫即位</button>
       <p v-if="game.bestYears.value > 0" class="best">前世最多撑了 {{ game.bestYears.value }} 年</p>
       <button class="btn-ghost" @click="panelOpen = true">先看看本朝人物</button>
     </section>
@@ -100,8 +107,11 @@ onUnmounted(() => window.removeEventListener('keydown', onKey))
           :active="isActive(key)"
         />
         <div class="year">
-          <span class="year-label">大明</span>
-          <span class="year-value">{{ game.yearText.value }}</span>
+          <div class="seal inked">
+            <span>{{ sealLines[0] }}</span>
+            <span>{{ sealLines[1] }}</span>
+          </div>
+          <span class="ad">西元 {{ adYear }}</span>
         </div>
         <ResourceBadge
           v-for="key in RESOURCE_KEYS.slice(2)"
@@ -116,7 +126,7 @@ onUnmounted(() => window.removeEventListener('keydown', onKey))
 
       <div class="subhud">
         <button class="people-btn" @click="panelOpen = true">
-          👥 朝中人物 <i>已识 {{ chars.appearedCount.value }} / {{ chars.views.value.length }}</i>
+          朝中人物 <i>已识 {{ chars.appearedCount.value }} / {{ chars.views.value.length }}</i>
         </button>
       </div>
 
@@ -141,18 +151,18 @@ onUnmounted(() => window.removeEventListener('keydown', onKey))
       </div>
 
       <footer v-if="game.currentCard.value" class="actions">
-        <button class="action-btn left" @click="cardRef?.fly('left')">
-          ← {{ game.currentCard.value.left.label }}
+        <button class="verdict-btn" @click="cardRef?.fly('left')">
+          <span class="arrow">◀</span>{{ game.currentCard.value.left.label }}
         </button>
-        <button class="action-btn right" @click="cardRef?.fly('right')">
-          {{ game.currentCard.value.right.label }} →
+        <button class="verdict-btn" @click="cardRef?.fly('right')">
+          {{ game.currentCard.value.right.label }}<span class="arrow">▶</span>
         </button>
       </footer>
     </section>
 
     <!-- 结局界面 -->
     <section v-else class="screen over-screen">
-      <div class="skull">{{ game.ending.value?.avatar }}</div>
+      <div class="halo">{{ game.ending.value?.avatar }}</div>
       <p class="verdict" :class="`verdict-${game.ending.value?.kind ?? 'doom'}`">
         {{ VERDICT_LABEL[game.ending.value?.kind ?? 'doom'] }}
       </p>
@@ -170,10 +180,10 @@ onUnmounted(() => window.removeEventListener('keydown', onKey))
         </div>
       </div>
 
-      <p v-if="game.reachedFinale.value" class="finale-badge">🕯️ 你走到了甲申终章</p>
-      <p v-else-if="game.isNewRecord.value" class="new-record">🎉 比前世撑得更久！</p>
+      <p v-if="game.reachedFinale.value" class="finale-badge">你走到了甲申终章</p>
+      <p v-else-if="game.isNewRecord.value" class="new-record">比前世撑得更久！</p>
 
-      <button class="btn" @click="start">再着龙袍</button>
+      <button class="btn seal inked" @click="start">再着龙袍</button>
       <button class="btn-ghost" @click="panelOpen = true">回看本朝人物</button>
     </section>
 
@@ -189,14 +199,37 @@ onUnmounted(() => window.removeEventListener('keydown', onKey))
 
 <style scoped>
 .app {
+  position: relative;
   height: 100dvh;
-  max-width: 480px;
+  max-width: 460px;
   margin: 0 auto;
   padding: 0 20px calc(16px + env(safe-area-inset-bottom));
   padding-top: env(safe-area-inset-top);
   display: flex;
   flex-direction: column;
   overflow: hidden;
+}
+
+/* 上下回纹装裱 */
+.app::before,
+.app::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 12px;
+  background: var(--meander) repeat-x;
+  opacity: 0.3;
+  pointer-events: none;
+}
+
+.app::before {
+  top: env(safe-area-inset-top);
+}
+
+.app::after {
+  bottom: 4px;
+  transform: scaleY(-1);
 }
 
 .screen {
@@ -213,11 +246,23 @@ onUnmounted(() => window.removeEventListener('keydown', onKey))
   overflow-y: auto;
   text-align: center;
   gap: 6px;
+  padding-top: 18px;
 }
 
-.crown {
-  font-size: 72px;
-  animation: float 3s ease-in-out infinite;
+.halo {
+  width: 92px;
+  height: 92px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 46px;
+  border-radius: 50%;
+  border: 1.5px solid var(--line);
+  background:
+    radial-gradient(circle at 50% 36%, rgba(168, 50, 42, 0.14), transparent 68%),
+    rgba(255, 252, 244, 0.7);
+  box-shadow: 0 0 0 5px rgba(171, 142, 95, 0.13), 0 4px 12px rgba(41, 33, 26, 0.12);
+  animation: float 3.4s ease-in-out infinite;
 }
 
 @keyframes float {
@@ -226,75 +271,85 @@ onUnmounted(() => window.removeEventListener('keydown', onKey))
     transform: translateY(0);
   }
   50% {
-    transform: translateY(-10px);
+    transform: translateY(-8px);
   }
 }
 
 .title {
-  font-size: 56px;
-  font-weight: 900;
-  letter-spacing: 20px;
-  text-indent: 20px;
-  color: #f0d9a0;
-  text-shadow: 0 4px 18px rgba(240, 217, 160, 0.35);
+  margin-top: 18px;
+  font-family: var(--font-kai);
+  font-size: clamp(32px, 11vw, 46px);
+  font-weight: 700;
+  letter-spacing: clamp(6px, 3vw, 16px);
+  text-indent: clamp(6px, 3vw, 16px);
+  color: var(--ink);
 }
 
 .subtitle {
-  color: #9a8465;
+  margin-top: 2px;
+  font-family: var(--font-kai);
+  color: var(--ink-3);
   letter-spacing: 4px;
   font-size: 13px;
 }
 
-.intro {
-  margin: 26px 0;
+.memo {
+  margin: 24px 0 20px;
+  padding: 16px 18px;
+  width: 100%;
+  max-width: 380px;
   line-height: 2;
+  text-align: justify;
+  border: 1px solid var(--line-soft);
+  border-radius: 3px;
+  background: rgba(255, 251, 242, 0.55);
+  box-shadow: inset 0 0 0 1px rgba(171, 142, 95, 0.18);
 }
 
-.intro p {
-  color: #cbb794;
-  font-size: 15px;
+.memo p {
+  color: var(--ink-2);
+  font-size: 14.5px;
 }
 
 .factions {
   display: flex;
   justify-content: center;
-  gap: 14px;
-  margin: 10px 0;
+  gap: 6px;
+  margin: 14px 0 10px;
   flex-wrap: wrap;
 }
 
 .faction {
-  padding: 4px 12px;
-  border: 1px solid #6b5436;
-  border-radius: 20px;
-  font-size: 13px;
-  color: #e3cf9f;
-  background: rgba(107, 84, 54, 0.2);
+  padding: 3px 7px;
+  border: 1px solid;
+  border-radius: 2px;
+  font-size: 12.5px;
+  letter-spacing: 1px;
+  color: var(--ink-2);
+  background: rgba(255, 253, 248, 0.7);
 }
 
-.warning {
-  color: #e08573;
+.memo .warning {
+  color: var(--cinnabar);
   font-size: 13px;
+  text-align: center;
 }
 
 .best {
-  margin-top: 14px;
-  color: #9a8465;
+  margin-top: 12px;
+  color: var(--ink-3);
   font-size: 13px;
 }
 
 .btn {
-  margin-top: 10px;
-  padding: 14px 46px;
-  font-size: 18px;
+  margin-top: 8px;
+  padding: 13px 40px;
+  font-size: 19px;
   font-weight: 700;
-  letter-spacing: 6px;
-  text-indent: 6px;
-  color: #2a1f12;
-  background: linear-gradient(160deg, #f0d9a0, #d3b26a);
-  border: none;
-  border-radius: 12px;
-  box-shadow: 0 6px 18px rgba(211, 178, 106, 0.35);
+  letter-spacing: 8px;
+  text-indent: 8px;
+  border-radius: 6px;
+  box-shadow: 0 5px 16px rgba(141, 38, 32, 0.3);
   cursor: pointer;
   transition: transform 0.15s ease;
 }
@@ -303,96 +358,113 @@ onUnmounted(() => window.removeEventListener('keydown', onKey))
   transform: scale(0.96);
 }
 
-/* 次级入口：不与主行动按钮争视觉重心 */
+/* 次级入口：不与主批红印争视觉重心 */
 .btn-ghost {
   margin-top: 16px;
-  padding: 8px 22px;
+  padding: 8px 20px;
   font-size: 13px;
   letter-spacing: 2px;
-  color: #b8a382;
-  background: none;
-  border: 1px solid #4a3925;
-  border-radius: 20px;
+  color: var(--ink-3);
+  background: rgba(255, 253, 248, 0.55);
+  border: 1px solid var(--line-soft);
+  border-radius: 3px;
   cursor: pointer;
 }
 
 .btn-ghost:active {
-  color: #f0d9a0;
-  border-color: #6b5436;
+  color: var(--cinnabar);
+  border-color: var(--cinnabar);
 }
 
 /* ---------- 游戏界面 ---------- */
 .play-screen {
-  gap: 10px;
+  gap: 8px;
+  padding-top: 16px;
 }
 
 .hud {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
-  padding: 14px 4px 4px;
+  gap: 6px;
+  padding: 0 2px;
 }
 
+/* 纪年宝玺 */
 .year {
   display: flex;
   flex-direction: column;
   align-items: center;
-  line-height: 1.3;
+  gap: 4px;
+  padding-top: 2px;
 }
 
-.year-label {
-  font-size: 11px;
-  color: #9a8465;
-  letter-spacing: 4px;
-}
-
-.year-value {
+.year .seal {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 8px;
   font-size: 15px;
-  font-weight: 700;
-  color: #f0d9a0;
-  white-space: nowrap;
+  line-height: 1.25;
+  letter-spacing: 1px;
+}
+
+.ad {
+  font-size: 10.5px;
+  letter-spacing: 1px;
+  color: var(--ink-3);
 }
 
 .subhud {
   display: flex;
   justify-content: center;
-  margin-top: -4px;
 }
 
 .people-btn {
   display: flex;
   align-items: center;
   gap: 6px;
-  padding: 5px 14px;
+  padding: 4px 13px;
+  font-family: var(--font-kai);
   font-size: 12.5px;
   letter-spacing: 1px;
-  color: #d9c49a;
-  background: rgba(240, 217, 160, 0.07);
-  border: 1px solid #4a3925;
-  border-radius: 16px;
+  color: var(--ink-2);
+  background: rgba(255, 253, 248, 0.6);
+  border: 1px solid var(--line-soft);
+  border-radius: 2px;
   cursor: pointer;
+}
+
+.people-btn::before {
+  content: '';
+  width: 5px;
+  height: 5px;
+  background: var(--cinnabar);
+  transform: rotate(45deg);
 }
 
 .people-btn i {
   font-style: normal;
-  color: #8a755a;
+  color: var(--ink-3);
 }
 
 .people-btn:active {
-  background: rgba(240, 217, 160, 0.16);
+  border-color: var(--cinnabar);
 }
 
+/* 批红：上一手的结果 */
 .toast {
-  min-height: 44px;
-  margin: 0 8px;
-  padding: 8px 14px;
-  text-align: center;
+  min-height: 42px;
+  margin: 0 6px;
+  padding: 7px 12px 7px 14px;
+  font-family: var(--font-kai);
   font-size: 13px;
-  line-height: 1.6;
-  color: #d9c49a;
-  background: rgba(240, 217, 160, 0.08);
-  border: 1px dashed rgba(240, 217, 160, 0.25);
-  border-radius: 10px;
+  line-height: 1.7;
+  text-align: justify;
+  color: var(--ink-2);
+  background: rgba(168, 50, 42, 0.07);
+  border-left: 3px solid var(--cinnabar);
 }
 
 .toast-enter-active {
@@ -414,50 +486,56 @@ onUnmounted(() => window.removeEventListener('keydown', onKey))
 .stack-back {
   position: absolute;
   inset: 0;
-  border-radius: 18px;
-  background: linear-gradient(160deg, #5c4a30, #453522);
-  border: 1px solid #6b5436;
-  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.45);
+  border-radius: 4px;
+  border: 1px solid var(--line-soft);
+  background: linear-gradient(168deg, #f6ecd9, #e8d7b8);
+  box-shadow: 0 8px 18px rgba(41, 33, 26, 0.14);
 }
 
 .back-1 {
-  transform: translateY(8px) scale(0.965) rotate(1.6deg);
+  transform: translateY(7px) scale(0.968) rotate(1.3deg);
 }
 
 .back-2 {
-  transform: translateY(15px) scale(0.93) rotate(-1.8deg);
+  transform: translateY(13px) scale(0.938) rotate(-1.5deg);
 }
 
 .actions {
   display: flex;
   gap: 12px;
-  padding: 4px 4px 6px;
+  padding: 4px 2px 2px;
 }
 
-.action-btn {
+/* 批红双印：左右同权重 */
+.verdict-btn {
   flex: 1;
-  padding: 12px 8px;
-  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 11px 8px;
+  font-family: var(--font-kai);
+  font-size: 14.5px;
+  font-weight: 700;
   letter-spacing: 1px;
-  color: #e3cf9f;
-  background: rgba(240, 217, 160, 0.08);
-  border: 1px solid #6b5436;
-  border-radius: 10px;
+  color: var(--cinnabar);
+  background:
+    var(--grain),
+    linear-gradient(150deg, rgba(255, 255, 255, 0.55), rgba(255, 255, 255, 0.15));
+  border: 2px solid var(--cinnabar);
+  border-radius: 5px;
   cursor: pointer;
   transition: background 0.15s ease, transform 0.15s ease;
 }
 
-.action-btn:active {
+.verdict-btn:active {
   transform: scale(0.97);
-  background: rgba(240, 217, 160, 0.16);
+  background: rgba(168, 50, 42, 0.12);
 }
 
-.action-btn.left {
-  color: #e8a090;
-}
-
-.action-btn.right {
-  color: #9fd8ae;
+.arrow {
+  font-size: 11px;
+  opacity: 0.7;
 }
 
 /* ---------- 结局界面 ---------- */
@@ -466,6 +544,7 @@ onUnmounted(() => window.removeEventListener('keydown', onKey))
   justify-content: safe center;
   overflow-y: auto;
   text-align: center;
+  padding-top: 18px;
   animation: fade-in 0.5s ease;
 }
 
@@ -480,55 +559,88 @@ onUnmounted(() => window.removeEventListener('keydown', onKey))
   }
 }
 
-.skull {
-  font-size: 64px;
+.over-screen .halo {
+  width: 84px;
+  height: 84px;
+  font-size: 42px;
+  animation: none;
 }
 
 .verdict {
-  margin-top: 14px;
-  font-size: 13px;
-  letter-spacing: 4px;
+  margin-top: 16px;
+  font-family: var(--font-kai);
+  font-size: 14px;
+  letter-spacing: 5px;
 }
 
 .verdict-doom {
-  color: #e08573;
+  color: var(--cinnabar);
 }
 
 .verdict-neutral {
-  color: #9fb6d4;
+  color: var(--azure);
 }
 
 .verdict-glory {
-  color: #ffd66e;
+  color: var(--ochre);
 }
 
 .finale-badge {
-  margin-top: 8px;
-  color: #d9c49a;
-  font-size: 14px;
+  margin-top: 10px;
+  font-family: var(--font-kai);
+  color: var(--ink-2);
+  font-size: 13.5px;
   letter-spacing: 2px;
 }
 
+.new-record {
+  margin-top: 10px;
+  font-family: var(--font-kai);
+  color: var(--cinnabar);
+  font-size: 13.5px;
+  letter-spacing: 2px;
+  animation: pulse-text 1.1s ease infinite;
+}
+
+@keyframes pulse-text {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
 .over-title {
-  margin-top: 14px;
-  font-size: 30px;
-  font-weight: 900;
-  letter-spacing: 6px;
-  text-indent: 6px;
-  color: #f0d9a0;
+  margin-top: 10px;
+  font-family: var(--font-kai);
+  font-size: 32px;
+  font-weight: 700;
+  letter-spacing: 8px;
+  text-indent: 8px;
+  color: var(--ink);
 }
 
 .over-desc {
-  margin: 18px 12px;
-  font-size: 15px;
+  margin: 16px 0 18px;
+  padding: 14px 16px;
+  width: 100%;
+  max-width: 360px;
+  font-size: 14.5px;
   line-height: 2;
-  color: #cbb794;
+  text-align: justify;
+  color: var(--ink-2);
+  border: 1px solid var(--line-soft);
+  border-radius: 3px;
+  background: rgba(255, 251, 242, 0.6);
+  box-shadow: inset 0 0 0 1px rgba(171, 142, 95, 0.18);
 }
 
 .over-stats {
   display: flex;
-  gap: 44px;
-  margin: 8px 0 4px;
+  gap: 34px;
+  margin: 0 0 6px;
 }
 
 .stat {
@@ -538,31 +650,15 @@ onUnmounted(() => window.removeEventListener('keydown', onKey))
 }
 
 .stat-value {
+  font-family: var(--font-kai);
   font-size: 34px;
-  font-weight: 900;
-  color: #f0d9a0;
+  font-weight: 700;
+  color: var(--cinnabar);
 }
 
 .stat-label {
-  font-size: 12px;
-  color: #9a8465;
+  font-size: 11.5px;
+  color: var(--ink-3);
   letter-spacing: 2px;
-}
-
-.new-record {
-  margin-top: 8px;
-  color: #ffd66e;
-  font-size: 14px;
-  animation: pulse-text 1s ease infinite;
-}
-
-@keyframes pulse-text {
-  0%,
-  100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.55;
-  }
 }
 </style>
