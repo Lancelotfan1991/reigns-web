@@ -1,5 +1,8 @@
-/** 四项国势指标：皇权 / 民心 / 军心 / 国库 */
-export type ResourceKey = 'court' | 'people' | 'army' | 'gold'
+/** 四项治平之具：君威 / 法度 / 军心 / 国库（过高过低皆足致亡） */
+export type AxisKey = 'court' | 'law' | 'army' | 'gold'
+
+/** 全部国势指标：四象之上另有民心，作为单向的「国本」水位，只论倾覆不论过盈 */
+export type ResourceKey = AxisKey | 'people'
 
 /** 一次选择对指标的影响 */
 export type Effects = Partial<Record<ResourceKey, number>>

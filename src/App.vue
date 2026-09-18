@@ -4,7 +4,14 @@ import CharacterPanel from './components/CharacterPanel.vue'
 import GameCard from './components/GameCard.vue'
 import ResourceBadge from './components/ResourceBadge.vue'
 import { useCharacters } from './composables/useCharacters'
-import { RESOURCE_KEYS, RESOURCE_META, yearLabel, useGame } from './composables/useGame'
+import {
+  AXIS_KEYS,
+  RESOURCE_META,
+  SOUTH_PEOPLE_LINE,
+  UNREST_LINE,
+  yearLabel,
+  useGame,
+} from './composables/useGame'
 import type { ResourceKey, Side } from './types'
 
 type Screen = 'start' | 'play' | 'over'
@@ -35,6 +42,10 @@ const sealLines = computed(() => {
   return [label.slice(0, 2), label.slice(2)]
 })
 const adYear = computed(() => 1627 + Math.min(Math.max(game.year.value, 0), 17))
+
+/** 国本民心：四象之外，唯一只看下限的轴 */
+const PEOPLE_META = RESOURCE_META.people
+const peopleValue = computed(() => game.resources.value.people)
 
 function isActive(key: ResourceKey) {
   return key in hoverEffects.value
@@ -73,32 +84,46 @@ onUnmounted(() => window.removeEventListener('keydown', onKey))
   <div class="app">
     <!-- 开始界面 -->
     <section v-if="screen === 'start'" class="screen start-screen">
-      <div class="halo">👑</div>
-      <h1 class="title">崇祯十七年</h1>
-      <p class="subtitle">穿越明末 ・ 塘报挽天倾</p>
+      <div class="brief">
+        <div class="halo">👑</div>
+        <h1 class="title">崇祯十七年</h1>
+        <p class="subtitle">穿越明末 ・ 塘报挽天倾</p>
 
-      <div class="memo">
-        <p>你一觉醒来，成了刚刚登基的大明皇帝朱由检。</p>
-        <p>内有党争、大旱、瘟疫、空虚的国库；外有建州铁骑、流亡驿卒。</p>
-        <p>每一纸塘报递到御前，左右滑出批红，守这四大国势：</p>
-        <div class="factions">
-          <span v-for="key in RESOURCE_KEYS" :key="key" class="faction" :style="{ borderColor: RESOURCE_META[key].color }">
-            {{ RESOURCE_META[key].icon }} {{ RESOURCE_META[key].name }}
-          </span>
+        <div class="memo">
+          <p>
+            你一觉醒来，成了刚刚登基的大明皇帝朱由检。内有党争、大旱、瘟疫、空虚的国库；外有建州铁骑、流亡驿卒。
+          </p>
+          <p>每一纸塘报递到御前，左右滑出批红。朝局由四象撑着，过高与过低一样要命：</p>
+          <dl class="axis-list">
+            <template v-for="key in AXIS_KEYS" :key="key">
+              <dt :style="{ borderColor: RESOURCE_META[key].color }">
+                {{ RESOURCE_META[key].icon }} {{ RESOURCE_META[key].name }}
+              </dt>
+              <dd>{{ RESOURCE_META[key].hint }}</dd>
+            </template>
+          </dl>
+          <p class="root-line">
+            <b :style="{ color: PEOPLE_META.color }">{{ PEOPLE_META.icon }} 民心</b>
+            是国本水位，只问厚薄、不计高下：跌破 {{ UNREST_LINE }} 便生动乱，归零则社稷无根。
+          </p>
+          <p class="warning">
+            四象任一归零或满格，国祚立崩；撑到崇祯十七年，南渡成败先看民心（须过 {{ SOUTH_PEOPLE_LINE }}）。
+          </p>
         </div>
-        <p class="warning">任何一项归零或过极，国祚立崩；撑到崇祯十七年，甲申抉择终将由你亲手落下。</p>
       </div>
 
-      <button class="btn seal inked" @click="start">入宫即位</button>
-      <p v-if="game.bestYears.value > 0" class="best">前世最多撑了 {{ game.bestYears.value }} 年</p>
-      <button class="btn-ghost" @click="panelOpen = true">先看看本朝人物</button>
+      <div class="entry">
+        <button class="btn seal inked" @click="start">入宫即位</button>
+        <p v-if="game.bestYears.value > 0" class="best">前世最多撑了 {{ game.bestYears.value }} 年</p>
+        <button class="btn-ghost" @click="panelOpen = true">先看看本朝人物</button>
+      </div>
     </section>
 
     <!-- 游戏界面 -->
     <section v-else-if="screen === 'play'" class="screen play-screen">
       <header class="hud">
         <ResourceBadge
-          v-for="key in RESOURCE_KEYS.slice(0, 2)"
+          v-for="key in AXIS_KEYS.slice(0, 2)"
           :key="key"
           :icon="RESOURCE_META[key].icon"
           :name="RESOURCE_META[key].name"
@@ -114,7 +139,7 @@ onUnmounted(() => window.removeEventListener('keydown', onKey))
           <span class="ad">西元 {{ adYear }}</span>
         </div>
         <ResourceBadge
-          v-for="key in RESOURCE_KEYS.slice(2)"
+          v-for="key in AXIS_KEYS.slice(2)"
           :key="key"
           :icon="RESOURCE_META[key].icon"
           :name="RESOURCE_META[key].name"
@@ -125,6 +150,20 @@ onUnmounted(() => window.removeEventListener('keydown', onKey))
       </header>
 
       <div class="subhud">
+        <div
+          class="levee"
+          :class="{ breach: game.unrest.value }"
+          :title="`民心 ${peopleValue}：跌破 ${UNREST_LINE} 即生动乱；甲申南渡须过 ${SOUTH_PEOPLE_LINE}`"
+        >
+          <span class="lv-cap">{{ PEOPLE_META.icon }} 国本</span>
+          <span class="lv-track">
+            <i class="lv-fill" :style="{ width: `${peopleValue}%`, background: PEOPLE_META.color }"></i>
+            <i class="lv-tick" :style="{ left: `${UNREST_LINE}%` }"></i>
+            <i class="lv-tick" :style="{ left: `${SOUTH_PEOPLE_LINE}%` }"></i>
+          </span>
+          <span class="lv-num">{{ peopleValue }}</span>
+          <span v-if="game.unrest.value" class="lv-flag">动乱</span>
+        </div>
         <button class="people-btn" @click="panelOpen = true">
           朝中人物 <i>已识 {{ chars.appearedCount.value }} / {{ chars.views.value.length }}</i>
         </button>
@@ -243,10 +282,27 @@ onUnmounted(() => window.removeEventListener('keydown', onKey))
 .start-screen {
   align-items: center;
   justify-content: safe center;
+}
+
+/* 简介按内容取高，矮屏才自身滚动；印信常驻底部不被卷走 */
+.brief {
+  flex: 0 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
   overflow-y: auto;
   text-align: center;
-  gap: 6px;
-  padding-top: 18px;
+  padding-top: 10px;
+}
+
+.entry {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-top: 12px;
 }
 
 .halo {
@@ -276,7 +332,7 @@ onUnmounted(() => window.removeEventListener('keydown', onKey))
 }
 
 .title {
-  margin-top: 18px;
+  margin-top: 14px;
   font-family: var(--font-kai);
   font-size: clamp(32px, 11vw, 46px);
   font-weight: 700;
@@ -294,11 +350,11 @@ onUnmounted(() => window.removeEventListener('keydown', onKey))
 }
 
 .memo {
-  margin: 24px 0 20px;
-  padding: 16px 18px;
+  margin: 16px 0 14px;
+  padding: 12px 16px;
   width: 100%;
   max-width: 380px;
-  line-height: 2;
+  line-height: 1.7;
   text-align: justify;
   border: 1px solid var(--line-soft);
   border-radius: 3px;
@@ -308,25 +364,48 @@ onUnmounted(() => window.removeEventListener('keydown', onKey))
 
 .memo p {
   color: var(--ink-2);
-  font-size: 14.5px;
+  font-size: 13.5px;
 }
 
-.factions {
-  display: flex;
-  justify-content: center;
-  gap: 6px;
-  margin: 14px 0 10px;
-  flex-wrap: wrap;
+.axis-list {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  gap: 4px 9px;
+  margin: 10px 0 8px;
+  text-align: left;
 }
 
-.faction {
-  padding: 3px 7px;
-  border: 1px solid;
-  border-radius: 2px;
-  font-size: 12.5px;
+.axis-list dt {
+  padding: 2px 0 2px 7px;
+  font-family: var(--font-kai);
+  font-size: 13px;
+  font-weight: 700;
   letter-spacing: 1px;
-  color: var(--ink-2);
-  background: rgba(255, 253, 248, 0.7);
+  white-space: nowrap;
+  color: var(--ink);
+  border-left: 3px solid;
+  background: rgba(255, 253, 248, 0.72);
+}
+
+.axis-list dd {
+  margin: 0;
+  font-size: 11.5px;
+  line-height: 1.45;
+  color: var(--ink-3);
+}
+
+.root-line {
+  margin-top: 2px;
+  padding-top: 7px;
+  border-top: 1px dashed var(--line-soft);
+  font-size: 12.5px;
+  text-align: left;
+}
+
+.root-line b {
+  font-weight: 700;
+  letter-spacing: 1px;
 }
 
 .memo .warning {
@@ -360,7 +439,7 @@ onUnmounted(() => window.removeEventListener('keydown', onKey))
 
 /* 次级入口：不与主批红印争视觉重心 */
 .btn-ghost {
-  margin-top: 16px;
+  margin-top: 12px;
   padding: 8px 20px;
   font-size: 13px;
   letter-spacing: 2px;
@@ -374,6 +453,37 @@ onUnmounted(() => window.removeEventListener('keydown', onKey))
 .btn-ghost:active {
   color: var(--cinnabar);
   border-color: var(--cinnabar);
+}
+
+/* 矮屏（≤700px 高）：收冕缩印，让整段简介不必滚动 */
+@media (max-height: 700px) {
+  .halo {
+    width: 64px;
+    height: 64px;
+    font-size: 32px;
+  }
+
+  .title {
+    margin-top: 8px;
+  }
+
+  .memo {
+    margin: 12px 0 10px;
+    line-height: 1.6;
+  }
+
+  .entry {
+    padding-top: 6px;
+  }
+
+  .btn {
+    margin-top: 4px;
+    padding: 10px 40px;
+  }
+
+  .btn-ghost {
+    margin-top: 8px;
+  }
 }
 
 /* ---------- 游戏界面 ---------- */
@@ -418,10 +528,91 @@ onUnmounted(() => window.removeEventListener('keydown', onKey))
 
 .subhud {
   display: flex;
-  justify-content: center;
+  align-items: center;
+  gap: 8px;
+}
+
+/* 国本堤坝：民心是四象之外唯一只看下限的水位 */
+.levee {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 9px;
+  border: 1px solid var(--line-soft);
+  border-radius: 2px;
+  background: rgba(255, 253, 248, 0.6);
+}
+
+.lv-cap {
+  font-family: var(--font-kai);
+  font-size: 11.5px;
+  color: var(--ink-2);
+  white-space: nowrap;
+}
+
+.lv-track {
+  position: relative;
+  flex: 1;
+  min-width: 36px;
+  height: 9px;
+  overflow: hidden;
+  border: 1px solid var(--line-soft);
+  border-radius: 5px;
+  background: rgba(255, 255, 255, 0.5);
+}
+
+.lv-fill {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  opacity: 0.82;
+  transition: width 0.4s cubic-bezier(0.2, 0.8, 0.3, 1);
+}
+
+.lv-tick {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: rgba(41, 33, 26, 0.5);
+}
+
+.lv-num {
+  min-width: 18px;
+  font-family: var(--font-kai);
+  font-size: 13px;
+  font-weight: 700;
+  text-align: right;
+  color: var(--ink);
+}
+
+.lv-flag {
+  flex: none;
+  white-space: nowrap;
+  padding: 1px 5px;
+  font-family: var(--font-kai);
+  font-size: 11px;
+  letter-spacing: 1px;
+  color: var(--paper-hi);
+  background: var(--cinnabar);
+  border-radius: 2px;
+}
+
+.levee.breach {
+  border-color: var(--cinnabar);
+  background: rgba(168, 50, 42, 0.07);
+}
+
+.levee.breach .lv-cap,
+.levee.breach .lv-num {
+  color: var(--cinnabar);
 }
 
 .people-btn {
+  flex: none;
   display: flex;
   align-items: center;
   gap: 6px;
@@ -434,6 +625,12 @@ onUnmounted(() => window.removeEventListener('keydown', onKey))
   border: 1px solid var(--line-soft);
   border-radius: 2px;
   cursor: pointer;
+}
+
+@media (max-width: 360px) {
+  .people-btn i {
+    display: none;
+  }
 }
 
 .people-btn::before {

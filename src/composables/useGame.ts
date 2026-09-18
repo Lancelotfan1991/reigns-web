@@ -1,15 +1,27 @@
 import { computed, ref } from 'vue'
 import { FINALE_EVENT, RANDOM_EVENTS, SCRIPT_EVENTS } from '../data/events'
-import type { Decision, Ending, Effects, GameEvent, ResourceKey, Side } from '../types'
+import type { AxisKey, Decision, Ending, Effects, GameEvent, ResourceKey, Side } from '../types'
 
-export const RESOURCE_KEYS: ResourceKey[] = ['court', 'people', 'army', 'gold']
+/** 四象：归零与满格同样致命 */
+export const AXIS_KEYS: AxisKey[] = ['court', 'law', 'army', 'gold']
+/** 结算与展示的统一顺序：四象在前，国本民心在后 */
+export const RESOURCE_KEYS: ResourceKey[] = ['court', 'law', 'army', 'gold', 'people']
 
-export const RESOURCE_META: Record<ResourceKey, { icon: string; name: string; color: string }> = {
-  court: { icon: '🏛️', name: '皇权', color: '#a8322a' },
-  people: { icon: '🌾', name: '民心', color: '#4b7a5c' },
-  army: { icon: '⚔️', name: '军心', color: '#3a5f83' },
-  gold: { icon: '💰', name: '国库', color: '#ab8430' },
+export const RESOURCE_META: Record<ResourceKey, { icon: string; name: string; color: string; hint: string }> = {
+  court: { icon: '🏛️', name: '君威', color: '#a8322a', hint: '谁的话还算数' },
+  law: { icon: '⚖️', name: '法度', color: '#6b4f86', hint: '章程还管不管用' },
+  army: { icon: '⚔️', name: '军心', color: '#3a5f83', hint: '兵还肯不肯战' },
+  gold: { icon: '💰', name: '国库', color: '#ab8430', hint: '饷银周转得开吗' },
+  people: { icon: '🌾', name: '民心', color: '#4b7a5c', hint: '国本水位：只跌不盈' },
 }
+
+/** 国本线：民心低于此值即为动乱，此后每做一次决策，军心与法度各再失血 */
+export const UNREST_LINE = 30
+/** 南渡硬门槛：终章时民心不及此数，南渡必败 */
+export const SOUTH_PEOPLE_LINE = 45
+/** 民心厚到此处，终章可赦免一象之不足 */
+export const SOUTH_WAIVER_LINE = 70
+const UNREST_PENALTY: Partial<Record<AxisKey, number>> = { army: -1, law: -1 }
 
 /** 每张卡约一个季度，3 张牌推进一年；天启七年 + 崇祯 1-16 年 + 1644 终章 */
 export const CARDS_PER_YEAR = 3
@@ -28,38 +40,38 @@ export function yearLabel(y: number): string {
 /** 时代重力：每做出一项决策，辽饷与武备都在缓慢失血 */
 const ERA_DRIFT: Partial<Record<ResourceKey, number>> = { army: -1, gold: -1 }
 
-/** 指标失衡结局（1644 之前） */
-const ENDINGS: Record<ResourceKey, { empty: Ending; full: Ending }> = {
+/** 四象失衡结局（1644 之前） */
+const AXIS_ENDINGS: Record<AxisKey, { empty: Ending; full: Ending }> = {
   court: {
     empty: {
       avatar: '🎭',
       kind: 'doom',
-      title: '庙堂无人',
+      title: '虚君',
       description:
-        '朝堂之上只剩磕头声。奏章全是套话，政令不出西直门，无人再肯为你任事。流贼入城之日，百官列队投降，拔刀抵抗的竟只剩守门的内侍。',
+        '票拟批红都还走你的手续，只是没人把你的话当数：除授之命阁臣封还，催饷之旨督抚宕缓，用人、调兵、催科，处处有人替你「斟酌」。你不曾被废，只是渐渐成了一个名字。城破之日你才看清，这朝廷早已不姓朱。',
     },
     full: {
       avatar: '🩸',
       kind: 'doom',
       title: '猜忌喋血',
       description:
-        '你诛戮过当，督抚相继就逮，「朝衣殿上」成了每日的戏。人人自危、事皆推诿，最后连贴身的干伴儿也在帘外低语：「皇上，该换个年号了。」',
+        '你要把君威立到人头上：诛戮过当，督抚相继就逮，「朝衣殿上」成了每日的戏。人人自危、事皆推诿，最后连贴身的干伴儿也在帘外低语：「皇上，该换个年号了。」',
     },
   },
-  people: {
+  law: {
     empty: {
-      avatar: '🔥',
+      avatar: '🏛️',
       kind: 'doom',
-      title: '万民倒戈',
+      title: '庙堂无人',
       description:
-        '不是百姓不忠君——你给了他们荒年、加派与瘟疫，却连活路也收走了。城门从内部打开，香烛「迎闯王」，闯王的兵未放一箭。',
+        '法度一弛，赏罚全出于上意，便再没人肯守章程。奏章尽是套话，政令不出西直门，守令以推诿为老成，将帅以养寇为功。流贼入城之日，百官列队投降，拔刀抵抗的竟只剩守门的内侍。',
     },
     full: {
-      avatar: '🗡️',
+      avatar: '📜',
       kind: 'doom',
-      title: '纲纪尽失',
+      title: '束湿之政',
       description:
-        '万民欢呼拥戴，法度却荡然无存。你赦免一切、宽免一切，士绅抗税、行伍抗令，「仁政」成了各衙门尸位素餐的遮羞布。大明赢了人心，输了国家。',
+        '你把天下做成了一部细密的机器：考成愈急，追赃愈峻，告讪起于骨肉之间，文吏舞于簿书之上。百姓苦胥吏甚于苦流贼，而州县一律呈报「境内晏然」。法愈密则奸愈生，及至大崩，竟无一人肯为这制度说一句话。',
     },
   },
   army: {
@@ -91,13 +103,25 @@ const ENDINGS: Record<ResourceKey, { empty: Ending; full: Ending }> = {
       kind: 'doom',
       title: '聚敛速亡',
       description:
-        '你把「富国」变成了富私库：加派、榷酷、籍没，白银层层流入大内。城破之日，新朝从你库中括银数千万两——知者私语：「总家底都在这儿了。」',
+        '你把「富国」变成了富私库：加派、榷酤、籍没，白银层层流入大内。城破之日，新朝从你库中括银数千万两——知者私语：「总家底都在这儿了。」',
     },
   },
 }
 
+/** 民心：唯一的单向底线——倾覆即亡，厚则无咎 */
+const PEOPLE_ENDING: Ending = {
+  avatar: '🔥',
+  kind: 'doom',
+  title: '万民倒戈',
+  description:
+    '不是百姓不忠君——你给了他们荒年、加派与瘟疫，却连活路也收走了。城门从内部打开，香烛「迎闯王」，闯王的兵未放一箭。国本一倾，宗庙、府库、边军随之而去：你失去的从来不是一项指标，是天命本身。',
+}
+
+/** 南渡所需的四象底线 */
+const AXIS_GATE: Record<AxisKey, number> = { court: 40, law: 35, army: 40, gold: 25 }
+
 /** 1644 终章结局 */
-const FINALE_ENDINGS: { meishan: Ending; southOk: Ending; southFail: Ending } = {
+const FINALE_ENDINGS: { meishan: Ending; southOk: Ending; southNoRoot: Ending; southFail: Ending } = {
   meishan: {
     avatar: '🪢',
     kind: 'neutral',
@@ -110,7 +134,14 @@ const FINALE_ENDINGS: { meishan: Ending; southOk: Ending; southFail: Ending } = 
     kind: 'glory',
     title: '南渡终成局',
     description:
-      '你雪夜出正阳门，南京百官迎于江东门。江淮固守、漕海畅通，虽失西北，社稷之血因你而续——后世史笔：「定鼎金陵，中兴之业，基于此举。」',
+      '你雪夜出正阳门，一路村堡献牛酒、输舟楫，南京百官迎于江东门。江淮固守、漕海畅通，虽失西北，社稷之血因你而续——后世史笔：「定鼎金陵，中兴之业，基于此举。」',
+  },
+  southNoRoot: {
+    avatar: '🚣',
+    kind: 'doom',
+    title: '无根之南',
+    description:
+      '你逃出了京师，却没有逃出人心的旧账。渡淮之后村堡闭门、粮户藏册、舟子索直，南京的百官另寻了更「有福分」的宗室，江淮寸土不肯为你而守。史臣不肯为你立本纪，只于传末记一句：「民思乱矣。」',
   },
   southFail: {
     avatar: '🩸',
@@ -138,6 +169,14 @@ function loadBest(): number {
   }
 }
 
+function clamp(value: number): number {
+  return Math.min(100, Math.max(0, value))
+}
+
+function initialResources(): Record<ResourceKey, number> {
+  return { court: START_VALUE, law: START_VALUE, army: START_VALUE, gold: START_VALUE, people: START_VALUE }
+}
+
 /** 构建本局牌堆：剧本卡锁入所属年份槽位，随机卡补足空槽，终章压轴 */
 function buildDeck(): GameEvent[] {
   const pool = shuffle(RANDOM_EVENTS)
@@ -163,12 +202,7 @@ function buildDeck(): GameEvent[] {
 }
 
 export function useGame() {
-  const resources = ref<Record<ResourceKey, number>>({
-    court: START_VALUE,
-    people: START_VALUE,
-    army: START_VALUE,
-    gold: START_VALUE,
-  })
+  const resources = ref<Record<ResourceKey, number>>(initialResources())
   const deck = ref<GameEvent[]>([])
   const cardIndex = ref(0)
   const ending = ref<Ending | null>(null)
@@ -190,6 +224,8 @@ export function useGame() {
   const isNewRecord = computed(() => isOver.value && reignedYears.value > bestYears.value)
   /** 终章是否被触发（区别于中途失衡而亡） */
   const reachedFinale = computed(() => isOver.value && cardIndex.value >= deck.value.length)
+  /** 国本已倾：民心跌破动乱线，此后每次决策都在同时耗尽军心与法度 */
+  const unrest = computed(() => resources.value.people < UNREST_LINE)
 
   /** 事件 id → 该事件上做出的决策 */
   const decisionByEvent = computed(() => {
@@ -206,7 +242,7 @@ export function useGame() {
   })
 
   function startGame() {
-    resources.value = { court: START_VALUE, people: START_VALUE, army: START_VALUE, gold: START_VALUE }
+    resources.value = initialResources()
     deck.value = buildDeck()
     cardIndex.value = 0
     ending.value = null
@@ -221,14 +257,30 @@ export function useGame() {
     return side === 'left' ? card.left.effects : card.right.effects
   }
 
+  /** 结算一次决策：时代重力常年失血；国本已倾（民心低于动乱线）时，军心与法度每判再耗一分 */
   function applyEffects(effects: Effects): Record<ResourceKey, number> {
     const next = { ...resources.value }
     for (const key of RESOURCE_KEYS) {
       const delta = (effects[key] ?? 0) + (ERA_DRIFT[key] ?? 0)
-      next[key] = Math.min(100, Math.max(0, next[key] + delta))
+      next[key] = clamp(next[key] + delta)
+    }
+    if (next.people < UNREST_LINE) {
+      for (const key of AXIS_KEYS) {
+        next[key] = clamp(next[key] + (UNREST_PENALTY[key] ?? 0))
+      }
     }
     resources.value = next
     return next
+  }
+
+  /** 终章结算：民心权重最高——不及国本线则南渡必败，四象有亏需民心 ≥70 方赦其一 */
+  function finaleEnding(next: Record<ResourceKey, number>): Ending {
+    if (next.people < SOUTH_PEOPLE_LINE) return FINALE_ENDINGS.southNoRoot
+    const shortfalls = AXIS_KEYS.filter((key) => next[key] < AXIS_GATE[key]).length
+    if (shortfalls === 0 || (next.people >= SOUTH_WAIVER_LINE && shortfalls === 1)) {
+      return FINALE_ENDINGS.southOk
+    }
+    return FINALE_ENDINGS.southFail
   }
 
   /** 做出选择：结算指标、判定失衡/终章、翻开下一张卡 */
@@ -248,16 +300,17 @@ export function useGame() {
     }
     if (choice.finale === 'south') {
       advance()
-      const survived = next.court >= 40 && next.army >= 40 && next.gold >= 25
-      return gameOver(survived ? FINALE_ENDINGS.southOk : FINALE_ENDINGS.southFail)
+      return gameOver(finaleEnding(next))
     }
 
-    // 失衡判定：任一指标归零或满格，国势崩解
-    for (const key of RESOURCE_KEYS) {
+    // 失衡判定：四象任一归零或满格，国势崩解
+    for (const key of AXIS_KEYS) {
       const value = next[key]
-      if (value <= 0) return gameOver(ENDINGS[key].empty)
-      if (value >= 100) return gameOver(ENDINGS[key].full)
+      if (value <= 0) return gameOver(AXIS_ENDINGS[key].empty)
+      if (value >= 100) return gameOver(AXIS_ENDINGS[key].full)
     }
+    // 民心只问下限：国本倾覆，社稷无根
+    if (next.people <= 0) return gameOver(PEOPLE_ENDING)
 
     advance()
   }
@@ -291,6 +344,7 @@ export function useGame() {
     reachedFinale,
     isOver,
     isNewRecord,
+    unrest,
     decisions,
     decisionByEvent,
     seenEventIds,

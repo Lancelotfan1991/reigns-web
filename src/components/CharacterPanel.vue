@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { RESOURCE_META, yearLabel } from '../composables/useGame'
+import { RESOURCE_KEYS, RESOURCE_META, yearLabel } from '../composables/useGame'
 import { STATUS_META } from '../data/characters'
 import type { CharView, ResourceKey } from '../types'
 
@@ -15,10 +15,7 @@ type Filter = 'all' | ResourceKey
 
 const FILTERS: { key: Filter; label: string }[] = [
   { key: 'all', label: '全部' },
-  { key: 'court', label: '皇权' },
-  { key: 'people', label: '民心' },
-  { key: 'army', label: '军心' },
-  { key: 'gold', label: '国库' },
+  ...RESOURCE_KEYS.map((key) => ({ key: key as Filter, label: RESOURCE_META[key].name })),
 ]
 
 const filter = ref<Filter>('all')
@@ -497,13 +494,14 @@ function toggle(id: string) {
 /* 窄屏让五档筛选正好一行放平，避免末位被切 */
 @media (max-width: 400px) {
   .filters {
-    gap: 5px;
-    padding: 10px 12px;
+    gap: 4px;
+    padding: 10px 11px;
   }
 
   .chip {
-    padding: 4px 9px;
-    font-size: 12px;
+    padding: 4px 7px;
+    font-size: 11.5px;
+    letter-spacing: 0;
   }
 }
 </style>
