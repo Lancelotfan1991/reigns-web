@@ -7,7 +7,7 @@
     "dev": "vite",
     "build": "vue-tsc --noEmit && vite build",
     "preview": "vite preview",
-    "deploy": "npm run build && wrangler pages deploy dist --project-name=reigns-web"
+    "deploy": "npm run build && wrangler pages deploy dist --project-name=reigns-web --branch=main"
   },
   "dependencies": {
     "vue": "^3.5.13"
