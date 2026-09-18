@@ -17,8 +17,14 @@ export interface Decision {
   year: number
 }
 
-/** 终章分支标记 */
-export type FinaleBranch = 'south' | 'meishan'
+/** 终章分支标记：南渡、煤山、亲征决战、坚壁待敝 */
+export type FinaleBranch = 'south' | 'meishan' | 'battle' | 'hold'
+
+/**
+ * 旗标规则：用于卡牌的出现条件。
+ * 裸字符串表示该旗标 ≥1；对象形式可指定最小累计次数。
+ */
+export type FlagRule = string | { flag: string; min: number }
 
 export interface Choice {
   /** 滑动时显示的决策印章文字 */
@@ -28,6 +34,8 @@ export interface Choice {
   response: string
   /** 标记此选择直接触发 1644 终章结算 */
   finale?: FinaleBranch
+  /** 此选择写下的旗标：决定后续年份哪些分叉卡会登场 */
+  sets?: string[]
 }
 
 export interface GameEvent {
@@ -42,8 +50,10 @@ export interface GameEvent {
   right: Choice
   /** 锁年剧本：崇祯纪年（0=天启七年，1..16=崇祯N年），随机卡无此字段 */
   year?: number
-  /** 同一年内的剧本顺序 */
+  /** 同一年内的剧本顺序：同一 year+order 即同一槽位，条件卡优先于史实卡 */
   order?: number
+  /** 全部满足才登场（改史分叉卡）；同槽位中条件优先于无条件的史实卡 */
+  requires?: FlagRule[]
 }
 
 export interface Ending {
@@ -71,8 +81,8 @@ export interface FateEntry {
   year: number
   status: CharStatus
   note: string
-  /** 玩家在该事件卡上做过抉择，则此条史实不再发生 */
-  unlessEvent?: string
+  /** 这些卡中任一张被裁决（史实卡或其改史替身卡），则此条史实不再发生 */
+  unlessEvent?: string[]
 }
 
 /** 抉择改写：玩家在指定卡上选了指定一侧，其后果覆盖同年史实轨迹 */

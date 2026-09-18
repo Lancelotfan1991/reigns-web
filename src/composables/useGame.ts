@@ -1,6 +1,6 @@
 import { computed, ref } from 'vue'
-import { FINALE_EVENT, RANDOM_EVENTS, SCRIPT_EVENTS } from '../data/events'
-import type { AxisKey, Decision, Ending, Effects, GameEvent, ResourceKey, Side } from '../types'
+import { FINALE_EVENTS, RANDOM_EVENTS, SCRIPT_EVENTS } from '../data/events'
+import type { AxisKey, Decision, Ending, Effects, FlagRule, GameEvent, ResourceKey, Side } from '../types'
 
 /** 四象：归零与满格同样致命 */
 export const AXIS_KEYS: AxisKey[] = ['court', 'law', 'army', 'gold']
@@ -121,7 +121,14 @@ const PEOPLE_ENDING: Ending = {
 const AXIS_GATE: Record<AxisKey, number> = { court: 40, law: 35, army: 40, gold: 25 }
 
 /** 1644 终章结局 */
-const FINALE_ENDINGS: { meishan: Ending; southOk: Ending; southNoRoot: Ending; southFail: Ending } = {
+const FINALE_ENDINGS: {
+  meishan: Ending
+  southOk: Ending
+  southNoRoot: Ending
+  southFail: Ending
+  restoreWin: Ending
+  restoreLose: Ending
+} = {
   meishan: {
     avatar: '🪢',
     kind: 'neutral',
@@ -150,6 +157,20 @@ const FINALE_ENDINGS: { meishan: Ending; southOk: Ending; southNoRoot: Ending; s
     description:
       '仓皇出逃，禁旅溃散、护驾失控，追骑在保定田野间赶上你的车架。君弃宗庙社稷而走，名分已坠地——就算逃到秦淮河，也无颜再登任何一座金銮殿。',
   },
+  restoreWin: {
+    avatar: '🐉',
+    kind: 'glory',
+    title: '中兴第一',
+    description:
+      '甲申之春，你没有上煤山，也没有南渡。你把最后的家底押在城下，守军以银为励，炮石俱发，闯军连夜引去；关外铁骑见隙不得，却于蓟镇之外。勤王之师四集，河南、陕西次第底定。三百年基业在你手里折过一次，又被你接上——后世读甲申事者，每于此处搁卷：「危哉崇祯，几失天下，卒能反之。」',
+  },
+  restoreLose: {
+    avatar: '🥀',
+    kind: 'doom',
+    title: '孤注不返',
+    description:
+      '你把最后的本钱压在一场会战上。兵无固志，饷无继发，城下一战而溃，随驾堪战之兵就此散尽，京师洞开。你来不及再下第二道诏书，城头已换了旗号。史臣不肯以此年系明：「不度德，不量力，不恤其人，而幸济于万一。」',
+  },
 }
 
 function shuffle<T>(list: T[]): T[] {
@@ -177,11 +198,40 @@ function initialResources(): Record<ResourceKey, number> {
   return { court: START_VALUE, law: START_VALUE, army: START_VALUE, gold: START_VALUE, people: START_VALUE }
 }
 
-/** 构建本局牌堆：剧本卡锁入所属年份槽位，随机卡补足空槽，终章压轴 */
-function buildDeck(): GameEvent[] {
+/** 剧本卡总槽位数：天启七年至崇祯十六年，每年 3 槽 */
+const SCRIPT_SLOTS = (LAST_SCRIPT_YEAR + 1) * CARDS_PER_YEAR
+
+/** 同一槽位（year + order-1）的候选卡：条件卡按特异性排前，无条件的史实卡在其后兜底 */
+const SLOT_CANDIDATES = new Map<string, GameEvent[]>()
+for (const e of SCRIPT_EVENTS) {
+  const key = `${e.year ?? 0}#${(e.order ?? 1) - 1}`
+  const list = SLOT_CANDIDATES.get(key)
+  if (list) list.push(e)
+  else SLOT_CANDIDATES.set(key, [e])
+}
+for (const list of SLOT_CANDIDATES.values()) {
+  list.sort((a, b) => (b.requires?.length ?? 0) - (a.requires?.length ?? 0))
+}
+
+/** 终章候选组：改史终章优先，史实终章兜底 */
+const FINALE_CANDIDATES = [...FINALE_EVENTS].sort(
+  (a, b) => (b.requires?.length ?? 0) - (a.requires?.length ?? 0),
+)
+
+function ruleMet(rule: FlagRule, flags: Record<string, number>): boolean {
+  if (typeof rule === 'string') return (flags[rule] ?? 0) >= 1
+  return (flags[rule.flag] ?? 0) >= rule.min
+}
+
+function eligible(card: GameEvent, flags: Record<string, number>): boolean {
+  return (card.requires ?? []).every((rule) => ruleMet(rule, flags))
+}
+
+/** 随机补槽的抽牌器：一轮抽空后重洗续池，并避免与上一张同卡 */
+function makeRandomDraw() {
   const pool = shuffle(RANDOM_EVENTS)
   let cursor = 0
-  const takeRandom = (): GameEvent => {
+  return (): GameEvent => {
     if (cursor >= pool.length) {
       const fresh = shuffle(RANDOM_EVENTS)
       if (fresh[0]?.id === pool[pool.length - 1]?.id) fresh.push(fresh.shift()!)
@@ -189,16 +239,6 @@ function buildDeck(): GameEvent[] {
     }
     return pool[cursor++]
   }
-
-  const deck: GameEvent[] = []
-  for (let year = 0; year <= LAST_SCRIPT_YEAR; year++) {
-    const scripts = SCRIPT_EVENTS.filter((e) => e.year === year).sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
-    for (let slot = 0; slot < CARDS_PER_YEAR; slot++) {
-      deck.push(scripts[slot] ?? takeRandom())
-    }
-  }
-  deck.push(FINALE_EVENT)
-  return deck
 }
 
 export function useGame() {
@@ -210,6 +250,27 @@ export function useGame() {
   const bestYears = ref(loadBest())
   /** 本局已做出的决策，供人物系统推导 */
   const decisions = ref<Decision[]>([])
+  /** 旗标计数：关键抉择写下的痕迹，决定后续槽位发哪张分叉卡 */
+  const flags = ref<Record<string, number>>({})
+  let drawRandom = makeRandomDraw()
+
+  /** 发某剧本槽位：条件卡 → 史实卡兜底 → 随机补空 */
+  function dealScript(index: number): GameEvent {
+    const key = `${Math.floor(index / CARDS_PER_YEAR)}#${index % CARDS_PER_YEAR}`
+    return SLOT_CANDIDATES.get(key)?.find((c) => eligible(c, flags.value)) ?? drawRandom()
+  }
+
+  /** 发终章：满足条件的改史终章优先，史实终章兜底 */
+  function dealFinale(): GameEvent | undefined {
+    return FINALE_CANDIDATES.find((c) => eligible(c, flags.value))
+  }
+
+  /** 惰性发第 index 张牌；越过终章即无牌 */
+  function dealCard(index: number): GameEvent | undefined {
+    if (index < SCRIPT_SLOTS) return dealScript(index)
+    if (index === SCRIPT_SLOTS) return dealFinale()
+    return undefined
+  }
 
   /** 0 = 天启七年，N = 崇祯N年，17 = 甲申终章当年 */
   const year = computed(() => Math.floor(cardIndex.value / CARDS_PER_YEAR))
@@ -243,7 +304,9 @@ export function useGame() {
 
   function startGame() {
     resources.value = initialResources()
-    deck.value = buildDeck()
+    flags.value = {}
+    drawRandom = makeRandomDraw()
+    deck.value = [dealScript(0)]
     cardIndex.value = 0
     ending.value = null
     lastResponse.value = ''
@@ -273,14 +336,25 @@ export function useGame() {
     return next
   }
 
-  /** 终章结算：民心权重最高——不及国本线则南渡必败，四象有亏需民心 ≥70 方赦其一 */
-  function finaleEnding(next: Record<ResourceKey, number>): Ending {
-    if (next.people < SOUTH_PEOPLE_LINE) return FINALE_ENDINGS.southNoRoot
+  /** 南渡结算：民心权重最高——不及国本线必败；已密办南迁者（船料册籍先行出京）线更宽、可赦一象 */
+  function southEnding(next: Record<ResourceKey, number>): Ending {
+    const prepared = (flags.value['south-prep'] ?? 0) > 0
+    if (next.people < SOUTH_PEOPLE_LINE - (prepared ? 7 : 0)) return FINALE_ENDINGS.southNoRoot
+    const allowed = (next.people >= SOUTH_WAIVER_LINE ? 1 : 0) + (prepared ? 1 : 0)
     const shortfalls = AXIS_KEYS.filter((key) => next[key] < AXIS_GATE[key]).length
-    if (shortfalls === 0 || (next.people >= SOUTH_WAIVER_LINE && shortfalls === 1)) {
-      return FINALE_ENDINGS.southOk
-    }
-    return FINALE_ENDINGS.southFail
+    return shortfalls <= allowed ? FINALE_ENDINGS.southOk : FINALE_ENDINGS.southFail
+  }
+
+  /** 亲征决战：兵、饷、名分、人心四者都要撑得住 */
+  function battleEnding(next: Record<ResourceKey, number>): Ending {
+    const ok = next.army >= 45 && next.gold >= 30 && next.court >= 35 && next.people >= 35
+    return ok ? FINALE_ENDINGS.restoreWin : FINALE_ENDINGS.restoreLose
+  }
+
+  /** 坚壁待敝：守的是城里还肯守——民心为本，法度调度，粮饷续命 */
+  function holdEnding(next: Record<ResourceKey, number>): Ending {
+    const ok = next.people >= 50 && next.law >= 35 && next.gold >= 25
+    return ok ? FINALE_ENDINGS.restoreWin : FINALE_ENDINGS.restoreLose
   }
 
   /** 做出选择：结算指标、判定失衡/终章、翻开下一张卡 */
@@ -292,15 +366,28 @@ export function useGame() {
     decisions.value.push({ eventId: card.id, side, year: year.value })
     lastResponse.value = choice.response
     const next = applyEffects(choice.effects)
+    if (choice.sets) {
+      const after = { ...flags.value }
+      for (const flag of choice.sets) after[flag] = (after[flag] ?? 0) + 1
+      flags.value = after
+    }
 
-    // 终章分支：按国势数值决定南渡成败
+    // 终章分支：按国势数值决定南渡、决战、坚守成败
     if (choice.finale === 'meishan') {
       advance()
       return gameOver(FINALE_ENDINGS.meishan)
     }
     if (choice.finale === 'south') {
       advance()
-      return gameOver(finaleEnding(next))
+      return gameOver(southEnding(next))
+    }
+    if (choice.finale === 'battle') {
+      advance()
+      return gameOver(battleEnding(next))
+    }
+    if (choice.finale === 'hold') {
+      advance()
+      return gameOver(holdEnding(next))
     }
 
     // 失衡判定：四象任一归零或满格，国势崩解
@@ -315,8 +402,14 @@ export function useGame() {
     advance()
   }
 
+  /** 推进一张：到堆尾时按当前旗标现发下一张，故分叉卡总在上一道决策之后才决定 */
   function advance() {
-    cardIndex.value += 1
+    const nextIndex = cardIndex.value + 1
+    if (nextIndex >= deck.value.length) {
+      const dealt = dealCard(nextIndex)
+      if (dealt) deck.value.push(dealt)
+    }
+    cardIndex.value = nextIndex
   }
 
   function gameOver(result: Ending) {
@@ -346,6 +439,7 @@ export function useGame() {
     isNewRecord,
     unrest,
     decisions,
+    flags,
     decisionByEvent,
     seenEventIds,
     startGame,

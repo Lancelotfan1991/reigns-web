@@ -1,10 +1,10 @@
 import { computed } from 'vue'
-import { FINALE_EVENT, RANDOM_EVENTS, SCRIPT_EVENTS } from '../data/events'
+import { FINALE_EVENTS, RANDOM_EVENTS, SCRIPT_EVENTS } from '../data/events'
 import { CHARACTERS, CHAR_MAP, RELATION_META } from '../data/characters'
 import type { CharStatus, CharView, Deed } from '../types'
 import type { Game } from './useGame'
 
-const ALL_EVENTS = [...SCRIPT_EVENTS, ...RANDOM_EVENTS, FINALE_EVENT]
+const ALL_EVENTS = [...SCRIPT_EVENTS, ...RANDOM_EVENTS, ...FINALE_EVENTS]
 
 interface EventMeta {
   title: string
@@ -54,7 +54,7 @@ export function useCharacters(game: Game) {
 
     for (const t of ch.track ?? []) {
       if (t.year > now.value) continue
-      if (t.unlessEvent && decided.value[t.unlessEvent]) continue
+      if (t.unlessEvent?.some((e) => decided.value[e])) continue
       nodes.push({ year: t.year, status: t.status, note: t.note, rank: 0 })
     }
     for (const f of ch.fates ?? []) {

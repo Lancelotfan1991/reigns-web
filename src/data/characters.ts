@@ -1,4 +1,4 @@
-import { FINALE_EVENT, RANDOM_EVENTS, SCRIPT_EVENTS } from './events'
+import { FINALE_EVENTS, RANDOM_EVENTS, SCRIPT_EVENTS } from './events'
 import type { CharStatus, Character, RelationType } from '../types'
 
 /**
@@ -19,7 +19,7 @@ export const CHARACTERS: Character[] = [
     born: 1611,
     appearYear: 0,
     /** 皇帝亲裁每一张卡：直接从卡池派生，避免手写清单随卡池腐烂 */
-    events: [...SCRIPT_EVENTS, ...RANDOM_EVENTS, FINALE_EVENT].map((e) => e.id),
+    events: [...SCRIPT_EVENTS, ...RANDOM_EVENTS, ...FINALE_EVENTS].map((e) => e.id),
     fates: [
       { event: 's-finale', side: 'left', status: 'dead', note: '甲申三月十九，崩于煤山寿皇亭东' },
       { event: 's-finale', side: 'right', status: 'alive', note: '雪夜出正阳门，南都之局自此人手重开' },
@@ -78,11 +78,11 @@ export const CHARACTERS: Character[] = [
     camp: '文官',
     faction: 'army',
     born: 1584,
-    events: ['s-ych-huajian', 's-jisi', 's-jisi2', 's-yuanshi'],
+    events: ['s-ych-huajian', 's-jisi', 's-jisi2', 's-yuanshi', 's-yuan-liaodong', 's-yuan-songjin'],
     track: [
       { year: 1, status: 'alive', note: '以主事出关，守宁远、抚大凌河，关外皆惮其名' },
       { year: 2, status: 'alive', note: '率关宁军昼夜入援，顿于广渠门外' },
-      { year: 3, status: 'dead', note: '史实：磔于西市，都市之人争啖其肉', unlessEvent: 's-yuanshi' },
+      { year: 3, status: 'dead', note: '史实：磔于西市，都市之人争啖其肉', unlessEvent: ['s-yuanshi', 's-yuan-liaodong'] },
     ],
     fates: [
       { event: 's-jisi', side: 'left', status: 'alive', note: '许其入城休整，关宁军得以血战堵虏' },
@@ -91,6 +91,10 @@ export const CHARACTERS: Character[] = [
       { event: 's-jisi2', side: 'right', status: 'alive', note: '流言止于御前。边臣得安，虏间不成' },
       { event: 's-yuanshi', side: 'left', status: 'dead', note: '寸磔西市，传首九边。辽左诸将自此解体' },
       { event: 's-yuanshi', side: 'right', status: 'alive', note: '戴罪督辽。关宁一军犹为国家用' },
+      { event: 's-yuan-liaodong', side: 'left', status: 'alive', note: '筑大凌河，屯田继之。关外之城，推进到广宁旧境' },
+      { event: 's-yuan-liaodong', side: 'right', status: 'alive', note: '饷不出关。退保宁远、锦州，他从此只是守边的人' },
+      { event: 's-yuan-songjin', side: 'left', status: 'dead', note: '松山粮尽城陷，被执不食三日死——辽东无复主名之将' },
+      { event: 's-yuan-songjin', side: 'right', status: 'alive', note: '驻塔山，以步制骑。锦州、松山相为犄角' },
     ],
     relations: [
       { to: 'sunchengzong', type: 'friend' },
@@ -142,11 +146,16 @@ export const CHARACTERS: Character[] = [
     camp: '皇清',
     faction: 'army',
     born: 1592,
-    events: ['s-jisi', 's-jisi2', 's-chaoxian', 's-daiching', 's-jinzhou', 's-songjin', 's-htj', 'r-mashi'],
+    events: ['s-jisi', 's-jisi2', 's-chaoxian', 's-daiching', 's-jinzhou', 's-songjin', 's-mihe', 's-mihe-leak', 's-htj', 'r-mashi'],
     track: [
       { year: 0, status: 'alive', note: '嗣建州汗位，方整八旗，未暇西顾' },
       { year: 9, status: 'alive', note: '称帝改元，国号大清，建牙已具天子规模' },
       { year: 16, status: 'dead', note: '史实：崇德八年八月暴亡于清宁宫，无遗诏' },
+    ],
+    fates: [
+      { event: 's-mihe', side: 'left', status: 'alive', note: '明果遣人来。划界之书始有回文，我得以专意朝鲜、蒙古' },
+      { event: 's-mihe-leak', side: 'left', status: 'alive', note: '明主自认其事，尚书留任。使者再至，所索益重' },
+      { event: 's-mihe-leak', side: 'right', status: 'alive', note: '明杀其尚书而讳其议。我知其无成，还兵攻锦' },
     ],
     relations: [
       { to: 'duoerhun', type: 'kin' },
@@ -215,16 +224,20 @@ export const CHARACTERS: Character[] = [
     camp: '义军',
     faction: 'people',
     born: 1606,
-    events: ['s-hanzai', 's-yizhan', 's-chuangjiang', 's-sizheng', 's-annei', 's-kaifeng', 's-chuanti', 's-dashun', 'r-daoge'],
+    events: ['s-hanzai', 's-yizhan', 's-licheng-officer', 's-chuangjiang', 's-sizheng', 's-annei', 's-kaifeng', 's-chuanti', 's-dashun', 's-dashun-noman', 'r-daoge'],
     track: [
       { year: 2, status: 'alive', note: '塞门一驿之粮，不足以活其家' },
       { year: 8, status: 'alive', note: '继高迎祥之众，号「闯王」，众愈盛而愈流' },
       { year: 14, status: 'alive', note: '围开封八阅月，决河灌城' },
-      { year: 16, status: 'alive', note: '即皇帝位于西安，国号大顺，改元永昌' },
+      { year: 16, status: 'alive', note: '即皇帝位于西安，国号大顺，改元永昌', unlessEvent: ['s-dashun-noman'] },
     ],
     fates: [
       { event: 's-yizhan', side: 'left', status: 'alive', note: '驿站既裁，此辈无所就食，流入流营' },
       { event: 's-yizhan', side: 'right', status: 'alive', note: '仍食驿粮。然饥不止于一身，其党自聚' },
+      { event: 's-licheng-officer', side: 'left', status: 'alive', note: '逃卒不入捕册，隶延绥军籍——闯营失其主' },
+      { event: 's-licheng-officer', side: 'right', status: 'alive', note: '捕牒下陕西各府，逸犯逾墙走，山谷中益众' },
+      { event: 's-dashun-noman', side: 'left', status: 'alive', note: '降众编为屯户，荒田有主。册报「关中底定」' },
+      { event: 's-dashun-noman', side: 'right', status: 'alive', note: '追兵所过民居一空，空者又尽为贼——其名自此不可复制' },
       { event: 's-hanzai', side: 'right', status: 'alive', note: '平粜护仓，饥民荷锸随行——驿卒之中，有姓名可记者' },
     ],
     relations: [
@@ -259,7 +272,7 @@ export const CHARACTERS: Character[] = [
     camp: '义军',
     faction: 'people',
     born: 1606,
-    events: ['s-sizheng', 's-annei', 's-xianzhong'],
+    events: ['s-sizheng', 's-annei', 's-xianzhong', 's-dashun-noman'],
     track: [
       { year: 12, status: 'alive', note: '受抚谷城，裹粮修战备，不受约束' },
       { year: 14, status: 'alive', note: '复叛，陷襄阳，杀襄王' },
@@ -267,6 +280,8 @@ export const CHARACTERS: Character[] = [
     fates: [
       { event: 's-xianzhong', side: 'left', status: 'alive', note: '降众半编半遣，将散未散' },
       { event: 's-xianzhong', side: 'right', status: 'alive', note: '受抚号而守空城。半年之后，反旗复树' },
+      { event: 's-dashun-noman', side: 'left', status: 'alive', note: '闯营无主，其众多归谷英——「八大王」之号不复假于人' },
+      { event: 's-dashun-noman', side: 'right', status: 'alive', note: '追兵所过降者复叛，与闯营残部合为一，楚中不复问' },
     ],
     relations: [{ to: 'xiongwenchan', type: 'neutral' }],
   },
@@ -338,11 +353,17 @@ export const CHARACTERS: Character[] = [
     camp: '文官',
     faction: 'army',
     born: 1593,
-    events: ['s-chuanti', 's-dashun'],
-    track: [{ year: 16, status: 'dead', note: '史实：汝州、郏山两丧，战殁于阵。或曰未死', unlessEvent: 's-chuanti' }],
+    events: ['s-chuanti', 's-chuanti-ready', 's-dashun', 's-finale-restore'],
+    track: [
+      { year: 16, status: 'dead', note: '史实：汝州、郏山两丧，战殁于阵。或曰未死', unlessEvent: ['s-chuanti', 's-chuanti-ready'] },
+    ],
     fates: [
       { event: 's-chuanti', side: 'left', status: 'dead', note: '兵未集而趣战之诏日下，殁于阵——催他出关的人，是你' },
       { event: 's-chuanti', side: 'right', status: 'alive', note: '长锢诏狱。大明的最后一张牌，锁在牢里' },
+      { event: 's-chuanti-ready', side: 'left', status: 'dead', note: '檄符三下，车营未习而东——你省下的饷，没能买到他说的三年' },
+      { event: 's-chuanti-ready', side: 'right', status: 'alive', note: '秦兵练于关中，车营火器皆成。持重而未出' },
+      { event: 's-finale-restore', side: 'left', status: 'alive', note: '督秦兵当一面，亲见御旗出城头' },
+      { event: 's-finale-restore', side: 'right', status: 'alive', note: '以秦兵环卫京师，坚壁之议自传庭出' },
     ],
     relations: [{ to: 'licheng', type: 'enemy' }],
   },
@@ -356,12 +377,31 @@ export const CHARACTERS: Character[] = [
     faction: 'army',
     born: 1593,
     events: ['s-jinzhou', 's-songjin'],
-    track: [{ year: 15, status: 'alive', note: '史实：松山粮尽城陷，遂降。于明为罪人，于清为佐命' }],
+    track: [{ year: 15, status: 'alive', note: '史实：松山粮尽城陷，遂降。于明为罪人，于清为佐命', unlessEvent: ['s-yuan-songjin'] }],
     fates: [
       { event: 's-jinzhou', side: 'left', status: 'alive', note: '督战之令严矣，兵疲粮罄而出垒' },
       { event: 's-jinzhou', side: 'right', status: 'alive', note: '坚壁之局得成，师老于松山而不决' },
     ],
     relations: [{ to: 'zadashou', type: 'friend' }],
+  },
+  {
+    id: 'chenxinjia',
+    name: '陈新甲',
+    alias: '初暗',
+    avatar: '📯',
+    role: '兵部尚书。嗣昌之党，主和议而典密旨',
+    camp: '文官',
+    faction: 'gold',
+    events: ['s-mihe', 's-mihe-leak'],
+    fates: [
+      { event: 's-mihe', side: 'left', status: 'alive', note: '受密旨于帷中，与虏使往来十数番，不入阁票' },
+      { event: 's-mihe-leak', side: 'left', status: 'alive', note: '上自任兵机得失，留任视事。外廷目为内操之臣' },
+      { event: 's-mihe-leak', side: 'right', status: 'dead', note: '归罪新甲，弃市。和议之迹尽湮，人益不敢受密旨' },
+    ],
+    relations: [
+      { to: 'yangsichang', type: 'friend' },
+      { to: 'emperor', type: 'loyal' },
+    ],
   },
   {
     id: 'zadashou',
@@ -375,7 +415,7 @@ export const CHARACTERS: Character[] = [
     events: ['s-jinzhou', 's-songjin', 's-wsangui'],
     track: [
       { year: 13, status: 'alive', note: '困守锦州，月五疏乞援' },
-      { year: 15, status: 'alive', note: '史实：以锦州残甲降，关宁兵权自此易主' },
+      { year: 15, status: 'alive', note: '史实：以锦州残甲降，关宁兵权自此易主', unlessEvent: ['s-yuan-songjin'] },
     ],
     relations: [{ to: 'wusanggui', type: 'kin' }],
   },
@@ -444,8 +484,16 @@ export const CHARACTERS: Character[] = [
     role: '上潜邸旧人。宫中呼为「大伴」',
     camp: '内廷',
     faction: 'court',
-    events: ['s-finale'],
-    track: [{ year: 17, status: 'dead', note: '史实：从崩于煤山，惟一内侍陪至最后' }],
+    events: ['s-finale', 's-finale-restore'],
+    track: [
+      { year: 17, status: 'dead', note: '史实：从崩于煤山，惟一内侍陪至最后', unlessEvent: ['s-finale', 's-finale-restore'] },
+    ],
+    fates: [
+      { event: 's-finale', side: 'left', status: 'dead', note: '从崩于煤山寿皇亭东，惟一内侍陪至最后' },
+      { event: 's-finale', side: 'right', status: 'alive', note: '随驾南渡，从行内侍只他一个' },
+      { event: 's-finale-restore', side: 'left', status: 'alive', note: '扈从垛口，昼夜传箭——这一回陪到最后的仍在城头' },
+      { event: 's-finale-restore', side: 'right', status: 'alive', note: '守门禁跸，宫中旧人唯此足恃' },
+    ],
     relations: [],
   },
   {
