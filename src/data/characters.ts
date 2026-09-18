@@ -452,6 +452,53 @@ export const CHARACTERS: Character[] = [
     relations: [],
   },
   {
+    id: 'sunyuanhua',
+    name: '孙元化',
+    alias: '字协初',
+    avatar: '🧨',
+    role: '登莱巡抚。从徐光启习炮法，募澳门夷匠自成一军',
+    camp: '文官',
+    faction: 'army',
+    born: 1581,
+    events: ['r-hongyi', 's-wuqiao'],
+    track: [
+      { year: 1, status: 'alive', note: '史实：主登州炮局，葡匠与红夷炮皆出其招' },
+      { year: 8, status: 'dead', note: '史实：登州一失，坐论死系狱，崇祯八年竟正法', unlessEvent: ['s-wuqiao'] },
+    ],
+    fates: [
+      { event: 's-wuqiao', side: 'left', status: 'dead', note: '城复而巡抚就逮论死。登州的炮匠死的死、散的散——你用一支炮队换一个「失守」的罪名' },
+      { event: 's-wuqiao', side: 'right', status: 'dead', note: '抚局未成而登莱已烂。通贼之诬起于缇骑未发之先——元化不待覆案，已死狱中' },
+    ],
+    relations: [
+      { to: 'xuguangqi', type: 'friend' },
+      { to: 'kongyoude', type: 'enemy' },
+    ],
+  },
+  {
+    id: 'gongsha',
+    name: '公沙·德罗',
+    alias: 'Cogliero',
+    avatar: '⚒️',
+    role: '澳门炮师。为明铸炮，亦为明死于登州城下',
+    camp: '西学',
+    faction: 'army',
+    born: 1580,
+    events: ['r-hongyi', 's-wuqiao'],
+    track: [
+      { year: 2, status: 'alive', note: '史实：率澳中善炮者应募入京，督造神威' },
+      { year: 6, status: 'dead', note: '史实：以炮攻登州，未破而中铳殁于城下', unlessEvent: ['s-wuqiao'] },
+    ],
+    fates: [
+      { event: 's-wuqiao', side: 'left', status: 'dead', note: '受命以炮攻城，一发未毕而城上已中铳——他替明人教炮，死在明人的城下' },
+      { event: 's-wuqiao', side: 'right', status: 'alive', note: '围解而技无所用。澳门来的人散去一半，炮架仍锈在演武堂' },
+    ],
+    relations: [
+      { to: 'xuguangqi', type: 'friend' },
+      { to: 'tangruowang', type: 'friend' },
+      { to: 'kongyoude', type: 'enemy' },
+    ],
+  },
+  {
     id: 'gaoqiqian',
     name: '高起潜',
     avatar: '🫖',
@@ -556,7 +603,7 @@ export const CHARACTERS: Character[] = [
     camp: '西学',
     faction: 'law',
     born: 1562,
-    events: ['r-lixi'],
+    events: ['r-lixi', 'r-hongyi'],
     track: [{ year: 6, status: 'dead', note: '史实：崇祯六年卒于官。历书成而身不及见' }],
     relations: [{ to: 'tangruowang', type: 'friend' }],
   },
@@ -569,7 +616,7 @@ export const CHARACTERS: Character[] = [
     camp: '西学',
     faction: 'gold',
     born: 1591,
-    events: ['r-lixi'],
+    events: ['r-lixi', 'r-hongyi'],
     relations: [{ to: 'longhuamin', type: 'friend' }],
   },
   {
@@ -583,6 +630,25 @@ export const CHARACTERS: Character[] = [
     born: 1559,
     events: ['r-lixi'],
     relations: [],
+  },
+  {
+    id: 'zhengzhilong',
+    name: '郑芝龙',
+    alias: '字飞黄',
+    avatar: '🌊',
+    role: '受抚的海商。闽、粤、日本三岛的船，都听他号令',
+    camp: '海商',
+    faction: 'gold',
+    born: 1604,
+    events: ['r-cao'],
+    track: [{ year: 6, status: 'alive', note: '破红毛夷于料罗湾，海上无与抗者。朝廷不能制，只能用他' }],
+    fates: [
+      { event: 'r-cao', side: 'right', status: 'alive', note: '海运果以闽船任之。漂失十余万石，河漕一派大哗——而郑家的牌子从此占了漕运的一半' },
+    ],
+    relations: [
+      { to: 'xiongwenchan', type: 'friend' },
+      { to: 'emperor', type: 'neutral' },
+    ],
   },
   {
     id: 'zhouyanru',
@@ -620,4 +686,4 @@ export const RELATION_META: Record<RelationType, { label: string; inverse: strin
   suspicion: { label: '猜忌', inverse: '见疑于上', color: '#6b4f86' },
 }
 
-export const CAMP_ORDER = ['内廷', '文官', '辽镇', '义军', '皇清', '塞外', '宗藩', '西学']
+export const CAMP_ORDER = ['内廷', '文官', '辽镇', '海商', '义军', '皇清', '塞外', '宗藩', '西学']
