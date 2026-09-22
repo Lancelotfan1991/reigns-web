@@ -22,18 +22,34 @@ const animated = ref(false)
 const flying = ref<Side | null>(null)
 
 let startX = 0
+let startY = 0
 
 function onPointerDown(e: PointerEvent) {
   if (!props.interactive || flying.value) return
   dragging.value = true
   animated.value = false
   startX = e.clientX
+  startY = e.clientY
   ;(e.currentTarget as HTMLElement).setPointerCapture(e.pointerId)
+}
+
+function cancelDrag() {
+  if (flying.value) return
+  dragging.value = false
+  animated.value = true
+  dx.value = 0
+  emit('drag', 0)
 }
 
 function onPointerMove(e: PointerEvent) {
   if (!dragging.value || flying.value) return
-  dx.value = e.clientX - startX
+  const horizontal = e.clientX - startX
+  const vertical = e.clientY - startY
+  if (Math.abs(vertical) > 8 && Math.abs(vertical) > Math.abs(horizontal)) {
+    cancelDrag()
+    return
+  }
+  dx.value = horizontal
   emit('drag', dx.value)
 }
 
@@ -82,7 +98,7 @@ defineExpose({ fly })
     @pointerdown="onPointerDown"
     @pointermove="onPointerMove"
     @pointerup="onPointerUp"
-    @pointercancel="onPointerUp"
+    @pointercancel="cancelDrag"
   >
     <span class="band"></span>
     <span class="slip">提塘官敬述</span>
@@ -93,7 +109,7 @@ defineExpose({ fly })
     <div class="ring-light">{{ event.avatar }}</div>
     <h2 class="name">{{ event.name }}</h2>
     <div class="rule"><span class="fleuron"></span></div>
-    <p class="text"><span class="body"><span v-if="lead" class="lead-char">{{ lead }}</span>{{ body }}</span></p>
+    <p class="text" tabindex="0" aria-label="塘报正文，可上下滚动"><span class="body"><span v-if="lead" class="lead-char">{{ lead }}</span>{{ body }}</span></p>
     <div class="swipe-hint">◀ 左滑 ・ 右滑 ▶</div>
   </div>
 </template>
@@ -119,7 +135,7 @@ defineExpose({ fly })
     0 2px 0 rgba(255, 255, 255, 0.5) inset,
     0 0 0 1px rgba(171, 142, 95, 0.35) inset;
   overflow: hidden;
-  touch-action: none;
+  touch-action: pan-y;
   cursor: grab;
   will-change: transform;
   animation: deal-in 0.35s cubic-bezier(0.2, 0.8, 0.3, 1);
@@ -219,7 +235,10 @@ defineExpose({ fly })
 }
 
 .text {
-  flex: none;
+  flex: 0 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
   width: 100%;
   margin-top: 4px;
   padding: 16px 14px;
@@ -336,6 +355,40 @@ defineExpose({ fly })
 
   .swipe-hint {
     bottom: 12px;
+  }
+}
+
+.ring-light,
+.name,
+.rule {
+  flex: none;
+}
+
+@media (max-height: 620px) {
+  .game-card {
+    padding: 28px 14px 32px;
+  }
+
+  .ring-light,
+  .slip {
+    display: none;
+  }
+
+  .name {
+    margin-top: 0;
+    font-size: 20px;
+    letter-spacing: 3px;
+    text-indent: 3px;
+  }
+
+  .rule {
+    margin: 5px 0;
+  }
+
+  .text {
+    padding: 8px 10px;
+    font-size: 14px;
+    line-height: 1.75;
   }
 }
 </style>

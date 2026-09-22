@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vue-tsc --noEmit && vite build",
+    "test": "vitest run",
+    "build": "npm run test && vue-tsc --noEmit && vite build",
     "preview": "vite preview",
     "deploy": "npm run build && wrangler pages deploy dist --project-name=reigns-web --branch=main"
   },
@@ -14,8 +15,11 @@
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^5.2.1",
+    "@vue/test-utils": "^2.5.1",
+    "happy-dom": "^20.14.5",
     "typescript": "~5.7.2",
     "vite": "^6.2.0",
+    "vitest": "^3.2.7",
     "vue-tsc": "^2.2.4",
     "wrangler": "^4.10.0"
   }

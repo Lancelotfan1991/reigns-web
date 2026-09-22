@@ -3,8 +3,9 @@ import { FINALE_EVENTS, RANDOM_EVENTS, SCRIPT_EVENTS } from '../data/events'
 import { CHARACTERS, CHAR_MAP, RELATION_META } from '../data/characters'
 import type { CharStatus, CharView, Deed } from '../types'
 import type { Game } from './useGame'
+import { REFORM_EVENTS, REFORM_FINALES } from '../data/reforms'
 
-const ALL_EVENTS = [...SCRIPT_EVENTS, ...RANDOM_EVENTS, ...FINALE_EVENTS]
+const ALL_EVENTS = [...SCRIPT_EVENTS, ...RANDOM_EVENTS, ...FINALE_EVENTS, ...REFORM_EVENTS, ...REFORM_FINALES]
 
 interface EventMeta {
   title: string
@@ -55,6 +56,7 @@ export function useCharacters(game: Game) {
     for (const t of ch.track ?? []) {
       if (t.year > now.value) continue
       if (t.unlessEvent?.some((e) => decided.value[e])) continue
+      if (t.unlessFlag?.some((flag) => (game.flags.value[flag] ?? 0) > 0)) continue
       nodes.push({ year: t.year, status: t.status, note: t.note, rank: 0 })
     }
     for (const f of ch.fates ?? []) {
@@ -66,8 +68,9 @@ export function useCharacters(game: Game) {
 
     // 终章或中途横死：皇帝本人即交代于此结局
     if (id === 'emperor' && game.isOver.value) {
-      const glory = game.ending.value?.kind === 'glory'
-      return { status: glory ? 'alive' : 'dead', note: game.ending.value?.title ?? '', at: now.value }
+      const result = game.ending.value
+      const survived = result?.survived ?? result?.kind === 'glory'
+      return { status: survived ? 'alive' : 'dead', note: result?.title ?? '', at: now.value }
     }
     const last = nodes[nodes.length - 1]
     if (!last) return { status: 'alive', note: ch.role, at: appear }

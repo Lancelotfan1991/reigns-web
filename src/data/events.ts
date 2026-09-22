@@ -2,7 +2,7 @@ import type { GameEvent } from '../types'
 
 /**
  * 锁年剧本卡：year 为崇祯纪年（0=天启七年，1..16=崇祯N年）。
- * 每年 3 张卡槽（≈一季度一张），剧本卡按 order 优先入槽，其余由随机卡池补足。
+ * 每年 5 张卡槽，剧本卡按 order 优先入槽，其余由随机卡池补足。
  */
 export const SCRIPT_EVENTS: GameEvent[] = [
   {
@@ -777,9 +777,9 @@ export const RANDOM_EVENTS: GameEvent[] = [
       response: '河道得通，挽输无虞。挑河夫役死者亦以千计。',
     },
     right: {
-      label: '改走海运试试',
+      label: '这批粮改走海运',
       effects: { gold: 6, court: -6, law: -6, people: 4, army: 2 },
-      response: '初行漂失十余万石，河漕一派大哗。然海船之利，实自此始。',
+      response: '一批粮船遭风漂失，河漕一派大哗。余粮仍按期抵港，海路可解一时之急，却不能免去风浪之险。',
     },
   },
   {
@@ -1164,6 +1164,518 @@ export const RANDOM_EVENTS: GameEvent[] = [
       label: '限期追征旧欠',
       effects: { law: 6, gold: 12, people: -14, army: 2 },
       response: '钱粮比完，考成为最。只是「逃」字册中，又添若干丁口。',
+    },
+  },
+  {
+    id: 'r-cangchong',
+    avatar: '仓',
+    name: '仓粮生了虫',
+    text: '常平仓翻出几层虫粮，底下的好粮也快保不住。仓官请借军车搬出去晾晒，粮商却愿出钱收走虫粮喂牲口，省得官府折腾。',
+    left: {
+      label: '借军车翻晒',
+      effects: { gold: -5, people: 4, army: -2 },
+      response: '准借军车翻晒，工钱由官府支给。好粮保住了，原定运往营中的草料却晚了几日。',
+    },
+    right: {
+      label: '卖作牲口料',
+      effects: { gold: 4, people: -4, law: -2 },
+      response: '虫粮折价出仓，库里添了现银。缺下的储粮暂不补足，仓官也借机少报了一笔损耗。',
+    },
+  },
+  {
+    id: 'r-chengdou',
+    avatar: '秤',
+    name: '两把秤打架',
+    text: '布商和粮商争一笔抵货钱，两家的秤各有官印，称出的分量却不同。县里请领官样核验，商会愿交一笔息讼钱，自己定个折中数。',
+    left: {
+      label: '收钱准其和解',
+      effects: { gold: 4, law: -4, people: -2 },
+      response: '准商会自行议价，息讼钱收进县库。大商户握手散去，小贩仍得随人家的秤吃亏。',
+    },
+    right: {
+      label: '送官样核秤',
+      effects: { gold: -4, law: 5, court: -2 },
+      response: '发官样逐把核验，不许两印并行。查验花了银钱，先前给错秤盖印的官员也满腹怨言。',
+    },
+  },
+  {
+    id: 'r-yiqiao',
+    avatar: '桥',
+    name: '驿桥被冲断',
+    text: '山口一座驿桥被急水冲断，送信的人和赶集的车都得绕远。营中工匠能搭便桥，附近富户也愿包修，只求准他收三年过桥钱。',
+    left: {
+      label: '调营匠搭桥',
+      effects: { gold: -6, army: -3, people: 6 },
+      response: '拨木料调工匠，便桥不收过路钱。山口很快通行，营里修战车的活却停了下来。',
+    },
+    right: {
+      label: '准包修收桥钱',
+      effects: { gold: 4, people: -4, court: 2 },
+      response: '准富户包修，余下桥款拨回官库。地方官卸下一件急差，挑菜过桥的人却多了一笔开销。',
+    },
+  },
+  {
+    id: 'r-kuangshui',
+    avatar: '矿',
+    name: '矿井冒水',
+    text: '一处官矿挖穿地下水道，井底已没到腰深。矿头请限工期排水复采，矿工却说井壁也在松动，宁可封掉下层，少出些矿石。',
+    left: {
+      label: '排水赶工复采',
+      effects: { gold: 7, people: -5, law: -2 },
+      response: '令矿头排水赶工，矿课总算照额入库。工期压得太紧，工伤也被写成了矿工失足。',
+    },
+    right: {
+      label: '封掉下层矿道',
+      effects: { gold: -4, people: 5, court: -2 },
+      response: '准封下层矿道，只留上层开采。矿工不必泡水下井，负责矿课的官员却来抱怨缺额。',
+    },
+  },
+  {
+    id: 'r-qianse',
+    avatar: '钱',
+    name: '一串钱两种价',
+    text: '县库收到一批铜钱，颜色发白，铺户只肯折价收。钱局说停收会耽误解款，市民却怕官府按足钱征来，再把薄钱发给他们。',
+    left: {
+      label: '验钱收回薄钱',
+      effects: { gold: -5, law: 4, people: 2 },
+      response: '令钱局验收薄钱，兑换的亏空由官府承担。街上不再争钱色，库款却少了实在一截。',
+    },
+    right: {
+      label: '准按旧数解款',
+      effects: { gold: 5, law: -4, people: -3 },
+      response: '准这批铜钱照数入库，不问铺户折价。账面钱款足了，领钱的人却买不回同样的米。',
+    },
+  },
+  {
+    id: 'r-shuijie',
+    avatar: '契',
+    name: '田契里的旧水沟',
+    text: '两村拿出旧田契，都说河边那片田归自己。契上作界的水沟早被洪水改了道，照旧纸划界省事，下田量地却要赶在插秧之前。',
+    left: {
+      label: '照旧契定界',
+      effects: { court: 3, law: 3, people: -5 },
+      response: '先照存档田契定界，不许另争。官府有了清楚依据，多年在新沟边种田的人却被赶走。',
+    },
+    right: {
+      label: '派人下田重量',
+      effects: { gold: -4, people: 5, court: -3, law: 2 },
+      response: '派人踏勘水痕，按实地调换界桩。丈量费由官出，持有旧契的大户则指责县官偏袒。',
+    },
+  },
+  {
+    id: 'r-zaochai',
+    avatar: '柴',
+    name: '盐灶缺柴烧',
+    text: '盐灶旁的柴山已砍秃，灶户想轮流去官滩割芦苇。木商愿交钱包下这片滩地，再把柴薪卖给灶户，地方官说这样最省看管人手。',
+    left: {
+      label: '把芦滩包给商人',
+      effects: { gold: 5, people: -4, law: -2 },
+      response: '收包滩钱，割苇由木商安排。官库有了进项，灶户却只能向一家买柴，官差也不再过问。',
+    },
+    right: {
+      label: '按灶户轮流割苇',
+      effects: { gold: -3, people: 5, court: -3 },
+      response: '按户排日割苇，另拨看滩工钱。灶火接上了，地方官却嫌名册繁琐，几次要求改包商人。',
+    },
+  },
+  {
+    id: 'r-chuancai',
+    avatar: '木',
+    name: '船梁挑中了果林',
+    text: '水师修船缺长木，料官看中了村外一片老果林，说征来即可开工。村民靠果子过活，若从远山买杂木，木价和运脚都要官府出。',
+    left: {
+      label: '从远山买木',
+      effects: { gold: -5, army: 4, people: 2 },
+      response: '照价买山木，不动果林。船梁送进船坞，村民也保住收成，只是运木的银钱花得不少。',
+    },
+    right: {
+      label: '征果木抵船料',
+      effects: { gold: 4, army: 3, people: -6, law: -2 },
+      response: '准料官就地取木，余款收回库中。船工如期开工，补偿却只按木料算，不管来年的果子。',
+    },
+  },
+  {
+    id: 'r-menhuo',
+    avatar: '门',
+    name: '城门洞堆油桶',
+    text: '城门洞两边摆满油桶和柴摊，守门兵说一旦起火，连出城的路都会堵死。摊主愿交钱添水缸值夜，也有人请官府另划空地迁摊。',
+    left: {
+      label: '收摊钱添水缸',
+      effects: { gold: 5, people: -3, law: -2 },
+      response: '收钱添缸，准摊位暂留门洞。扣除值夜钱尚有盈余，可禁火告示成了交钱便能越过的规矩。',
+    },
+    right: {
+      label: '拨地搬走油摊',
+      effects: { gold: -4, people: 4, court: -2 },
+      response: '拨地补贴搬摊，门洞不准留油桶。通道清了，管摊的衙门却因少收租钱，对新址百般推拖。',
+    },
+  },
+  {
+    id: 'r-cigu',
+    avatar: '孤',
+    name: '灾棚里的孩子',
+    text: '灾棚要撤，几十个失去父母的孩子还没人领。县里可借空屋继续供饭，也有富户愿领回家养，只是不肯让官差常来查问孩子的去向。',
+    left: {
+      label: '留屋供养查亲',
+      effects: { gold: -6, people: 6, court: -2 },
+      response: '留空屋供饭，另派人寻亲认领。孩子有了落脚处，地方官却抱怨这笔差事不知何时能结。',
+    },
+    right: {
+      label: '交富户领养',
+      effects: { gold: 3, people: 2, law: -5 },
+      response: '准具名领养，余下棚款交回县库。孩子暂有饭吃，可官府不再追问，有人便把领养当买仆。',
+    },
+  },
+  {
+    id: 'r-shangbing',
+    avatar: '伤',
+    name: '伤兵等一口饭',
+    text: '一队伤兵退下阵来，已拿不动长枪，却还得养家。兵部请按伤情发口粮，关卡愿让他们看货收过路钱，说不用另添官府的开销。',
+    left: {
+      label: '按伤给口粮',
+      effects: { gold: -5, army: 5, court: -2 },
+      response: '按伤情给粮，不拿残兵充关差。营中知道受伤仍有饭吃，核粮的官员却抱怨又添长年支出。',
+    },
+    right: {
+      label: '安置关卡收钱',
+      effects: { gold: 3, army: -4, people: -2, law: 2 },
+      response: '给关卡名册按额收钱，省下抚粮。伤兵仍须站一整日，行旅嫌收费，将士也嫌朝廷薄情。',
+    },
+  },
+  {
+    id: 'r-mayi',
+    avatar: '马',
+    name: '马棚传病',
+    text: '营中几匹马接连发热，兽医请分棚照看，连健康马也暂缓出勤。军官急着送粮，主张处置病马，再征附近村庄的骡驴顶上。',
+    left: {
+      label: '分棚停用察看',
+      effects: { gold: -4, army: -3, people: 4 },
+      response: '拨料分棚，暂不从村里调牲口。村民保住农时，营中能用的马少了，几队粮车只好缓发。',
+    },
+    right: {
+      label: '除病马征骡驴',
+      effects: { gold: 3, army: 2, people: -6, law: -2 },
+      response: '处置病马，征骡驴接运军粮。省下买马钱，粮车也动了，村中的征用收条却开得含糊。',
+    },
+  },
+  {
+    id: 'r-tunniu',
+    avatar: '犁',
+    name: '屯田排队等犁',
+    text: '春耕将近，屯田里几户人家争用一套牛犁。营里有运料牛可借，但会耽误操练备料；地主也肯出租牛具，只要从屯户收成里先扣租。',
+    left: {
+      label: '借营牛轮流耕',
+      effects: { army: -3, people: 5, gold: -2 },
+      response: '添草料借营牛，排日轮耕不许插队。屯户赶上了春耕，营里运料不足，操练也跟着减了。',
+    },
+    right: {
+      label: '准租牛扣收成',
+      effects: { gold: 4, army: 3, people: -4, law: -2 },
+      response: '准以收成抵牛租，原拨牛款转作库用。营务照常，屯户未收粮先欠租，衙门也不过问租数。',
+    },
+  },
+  {
+    id: 'r-diyi',
+    avatar: '堤',
+    name: '堤脚藏蚁穴',
+    text: '巡堤人挖开一处松土，发现蚁道已经穿进堤心。汛期未到，尚能分段补夯；是调附近守兵来干，还是向堤内各村收钱雇工？',
+    left: {
+      label: '调守兵补夯',
+      effects: { army: -4, people: 5, gold: -3 },
+      response: '拨土料调兵补堤，不再向村里收钱。堤脚夯实了，沿路巡哨却因兵手不足撤掉了几处。',
+    },
+    right: {
+      label: '向受益村收工钱',
+      effects: { gold: 5, people: -5, army: 2 },
+      response: '按田亩收钱雇工，余款留作堤费。守兵仍可巡防，低洼田户却说自己本就收得最少。',
+    },
+  },
+  {
+    id: 'r-keban',
+    avatar: '书',
+    name: '两家书坊争书版',
+    text: '书坊花钱校了一本农书，邻坊照着重刻，卖价只有一半。原坊主拿账本告状，买书的乡民却盼着便宜本留下，县官不知该护哪头。',
+    left: {
+      label: '禁售照抄本',
+      effects: { law: 4, court: 2, people: -3 },
+      response: '准查校书账本，照抄本暂不得卖。出钱校书的人服了判，想买廉价农书的乡民却失望而归。',
+    },
+    right: {
+      label: '收印钱准并卖',
+      effects: { gold: 4, law: -4, people: 3, court: -2 },
+      response: '两坊交印钱后都准卖书，便宜本流入乡间。原坊主却说官府拿他的本钱，替别人做了生意。',
+    },
+  },
+  {
+    id: 'r-dugong',
+    avatar: '渡',
+    name: '船工不肯白摆渡',
+    text: '官渡船工连着替公差摆渡，误了自家的生计，几个人索性收起船桨。县官请发工食钱，里长则提议让沿河各户轮流出人摇船。',
+    left: {
+      label: '给船工发工食',
+      effects: { gold: -5, people: 4, army: 2 },
+      response: '按趟给工食，不许公差白占船工。渡船开了，军使也能及时过河，只是这笔钱不能再省。',
+    },
+    right: {
+      label: '编户轮流摇船',
+      effects: { gold: 4, people: -5, law: -3 },
+      response: '沿河各户轮流上船，原拨渡款收回。里长把熟户往后排，穷户误了农活，还得挨公差催骂。',
+    },
+  },
+  {
+    id: 'r-juncha',
+    avatar: '械',
+    name: '军械库返潮',
+    text: '连日湿气钻进军械库，弓弦发软，皮甲也长了霉。库官请拨油布和工钱集中整修，各营管事却说分下去让兵丁自己修，出库最快。',
+    left: {
+      label: '拨料集中整修',
+      effects: { gold: -4, army: 5, court: -2 },
+      response: '发油布，逐件整修后再交营。兵丁领到能用的弓甲，库官却嫌验收拖长了结账的日子。',
+    },
+    right: {
+      label: '照册发下自修',
+      effects: { gold: 5, army: -4, law: -3 },
+      response: '器械照册出库，修缮余款缴回。兵丁得自买弦油，账上件数齐全，点验时却拉不开几张弓。',
+    },
+  },
+  {
+    id: 'r-yiyu',
+    avatar: '译',
+    name: '堂上听不懂的话',
+    text: '外地脚夫与货主争运费，口音不同，连证人说的数目都记不准。货主愿出钱请商会通事，县里另雇两人对译却得多等几日。',
+    left: {
+      label: '让商会出通事',
+      effects: { gold: 3, law: -5, people: -2 },
+      response: '通事由商会出钱，余下审案款留库。案子结得快，可脚夫发现自己的话，总被翻成认错。',
+    },
+    right: {
+      label: '雇两人对着译',
+      effects: { gold: -4, law: 5, court: -2 },
+      response: '另雇两人各译一遍，口供对上才准落笔。花钱又误结案期限，承审官却再不能随意省话。',
+    },
+  },
+  {
+    id: 'r-yijian',
+    avatar: '检',
+    name: '边市商队发热',
+    text: '边市开门前，一队运皮货的商人里有人发热咳嗽。守关人请留队察看，商人愿加交市钱，求在围栏里卸货，不进镇子也不误买卖。',
+    left: {
+      label: '留队察看再开市',
+      effects: { gold: -4, people: 4, army: -2 },
+      response: '留商队在关外给水给饭，暂不开市。镇里居民稍安，税钱少收，守兵还得分人照看营地。',
+    },
+    right: {
+      label: '加收钱隔栏卖货',
+      effects: { gold: 5, people: -4, army: -2 },
+      response: '收钱准隔栏交货，市上生意未断。守兵忙着逐包搬验，镇民看见往来人手，仍不敢出门。',
+    },
+  },
+  {
+    id: 'r-wangshui',
+    avatar: '渔',
+    name: '破渔网也算税',
+    text: '沿湖鱼获少了，税册却仍按旧年渔网张数收钱，连破网停船的也没除名。税吏说照册才好收，渔户请求只在鱼卖出时按筐缴税。',
+    left: {
+      label: '照旧网册收钱',
+      effects: { gold: 5, people: -5, law: -2 },
+      response: '先照旧册完税，缺网的以后再核。县库收入稳了，税吏却拿早已破掉的渔网当追钱凭据。',
+    },
+    right: {
+      label: '按卖鱼数收税',
+      effects: { gold: -4, people: 4, law: 3, court: -2 },
+      response: '在鱼市按实数收，不许向空船追税。渔户能喘口气，税吏却因收入少、核数多而连连叫苦。',
+    },
+  },
+  {
+    id: 'r-gongdeng',
+    avatar: '灯',
+    name: '宫宴要点多少灯',
+    text: '宫中节宴列出灯烛清单，几条少有人走的廊道也要彻夜点亮。管事说这是旧例，库吏却算出蜡价涨了，同样的灯数得多付一笔钱。',
+    left: {
+      label: '减掉空廊灯烛',
+      effects: { gold: 5, court: -4, people: 2 },
+      response: '空廊减灯，把未用的蜡款退回。采买差役少催了几家铺户，内臣却嫌节宴不如往年体面。',
+    },
+    right: {
+      label: '照旧数买蜡',
+      effects: { gold: -4, court: 4, law: 2, people: -2 },
+      response: '照旧例核数采买，不许借价涨加报。宫宴体面保住了，铺户却被限期赶货，赔进不少工夫。',
+    },
+  },
+  {
+    id: 'r-cangzhang',
+    avatar: '账',
+    name: '仓单多出三百袋',
+    text: '转运仓盘点，账上比实物多了三百袋粮。仓吏说是前任交接时漏记，催解的军官却不肯等，请从邻村先摊补，免得追着旧账误事。',
+    left: {
+      label: '封仓对单追查',
+      effects: { gold: -3, law: 5, army: -3 },
+      response: '封存交接单，派人一笔笔核对。查账花钱，军粮也迟发了几日，可短粮不能凭一句话抹平。',
+    },
+    right: {
+      label: '邻村摊补缺粮',
+      effects: { gold: 5, people: -6, law: -4, army: 2 },
+      response: '按村摊补，准粮车先走。官仓很快补平，军营收到口粮，村民却替一笔说不清的账买了单。',
+    },
+  },
+  {
+    id: 'r-xunyun',
+    avatar: '舟',
+    name: '赈粮等着小船',
+    text: '汛水漫过田埂，赈粮车到不了几个被围的村子。附近只有营中快船和商人的浅底船可用，征军船不花租钱，雇商船则得先付现银。',
+    left: {
+      label: '调军船运粮',
+      effects: { gold: 3, army: -3, people: 2 },
+      response: '拨军船运粮，未用船租收回库中。村民接到了粮袋，河口巡防却少了几条最轻快的船。',
+    },
+    right: {
+      label: '付钱雇浅底船',
+      effects: { gold: -5, army: 2, people: 5, court: -2 },
+      response: '现银雇船，不动巡防船只。粮袋送进村庄，军船也照常巡河，核销官却嫌急办的租价过高。',
+    },
+  },
+  {
+    id: 'r-dongyi',
+    avatar: '衣',
+    name: '冬衣还差夹里',
+    text: '营中冬衣已裁好面子，夹里的布和棉花却不够。库里有一批旧宫帘，拆了能顶一阵；内臣不肯，说宁愿照价去民间采买。',
+    left: {
+      label: '拆旧宫帘作夹里',
+      effects: { gold: 3, court: -5, army: 3, law: -2 },
+      response: '旧帘拆洗填衣，余款收回库中。兵丁先得了暖衣，内臣却说未经移交就拆御物，坏了规矩。',
+    },
+    right: {
+      label: '照价买布棉',
+      effects: { gold: -6, army: 5, people: 2 },
+      response: '照市价给钱，不许赊欠布户。新棉衣送到营里，作坊也拿到工钱，只是库中现银又薄了一层。',
+    },
+  },
+  {
+    id: 'r-meiyan',
+    avatar: '煤',
+    name: '煤炉把人熏倒',
+    text: '城里几处合住的小院烧煤取暖，关紧窗后竟有人昏倒。坊官请出钱改烟道，巡夜的人却主张罚所有夜里封窗生火的住户，图个省事。',
+    left: {
+      label: '拨钱改烟道',
+      effects: { gold: -5, people: 5, court: -2 },
+      response: '请泥匠改烟道，逐院教人留气口。住户不必挨冻，坊官却嫌验工费时，连道手头人不够。',
+    },
+    right: {
+      label: '封窗生火便罚钱',
+      effects: { gold: 3, law: 3, people: -5 },
+      response: '明定罚数，巡夜按户检查。罚钱添了进项，禁令也传开了，可漏风破屋里的人只能冻着睡。',
+    },
+  },
+  {
+    id: 'r-guanjing',
+    avatar: '井',
+    name: '街坊的井变浑',
+    text: '城南公井淤泥翻涌，打出的水越来越浑，百姓排到衙门门前求水。井匠请清淤换沙，府衙则愿开放自己的清水井，只要每担收些看井钱。',
+    left: {
+      label: '出钱清井换沙',
+      effects: { gold: -5, people: 5, court: -2 },
+      response: '拨钱清井换沙，不向挑水人摊派。街坊有水可用，府衙原想收取的看井钱也就落了空。',
+    },
+    right: {
+      label: '开府井按担收费',
+      effects: { gold: 4, people: -4, law: -2 },
+      response: '府井按担收费，官库留取余钱。公井修理就此搁下，看井的差役又把熟人排在了前头。',
+    },
+  },
+  {
+    id: 'r-luyin',
+    avatar: '引',
+    name: '过关文书泡烂了',
+    text: '一队挑货的小贩途中淋雨，过关文书泡得认不出字。同行熟人愿作保，关吏却说无纸放行不好交差，要连人带货留在关边候查。',
+    left: {
+      label: '准熟人作保放行',
+      effects: { law: -4, people: 5, gold: 2 },
+      response: '记下保人姓名，准货物纳税过关。小贩赶上了集市，可验文书的规矩因此让出了一道口子。',
+    },
+    right: {
+      label: '扣留等原籍回文',
+      effects: { gold: -3, law: 4, people: -4, army: 2 },
+      response: '留人给口粮，待原籍回文才放。关口核验更严，守兵也便于盘查，货主的鲜货却等不起。',
+    },
+  },
+  {
+    id: 'r-yanchang',
+    avatar: '场',
+    name: '空营地想摆集市',
+    text: '城外一片营地眼下没人住，商户求租来摆集，愿先交半年租钱。守将说调兵时还得在这里扎帐，若留下摊棚，急用时很难清走。',
+    left: {
+      label: '租给商户摆集',
+      effects: { gold: 6, army: -5, court: -2 },
+      response: '收租准设集市，商棚很快连成一片。官库多了收入，守将却来报急调兵马已无处安营。',
+    },
+    right: {
+      label: '留地供兵马驻扎',
+      effects: { gold: -3, army: 4, people: -3 },
+      response: '营地不出租，拨钱整平沟坎。兵马来时能立刻扎营，商户只能另找摊位，附近村民也少了集市。',
+    },
+  },
+  {
+    id: 'r-zhaofeng',
+    avatar: '符',
+    name: '拿假牌子催差',
+    text: '几个差役拿着模糊的官牌征车，村民说同样的牌子一天来了三拨。衙门请逐张编号核验，送军报的人担心每到一县都查，会误了急件。',
+    left: {
+      label: '核牌编号再给车',
+      effects: { gold: -2, law: 5, army: -3 },
+      response: '拨人核牌编号，无号不得征车。冒名催差少了，核验却占去时辰，几封军报因此迟到。',
+    },
+    right: {
+      label: '认来使先办急差',
+      effects: { court: 4, army: 3, law: -5 },
+      response: '让县官认来使先给车，不必处处验牌。急件送得快，衙门也省事，可冒差的人照样混在其中。',
+    },
+  },
+  {
+    id: 'r-zhongzi',
+    avatar: '种',
+    name: '春播种粮发霉',
+    text: '几个村留作春播的种粮受潮发霉，误了播期就得荒一年。农人愿改种早熟杂粮，只求官府垫买种钱；营中屯田也存着一批能用的种子。',
+    left: {
+      label: '出钱买早熟种',
+      effects: { gold: -5, people: 5, court: -2 },
+      response: '准垫买早熟种，不动军屯储备。田里赶上了播种，催钱的官员却抱怨借款要等秋后才收。',
+    },
+    right: {
+      label: '先分军屯种粮',
+      effects: { people: 4, army: -5, gold: 3, law: -2 },
+      response: '军屯种粮先借民用，购种余款留库。村田种下了，营里却少了自己的种子，移交手续也没齐。',
+    },
+  },
+  {
+    id: 'r-shicheng',
+    avatar: '巷',
+    name: '粪车堵在巷口',
+    text: '城里粪车与早市争路，污水常洒到菜摊旁。菜农愿包下清运，把粪肥运去田里再交一笔钱，只求独占各巷；坊官另提雇人夜间清运。',
+    left: {
+      label: '收钱包给菜农',
+      effects: { gold: 5, people: -4, law: -2 },
+      response: '收包运钱，准菜农独管各巷。官府少操一份心，旧清运户却失了活，菜农还向住户加收钱。',
+    },
+    right: {
+      label: '雇人夜间清运',
+      effects: { gold: -4, people: 5, court: -2 },
+      response: '拨钱雇人夜运，不许堵早市。街巷干净了，管坊的官员却得轮流值夜，抱怨这不算正经差事。',
+    },
+  },
+  {
+    id: 'r-jianche',
+    avatar: '车',
+    name: '军粮车压断轴',
+    text: '一队承运军粮的民车断了轴，车主说军官临行加装了粮袋，军官却咬定车木不结实。修车得先出钱，双方都请把损失记在对方名下。',
+    left: {
+      label: '官出钱按载重修',
+      effects: { gold: -4, army: 4, people: 3 },
+      response: '官出修车钱，按车力减装后起运。粮队重新上路，车主不再争吵，库里却多付了一笔运费。',
+    },
+    right: {
+      label: '扣车主押金修车',
+      effects: { gold: 5, army: -2, people: -4 },
+      response: '从押金扣修费，原拨车款交回。省下了现银，车主却怕再赔，沿途愿接军运的人明显少了。',
     },
   },
 ]

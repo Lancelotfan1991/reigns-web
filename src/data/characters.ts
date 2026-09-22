@@ -1,11 +1,12 @@
 import { FINALE_EVENTS, RANDOM_EVENTS, SCRIPT_EVENTS } from './events'
+import { REFORM_EVENTS, REFORM_FINALES } from './reforms'
 import type { CharStatus, Character, RelationType } from '../types'
 
 /**
  * 崇祯朝人物谱。
  * 纪年沿用游戏内崇祯纪年：0=天启七年(1627)，N=崇祯N年(1627+N)，17=甲申(1644)。
  * track = 史实轨迹；fates = 玩家抉择改写（与同年史实冲突时以抉择为准，
- * 并可用 FateEntry.unlessEvent 取消该条史实）。
+ * 并可用 FateEntry.unlessEvent / unlessFlag 按事件或已取得的成果取消该条史实）。
  */
 export const CHARACTERS: Character[] = [
   {
@@ -19,7 +20,7 @@ export const CHARACTERS: Character[] = [
     born: 1611,
     appearYear: 0,
     /** 皇帝亲裁每一张卡：直接从卡池派生，避免手写清单随卡池腐烂 */
-    events: [...SCRIPT_EVENTS, ...RANDOM_EVENTS, ...FINALE_EVENTS].map((e) => e.id),
+    events: [...SCRIPT_EVENTS, ...RANDOM_EVENTS, ...FINALE_EVENTS, ...REFORM_EVENTS, ...REFORM_FINALES].map((e) => e.id),
     fates: [
       { event: 's-finale', side: 'left', status: 'dead', note: '甲申三月十九，崩于煤山寿皇亭东' },
       { event: 's-finale', side: 'right', status: 'alive', note: '雪夜出正阳门，南都之局自此人手重开' },
@@ -146,7 +147,7 @@ export const CHARACTERS: Character[] = [
     camp: '皇清',
     faction: 'army',
     born: 1592,
-    events: ['s-jisi', 's-jisi2', 's-chaoxian', 's-daiching', 's-jinzhou', 's-songjin', 's-mihe', 's-mihe-leak', 's-htj', 'r-mashi'],
+    events: ['s-jisi', 's-jisi2', 's-chaoxian', 's-daiching', 's-jinzhou', 's-songjin', 's-mihe', 's-mihe-leak', 's-htj', 'r-mashi', 'g-peace', 'g-peace-ratify'],
     track: [
       { year: 0, status: 'alive', note: '嗣建州汗位，方整八旗，未暇西顾' },
       { year: 9, status: 'alive', note: '称帝改元，国号大清，建牙已具天子规模' },
@@ -154,8 +155,12 @@ export const CHARACTERS: Character[] = [
     ],
     fates: [
       { event: 's-mihe', side: 'left', status: 'alive', note: '明果遣人来。划界之书始有回文，我得以专意朝鲜、蒙古' },
-      { event: 's-mihe-leak', side: 'left', status: 'alive', note: '明主自认其事，尚书留任。使者再至，所索益重' },
-      { event: 's-mihe-leak', side: 'right', status: 'alive', note: '明杀其尚书而讳其议。我知其无成，还兵攻锦' },
+      { event: 's-mihe-leak', side: 'left', status: 'dead', note: '崇德八年暴亡，死讯与明廷和议争论同至。明主承认议和、留任尚书，后续交涉须待清廷继承者' },
+      { event: 's-mihe-leak', side: 'right', status: 'dead', note: '崇德八年暴亡，未留遗诏。明廷杀尚书而讳和议，清廷诸旗另争继承之位' },
+      { event: 'g-peace', side: 'left', status: 'alive', note: '明廷公开授权议和，遣使议定边界与岁币，未成约前两边仍须守备' },
+      { event: 'g-peace', side: 'right', status: 'alive', note: '明廷经公议拒和，边境对峙未解，不能指望一纸来书便使其撤防' },
+      { event: 'g-peace-ratify', side: 'left', status: 'dead', note: '崇德八年暴亡，死讯抵明。明廷按公议追认和约，后续交涉由继承者承接' },
+      { event: 'g-peace-ratify', side: 'right', status: 'dead', note: '崇德八年暴亡，死讯抵明。明廷撤回和谈，清廷继承之局另待诸旗议定' },
     ],
     relations: [
       { to: 'duoerhun', type: 'kin' },
@@ -224,12 +229,12 @@ export const CHARACTERS: Character[] = [
     camp: '义军',
     faction: 'people',
     born: 1606,
-    events: ['s-hanzai', 's-yizhan', 's-licheng-officer', 's-chuangjiang', 's-sizheng', 's-annei', 's-kaifeng', 's-chuanti', 's-dashun', 's-dashun-noman', 'r-daoge'],
+    events: ['s-hanzai', 's-yizhan', 's-licheng-officer', 's-chuangjiang', 's-sizheng', 's-annei', 's-kaifeng', 's-chuanti', 's-dashun', 's-dashun-noman', 'r-daoge', 'g-recruit', 'g-guanzhong'],
     track: [
       { year: 2, status: 'alive', note: '塞门一驿之粮，不足以活其家' },
-      { year: 8, status: 'alive', note: '继高迎祥之众，号「闯王」，众愈盛而愈流' },
-      { year: 14, status: 'alive', note: '围开封八阅月，决河灌城' },
-      { year: 16, status: 'alive', note: '即皇帝位于西安，国号大顺，改元永昌', unlessEvent: ['s-dashun-noman'] },
+      { year: 8, status: 'alive', note: '继高迎祥之众，号「闯王」，众愈盛而愈流', unlessFlag: ['lz-absorbed'] },
+      { year: 14, status: 'alive', note: '围开封八阅月，决河灌城', unlessFlag: ['lz-absorbed'] },
+      { year: 16, status: 'alive', note: '即皇帝位于西安，国号大顺，改元永昌', unlessEvent: ['s-dashun-noman'], unlessFlag: ['lz-absorbed'] },
     ],
     fates: [
       { event: 's-yizhan', side: 'left', status: 'alive', note: '驿站既裁，此辈无所就食，流入流营' },
@@ -239,6 +244,10 @@ export const CHARACTERS: Character[] = [
       { event: 's-dashun-noman', side: 'left', status: 'alive', note: '降众编为屯户，荒田有主。册报「关中底定」' },
       { event: 's-dashun-noman', side: 'right', status: 'alive', note: '追兵所过民居一空，空者又尽为贼——其名自此不可复制' },
       { event: 's-hanzai', side: 'right', status: 'alive', note: '平粜护仓，饥民荷锸随行——驿卒之中，有姓名可记者' },
+      { event: 'g-recruit', side: 'left', status: 'alive', note: '旧案依法审结，责任与补偿留案。受约束编入延绥军籍，由公册给实饷，不得自领私队' },
+      { event: 'g-recruit', side: 'right', status: 'alive', note: '原捕令照行，未获招抚，仍在逃亡。实发军饷未能使他归营，流众仍可能聚起' },
+      { event: 'g-guanzhong', side: 'left', status: 'alive', note: '仍隶公册军籍，关中缓催旧欠、补耕牛与作坊周转，复业之民渐有常业' },
+      { event: 'g-guanzhong', side: 'right', status: 'alive', note: '仍隶公册军籍，未再自领流营。各县恢复催征旧欠，复业之家负担加重，收编与安置并未撤销' },
     ],
     relations: [
       { to: 'gaoyingsiang', type: 'kin' },
@@ -272,16 +281,18 @@ export const CHARACTERS: Character[] = [
     camp: '义军',
     faction: 'people',
     born: 1606,
-    events: ['s-sizheng', 's-annei', 's-xianzhong', 's-dashun-noman'],
+    events: ['s-sizheng', 's-annei', 's-xianzhong', 's-dashun-noman', 'g-gucheng'],
     track: [
       { year: 12, status: 'alive', note: '受抚谷城，裹粮修战备，不受约束' },
-      { year: 14, status: 'alive', note: '复叛，陷襄阳，杀襄王' },
+      { year: 14, status: 'alive', note: '复叛，陷襄阳，杀襄王', unlessFlag: ['gewu-settlement'] },
     ],
     fates: [
       { event: 's-xianzhong', side: 'left', status: 'alive', note: '降众半编半遣，将散未散' },
       { event: 's-xianzhong', side: 'right', status: 'alive', note: '受抚号而守空城。半年之后，反旗复树' },
       { event: 's-dashun-noman', side: 'left', status: 'alive', note: '闯营无主，其众多归谷英——「八大王」之号不复假于人' },
       { event: 's-dashun-noman', side: 'right', status: 'alive', note: '追兵所过降者复叛，与闯营残部合为一，楚中不复问' },
+      { event: 'g-gucheng', side: 'left', status: 'alive', note: '仍由旧营头领代领粮食，藏械与空名未拆。受抚之众仍系一人，复叛之患未除' },
+      { event: 'g-gucheng', side: 'right', status: 'alive', note: '旧部分户核田粮，愿役者入公册，藏械者另案查办。不能再把受抚之众全作自己的旧营' },
     ],
     relations: [{ to: 'xiongwenchan', type: 'neutral' }],
   },
@@ -293,10 +304,14 @@ export const CHARACTERS: Character[] = [
     role: '主抚之人。以「抚局大好」入告',
     camp: '文官',
     faction: 'law',
-    events: ['s-xianzhong'],
+    events: ['s-xianzhong', 'g-gucheng'],
     track: [
       { year: 12, status: 'alive', note: '招抚一方，朝廷倚之' },
-      { year: 16, status: 'dead', note: '史实：抚局败露，诏狱鞫治，弃市' },
+      { year: 16, status: 'dead', note: '史实：抚局败露，诏狱鞫治，弃市', unlessFlag: ['gewu-settlement'] },
+    ],
+    fates: [
+      { event: 'g-gucheng', side: 'left', status: 'alive', note: '仍按原营交粮，抚局未能逐户核实，头领代领与藏械之患犹在' },
+      { event: 'g-gucheng', side: 'right', status: 'alive', note: '安置清册逐户核验，田粮与军籍分办，抚局不再只据旧头领一纸呈报' },
     ],
     relations: [],
   },
@@ -309,14 +324,16 @@ export const CHARACTERS: Character[] = [
     camp: '文官',
     faction: 'gold',
     born: 1588,
-    events: ['s-annei'],
+    events: ['s-annei', 'g-gucheng'],
     track: [
       { year: 11, status: 'alive', note: '身任剿事，请加赋充饷，曰「安内方可攘外」' },
-      { year: 14, status: 'dead', note: '史实：襄阳失陷，退归沙市军中，忧悸而卒' },
+      { year: 14, status: 'dead', note: '史实：襄阳失陷，退归沙市军中，忧悸而卒', unlessFlag: ['gewu-settlement'] },
     ],
     fates: [
       { event: 's-annei', side: 'left', status: 'alive', note: '其策得行，加派及于训兵——养虎者饲之以民' },
       { event: 's-annei', side: 'right', status: 'alive', note: '边备先于内剿，十面之网不全布' },
+      { event: 'g-gucheng', side: 'left', status: 'alive', note: '谷城仍按营交粮，旧营未拆，督抚仍须面对受抚诸部再起的隐患' },
+      { event: 'g-gucheng', side: 'right', status: 'alive', note: '谷城按户分散安置，藏械另案查问，剿抚不再只凭头领承诺' },
     ],
     relations: [
       { to: 'licheng', type: 'enemy' },
@@ -376,11 +393,15 @@ export const CHARACTERS: Character[] = [
     camp: '文官',
     faction: 'army',
     born: 1593,
-    events: ['s-jinzhou', 's-songjin'],
-    track: [{ year: 15, status: 'alive', note: '史实：松山粮尽城陷，遂降。于明为罪人，于清为佐命', unlessEvent: ['s-yuan-songjin'] }],
+    events: ['s-jinzhou', 's-songjin', 'g-jinzhou', 'g-songjin'],
+    track: [{ year: 15, status: 'alive', note: '史实：松山粮尽城陷，遂降。于明为罪人，于清为佐命', unlessEvent: ['s-yuan-songjin', 'g-songjin'] }],
     fates: [
       { event: 's-jinzhou', side: 'left', status: 'alive', note: '督战之令严矣，兵疲粮罄而出垒' },
       { event: 's-jinzhou', side: 'right', status: 'alive', note: '坚壁之局得成，师老于松山而不决' },
+      { event: 'g-jinzhou', side: 'left', status: 'alive', note: '依轮换粮站分批接济锦州，船队工师修炮运粮，不以限日决战赌尽各镇' },
+      { event: 'g-jinzhou', side: 'right', status: 'alive', note: '缩短防线，护送外围军民后撤。粮站工师仍在，锦州接济尚未连成长策' },
+      { event: 'g-songjin', side: 'left', status: 'alive', note: '掩护各营有序退整，粮路接回伤兵军民，边军骨干与工师仍为朝廷所用' },
+      { event: 'g-songjin', side: 'right', status: 'alive', note: '接济轮防而不受限日决战之催，诸镇骨干与守城军民仍在，围困尚待缓解' },
     ],
     relations: [{ to: 'zadashou', type: 'friend' }],
   },
@@ -389,14 +410,18 @@ export const CHARACTERS: Character[] = [
     name: '陈新甲',
     alias: '初暗',
     avatar: '📯',
-    role: '兵部尚书。嗣昌之党，主和议而典密旨',
+    role: '兵部尚书。嗣昌之党，主张议和',
     camp: '文官',
     faction: 'gold',
-    events: ['s-mihe', 's-mihe-leak'],
+    events: ['s-mihe', 's-mihe-leak', 'g-peace', 'g-peace-ratify'],
     fates: [
       { event: 's-mihe', side: 'left', status: 'alive', note: '受密旨于帷中，与虏使往来十数番，不入阁票' },
       { event: 's-mihe-leak', side: 'left', status: 'alive', note: '上自任兵机得失，留任视事。外廷目为内操之臣' },
       { event: 's-mihe-leak', side: 'right', status: 'dead', note: '归罪新甲，弃市。和议之迹尽湮，人益不敢受密旨' },
+      { event: 'g-peace', side: 'left', status: 'alive', note: '奉公开授权与清使议和，条件与用款须经章程复核，不凭帷中密旨撤防' },
+      { event: 'g-peace', side: 'right', status: 'alive', note: '议和建议经公议否决，仍任其职，不因进言而获罪，边备继续维持' },
+      { event: 'g-peace-ratify', side: 'left', status: 'alive', note: '奉命公开呈议和约，经公议追认，得失由朝廷共同承担，留任办理交涉' },
+      { event: 'g-peace-ratify', side: 'right', status: 'alive', note: '朝廷按章撤谈，恢复守备安排，不把公开授权之事归罪使臣，未因和议被杀' },
     ],
     relations: [
       { to: 'yangsichang', type: 'friend' },
@@ -412,10 +437,16 @@ export const CHARACTERS: Character[] = [
     camp: '辽镇',
     faction: 'army',
     born: 1579,
-    events: ['s-jinzhou', 's-songjin', 's-wsangui'],
+    events: ['s-jinzhou', 's-songjin', 's-wsangui', 'g-jinzhou', 'g-songjin'],
     track: [
       { year: 13, status: 'alive', note: '困守锦州，月五疏乞援' },
-      { year: 15, status: 'alive', note: '史实：以锦州残甲降，关宁兵权自此易主', unlessEvent: ['s-yuan-songjin'] },
+      { year: 15, status: 'alive', note: '史实：以锦州残甲降，关宁兵权自此易主', unlessEvent: ['s-yuan-songjin', 'g-songjin'] },
+    ],
+    fates: [
+      { event: 'g-jinzhou', side: 'left', status: 'alive', note: '锦州围困未解，守军得分批接济与轮换，工师修炮，城中不必坐待粮绝' },
+      { event: 'g-jinzhou', side: 'right', status: 'alive', note: '配合护送外围军民后撤，缩短供饷路途，锦州守备仍须筹划' },
+      { event: 'g-songjin', side: 'left', status: 'alive', note: '循粮路掩护各营退整，关宁骨干未失，伤兵与军民得以有序撤回' },
+      { event: 'g-songjin', side: 'right', status: 'alive', note: '以粮站轮防续守锦州，守城人和炮队仍在，未以残甲易主求生' },
     ],
     relations: [{ to: 'wusanggui', type: 'kin' }],
   },
@@ -428,11 +459,13 @@ export const CHARACTERS: Character[] = [
     camp: '辽镇',
     faction: 'army',
     born: 1612,
-    events: ['s-wsangui'],
-    track: [{ year: 15, status: 'alive', note: '年方三十余，尽得关宁之众，为朝廷所倚、为敌国所招' }],
+    events: ['s-wsangui', 'g-guanning'],
+    track: [{ year: 15, status: 'alive', note: '年方三十余，尽得关宁之众，为朝廷所倚、为敌国所招', unlessEvent: ['g-guanning'] }],
     fates: [
       { event: 's-wsangui', side: 'left', status: 'alive', note: '专阃之寄已定，宁远至山海关一军皆属' },
       { event: 's-wsangui', side: 'right', status: 'alive', note: '以文驭武，督抚经制其上。此人心益两端' },
+      { event: 'g-guanning', side: 'left', status: 'alive', note: '分段受任，军籍军饷仍归公册。得一段防务，不得将关宁兵众据为私产' },
+      { event: 'g-guanning', side: 'right', status: 'alive', note: '轮调暂缓，各营原班守备，仍按公册领实饷。无论新将旧将，均不得私占兵权' },
     ],
     relations: [{ to: 'licheng', type: 'enemy' }],
   },
@@ -440,14 +473,16 @@ export const CHARACTERS: Character[] = [
     id: 'kongyoude',
     name: '孔有德',
     avatar: '⛵',
-    role: '入援客兵将领。登州一叛，红夷炮法尽输建州',
+    role: '入援客兵将领。所部经过吴桥，军粮与军纪皆生隐患',
     camp: '辽镇',
     faction: 'army',
-    events: ['s-wuqiao'],
-    track: [{ year: 4, status: 'alive', note: '史实：浮海归建州，清人自此有炮队与水师' }],
+    events: ['s-wuqiao', 'g-wuqiao'],
+    track: [{ year: 4, status: 'alive', note: '史实：浮海归建州，清人自此有炮队与水师', unlessEvent: ['g-wuqiao'] }],
     fates: [
       { event: 's-wuqiao', side: 'left', status: 'alive', note: '城复而叛将遁海，炮匠随之北去' },
       { event: 's-wuqiao', side: 'right', status: 'alive', note: '回书谢恩，缚使者献于沈阳为礼' },
+      { event: 'g-wuqiao', side: 'left', status: 'alive', note: '所部拆分核饷，涉案军官凭证候审，普通兵士得粮归队。炮厂工师另受保护，未随军北去' },
+      { event: 'g-wuqiao', side: 'right', status: 'alive', note: '整军暂缓，乱兵之患未平；工师、家眷与图册已撤离，不能挟炮匠与技艺渡海投清' },
     ],
     relations: [],
   },
@@ -460,14 +495,16 @@ export const CHARACTERS: Character[] = [
     camp: '文官',
     faction: 'army',
     born: 1581,
-    events: ['r-hongyi', 's-wuqiao'],
+    events: ['r-hongyi', 's-wuqiao', 'g-wuqiao'],
     track: [
       { year: 1, status: 'alive', note: '史实：主登州炮局，葡匠与红夷炮皆出其招' },
-      { year: 8, status: 'dead', note: '史实：登州一失，坐论死系狱，崇祯八年竟正法', unlessEvent: ['s-wuqiao'] },
+      { year: 8, status: 'dead', note: '史实：登州一失，坐论死系狱，崇祯八年竟正法', unlessEvent: ['s-wuqiao', 'g-wuqiao'] },
     ],
     fates: [
       { event: 's-wuqiao', side: 'left', status: 'dead', note: '城复而巡抚就逮论死。登州的炮匠死的死、散的散——你用一支炮队换一个「失守」的罪名' },
       { event: 's-wuqiao', side: 'right', status: 'dead', note: '抚局未成而登莱已烂。通贼之诬起于缇骑未发之先——元化不待覆案，已死狱中' },
+      { event: 'g-wuqiao', side: 'left', status: 'alive', note: '保厂分兵，补给与审案分办，留任办理交接。登莱炮厂与水师骨干未被哗变卷走' },
+      { event: 'g-wuqiao', side: 'right', status: 'alive', note: '先护送匠人家眷与图册撤离，旧雇约照付。本人候查，不因失地定死罪' },
     ],
     relations: [
       { to: 'xuguangqi', type: 'friend' },
@@ -479,18 +516,20 @@ export const CHARACTERS: Character[] = [
     name: '公沙·德罗',
     alias: 'Cogliero',
     avatar: '⚒️',
-    role: '澳门炮师。为明铸炮，亦为明死于登州城下',
+    role: '澳门炮师。应募为明铸炮，传习炮法',
     camp: '西学',
     faction: 'army',
     born: 1580,
-    events: ['r-hongyi', 's-wuqiao'],
+    events: ['r-hongyi', 's-wuqiao', 'g-wuqiao'],
     track: [
       { year: 2, status: 'alive', note: '史实：率澳中善炮者应募入京，督造神威' },
-      { year: 6, status: 'dead', note: '史实：以炮攻登州，未破而中铳殁于城下', unlessEvent: ['s-wuqiao'] },
+      { year: 6, status: 'dead', note: '史实：以炮攻登州，未破而中铳殁于城下', unlessEvent: ['s-wuqiao', 'g-wuqiao'] },
     ],
     fates: [
       { event: 's-wuqiao', side: 'left', status: 'dead', note: '受命以炮攻城，一发未毕而城上已中铳——他替明人教炮，死在明人的城下' },
       { event: 's-wuqiao', side: 'right', status: 'alive', note: '围解而技无所用。澳门来的人散去一半，炮架仍锈在演武堂' },
+      { event: 'g-wuqiao', side: 'left', status: 'alive', note: '工师与炮厂先受保护，按雇约留厂修造，技艺图册未随乱兵流失' },
+      { event: 'g-wuqiao', side: 'right', status: 'alive', note: '随匠人家眷安全撤出，图册一并护送，旧雇约照付。未被驱往城下攻炮送命' },
     ],
     relations: [
       { to: 'xuguangqi', type: 'friend' },
@@ -516,10 +555,12 @@ export const CHARACTERS: Character[] = [
     role: '南京用度内珰。请括富民与盐商之财',
     camp: '内廷',
     faction: 'law',
-    events: ['s-yingdi'],
+    events: ['s-yingdi', 'g-revenue'],
     fates: [
       { event: 's-yingdi', side: 'left', status: 'dead', note: '斩于市以谢言路。自此内廷不敢言及富户' },
       { event: 's-yingdi', side: 'right', status: 'alive', note: '办饷有方，言官投劾相望于道' },
+      { event: 'g-revenue', side: 'left', status: 'alive', note: '搜富户之议未行，朝廷改以公账临时加征货税，不派缇骑抄家，也不杀进言者' },
+      { event: 'g-revenue', side: 'right', status: 'alive', note: '密疏交公议驳回，缺口公开，裁冗采办分季筹饷。未因进言获死罪' },
     ],
     relations: [],
   },
@@ -531,15 +572,17 @@ export const CHARACTERS: Character[] = [
     role: '上潜邸旧人。宫中呼为「大伴」',
     camp: '内廷',
     faction: 'court',
-    events: ['s-finale', 's-finale-restore'],
-    track: [
-      { year: 17, status: 'dead', note: '史实：从崩于煤山，惟一内侍陪至最后', unlessEvent: ['s-finale', 's-finale-restore'] },
-    ],
+    events: ['s-finale', 's-finale-restore', 'g-finale-gewu', 'g-finale-incomplete'],
+    // 从死由煤山抉择决定，不能在甲申终章尚待裁决时预先判死。
     fates: [
       { event: 's-finale', side: 'left', status: 'dead', note: '从崩于煤山寿皇亭东，惟一内侍陪至最后' },
       { event: 's-finale', side: 'right', status: 'alive', note: '随驾南渡，从行内侍只他一个' },
       { event: 's-finale-restore', side: 'left', status: 'alive', note: '扈从垛口，昼夜传箭——这一回陪到最后的仍在城头' },
       { event: 's-finale-restore', side: 'right', status: 'alive', note: '守门禁跸，宫中旧人唯此足恃' },
+      { event: 'g-finale-gewu', side: 'left', status: 'alive', note: '仍侍宫中，内廷亦照章办事。此番甲申留下的不是殉葬诏，而是传给后人的成法' },
+      { event: 'g-finale-gewu', side: 'right', status: 'alive', note: '仍在御前供职，亲见皇帝收回裁断权。器物尚存，约束内廷的章程却开始退让' },
+      { event: 'g-finale-incomplete', side: 'left', status: 'alive', note: '奉命守宫门、传政令，督促仓粮转运。此番所议是休养民力，补未竟之制' },
+      { event: 'g-finale-incomplete', side: 'right', status: 'alive', note: '留守宫禁，传递整军之令。出兵仍须量粮量力，不再以殉国作甲申唯一的交代' },
     ],
     relations: [],
   },
@@ -553,7 +596,7 @@ export const CHARACTERS: Character[] = [
     faction: 'gold',
     born: 1586,
     events: ['s-fuwang', 'r-zonglu'],
-    track: [{ year: 14, status: 'dead', note: '史实：洛阳城陷，为闯所戮，并鹿烹之，号「福禄酒」' }],
+    track: [{ year: 14, status: 'dead', note: '史实：洛阳城陷，为闯所戮，并鹿烹之，号「福禄酒」', unlessFlag: ['lz-absorbed'] }],
     fates: [
       { event: 's-fuwang', side: 'left', status: 'alive', note: '割银二十万佐饷，茹痛如剥肤；宗室自此怨上' },
       { event: 's-fuwang', side: 'right', status: 'alive', note: '闭阁谢客，一钱不出' },
@@ -591,7 +634,11 @@ export const CHARACTERS: Character[] = [
     camp: '宗藩',
     faction: 'law',
     born: 1629,
-    events: ['r-taizi'],
+    events: ['r-taizi', 'g-succession'],
+    fates: [
+      { event: 'g-succession', side: 'left', status: 'alive', note: '讲习新政而不立继承约束，知其用处，日后却仍可一言更改' },
+      { event: 'g-succession', side: 'right', status: 'alive', note: '公开承诺继位也守章程，公账、任期、议事与救济不因易君而废' },
+    ],
     relations: [],
   },
   {
@@ -603,7 +650,7 @@ export const CHARACTERS: Character[] = [
     camp: '西学',
     faction: 'law',
     born: 1562,
-    events: ['r-lixi', 'r-hongyi'],
+    events: ['r-lixi', 'r-hongyi', 'g-institute', 'g-seeds', 'g-manuals'],
     track: [{ year: 6, status: 'dead', note: '史实：崇祯六年卒于官。历书成而身不及见' }],
     relations: [{ to: 'tangruowang', type: 'friend' }],
   },
@@ -636,14 +683,18 @@ export const CHARACTERS: Character[] = [
     name: '郑芝龙',
     alias: '字飞黄',
     avatar: '🌊',
-    role: '受抚的海商。闽、粤、日本三岛的船，都听他号令',
+    role: '受抚的海商。熟悉闽粤与日本航路，麾下有船众',
     camp: '海商',
     faction: 'gold',
     born: 1604,
-    events: ['r-cao'],
-    track: [{ year: 6, status: 'alive', note: '破红毛夷于料罗湾，海上无与抗者。朝廷不能制，只能用他' }],
+    events: ['r-cao', 'g-shipping', 'g-customs'],
+    track: [{ year: 6, status: 'alive', note: '破红毛夷于料罗湾，海上声势大振' }],
     fates: [
-      { event: 'r-cao', side: 'right', status: 'alive', note: '海运果以闽船任之。漂失十余万石，河漕一派大哗——而郑家的牌子从此占了漕运的一半' },
+      { event: 'r-cao', side: 'right', status: 'alive', note: '以闽船承运此批漕粮，风损受责，余粮仍按期抵港。此番只议运输，不改既定航路契约' },
+      { event: 'g-shipping', side: 'left', status: 'alive', note: '依约分批承运，按到货结算并分担船损。得运利而无独占权，别家船商仍有份额' },
+      { event: 'g-shipping', side: 'right', status: 'alive', note: '以垫款换取整条航路独占，运价与承运人渐由郑家决定，公开竞争止在此处' },
+      { event: 'g-customs', side: 'left', status: 'alive', note: '承运契约照行，关税留港养巡船；海路仍许别商承运，朝廷尚难核定关税财源' },
+      { event: 'g-customs', side: 'right', status: 'alive', note: '按公开税率缴纳海税，巡防费核定后余款入公库，仍按非独占契约承运' },
     ],
     relations: [
       { to: 'xiongwenchan', type: 'friend' },

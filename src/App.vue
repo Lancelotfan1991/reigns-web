@@ -6,6 +6,7 @@ import ResourceBadge from './components/ResourceBadge.vue'
 import { useCharacters } from './composables/useCharacters'
 import {
   AXIS_KEYS,
+  CARDS_PER_YEAR,
   RESOURCE_META,
   SOUTH_PEOPLE_LINE,
   UNREST_LINE,
@@ -93,7 +94,7 @@ onUnmounted(() => window.removeEventListener('keydown', onKey))
           <p>
             你一觉醒来，成了刚刚登基的大明皇帝朱由检。内有党争、大旱、瘟疫、空虚的国库；外有建州铁骑、流亡驿卒。
           </p>
-          <p>每一纸塘报递到御前，左右滑出批红。朝局由四象撑着，过高与过低一样要命：</p>
+          <p>每年 {{ CARDS_PER_YEAR }} 次抉择，左右滑出批红；本局事件绝不重复。朝局由四象撑着，过高与过低一样要命：</p>
           <dl class="axis-list">
             <template v-for="key in AXIS_KEYS" :key="key">
               <dt :style="{ borderColor: RESOURCE_META[key].color }">
@@ -109,6 +110,7 @@ onUnmounted(() => window.removeEventListener('keydown', onKey))
           <p class="warning">
             四象任一归零或满格，国祚立崩；撑到崇祯十七年，南渡成败先看民心（须过 {{ SOUTH_PEOPLE_LINE }}）。
           </p>
+          <p>架空革新线：技术、财政与政治环环相扣，缺一不可；关键机会错过不再重来。</p>
         </div>
       </div>
 
@@ -137,6 +139,7 @@ onUnmounted(() => window.removeEventListener('keydown', onKey))
             <span>{{ sealLines[1] }}</span>
           </div>
           <span class="ad">西元 {{ adYear }}</span>
+          <span class="ad" aria-live="polite">{{ game.turnInYear.value === null ? '甲申终章' : `第 ${game.turnInYear.value} / ${CARDS_PER_YEAR} 议` }}</span>
         </div>
         <ResourceBadge
           v-for="key in AXIS_KEYS.slice(2)"
@@ -168,6 +171,12 @@ onUnmounted(() => window.removeEventListener('keydown', onKey))
           朝中人物 <i>已识 {{ chars.appearedCount.value }} / {{ chars.views.value.length }}</i>
         </button>
       </div>
+
+      <p v-if="game.customsFunded.value || game.workshopsSupplied.value" class="ad">
+        <span v-if="game.customsFunded.value">海税入公库：抵消国库岁耗</span>
+        <span v-if="game.customsFunded.value && game.workshopsSupplied.value"> · </span>
+        <span v-if="game.workshopsSupplied.value">工坊供械：抵消军心岁耗</span>
+      </p>
 
       <Transition name="toast">
         <div v-if="game.lastResponse.value" :key="game.currentCard.value?.id" class="toast">
@@ -203,7 +212,7 @@ onUnmounted(() => window.removeEventListener('keydown', onKey))
     <section v-else class="screen over-screen">
       <div class="halo">{{ game.ending.value?.avatar }}</div>
       <p class="verdict" :class="`verdict-${game.ending.value?.kind ?? 'doom'}`">
-        {{ VERDICT_LABEL[game.ending.value?.kind ?? 'doom'] }}
+        {{ game.ending.value?.survived && game.ending.value.kind === 'neutral' ? '国运未定' : VERDICT_LABEL[game.ending.value?.kind ?? 'doom'] }}
       </p>
       <h2 class="over-title">{{ game.ending.value?.title }}</h2>
       <p class="over-desc">{{ game.ending.value?.description }}</p>
@@ -757,6 +766,7 @@ onUnmounted(() => window.removeEventListener('keydown', onKey))
 }
 
 .over-screen .halo {
+  flex: none;
   width: 84px;
   height: 84px;
   font-size: 42px;
@@ -857,5 +867,25 @@ onUnmounted(() => window.removeEventListener('keydown', onKey))
   font-size: 11.5px;
   color: var(--ink-3);
   letter-spacing: 2px;
+}
+
+@media (max-height: 620px) {
+  .play-screen {
+    gap: 6px;
+  }
+
+  .toast {
+    flex: none;
+    max-height: 76px;
+    overflow-y: auto;
+    padding: 5px 9px;
+    font-size: 12px;
+    line-height: 1.55;
+  }
+
+  .verdict-btn {
+    font-size: 13px;
+    padding: 8px 6px;
+  }
 }
 </style>

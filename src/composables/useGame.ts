@@ -1,5 +1,6 @@
 import { computed, ref } from 'vue'
 import { FINALE_EVENTS, RANDOM_EVENTS, SCRIPT_EVENTS } from '../data/events'
+import { REFORM_EVENTS, REFORM_FINALES } from '../data/reforms'
 import type { AxisKey, Decision, Ending, Effects, FlagRule, GameEvent, ResourceKey, Side } from '../types'
 
 /** 四象：归零与满格同样致命 */
@@ -15,7 +16,7 @@ export const RESOURCE_META: Record<ResourceKey, { icon: string; name: string; co
   people: { icon: '🌾', name: '民心', color: '#4b7a5c', hint: '国本水位：只跌不盈' },
 }
 
-/** 国本线：民心低于此值即为动乱，此后每做一次决策，军心与法度各再失血 */
+/** 国本线：民心低于此值即为动乱，军心与法度随岁耗额外失血 */
 export const UNREST_LINE = 30
 /** 南渡硬门槛：终章时民心不及此数，南渡必败 */
 export const SOUTH_PEOPLE_LINE = 45
@@ -23,8 +24,8 @@ export const SOUTH_PEOPLE_LINE = 45
 export const SOUTH_WAIVER_LINE = 70
 const UNREST_PENALTY: Partial<Record<AxisKey, number>> = { army: -1, law: -1 }
 
-/** 每张卡约一个季度，3 张牌推进一年；天启七年 + 崇祯 1-16 年 + 1644 终章 */
-export const CARDS_PER_YEAR = 3
+export const CARDS_PER_YEAR = 5
+const YEARLY_TICKS = 3
 const LAST_SCRIPT_YEAR = 16
 const START_VALUE = 50
 const BEST_KEY = 'chongzhen-best-years'
@@ -37,7 +38,6 @@ export function yearLabel(y: number): string {
   return `崇祯${CN_YEAR[Math.min(y, CN_YEAR.length - 1)]}年`
 }
 
-/** 时代重力：每做出一项决策，辽饷与武备都在缓慢失血 */
 const ERA_DRIFT: Partial<Record<ResourceKey, number>> = { army: -1, gold: -1 }
 
 /** 四象失衡结局（1644 之前） */
@@ -173,6 +173,35 @@ const FINALE_ENDINGS: {
   },
 }
 
+const REFORM_ENDINGS: Record<'perfect' | 'retreat' | 'unfinished' | 'setback', Ending> = {
+  perfect: {
+    avatar: '兴',
+    kind: 'glory',
+    title: '格物中兴',
+    description: '甲申没有成为亡国之年。海税供养边军，工坊以水力和统一量度批量制器，荒年粮站与医所留住了流民。你没有让旱疫消失，而是让国家有了应对它们的本领。此后数十年，工学、商法与公议相续，蒸汽小试终于走出矿井，大明由救亡转入富庶。史臣书曰：其兴不独得一圣君，而在使后世庸主亦不得轻坏成法。',
+  },
+  retreat: {
+    avatar: '器',
+    kind: 'neutral',
+    survived: true,
+    title: '器成政退',
+    description: '船炮仍新，工坊仍在，你却于大功将成时收回公议，将新增税课尽付远征。机器救了眼前的朝廷，没能约束下一道中旨。你仍坐在龙椅上，但借款失信、匠师离散，盛世的门在你身后缓缓合拢。史臣曰：能改其器，不能改其政。',
+  },
+  unfinished: {
+    avatar: '续',
+    kind: 'neutral',
+    survived: true,
+    title: '新政未竟',
+    description: '工坊与新学没有白建，赈济与海税也没有白行，只是尚未凑齐支撑整套新政的条件。你保住了这一朝，却没能把革新变成不可轻废的常法。后世能否接续，仍悬在下一位执政者手中。',
+  },
+  setback: {
+    avatar: '散',
+    kind: 'doom',
+    title: '新政失守',
+    description: '粮站、工坊与安置曾经稳住一方，眼下的兵饷与民生却已承受不住新的部署。各镇离心，政令中断，你未能保住朝廷。图册与手艺随工师散入民间，局部成果没有凭空消失，但它们终究没能独自撑起一个国家。',
+  },
+}
+
 function shuffle<T>(list: T[]): T[] {
   const arr = [...list]
   for (let i = arr.length - 1; i > 0; i--) {
@@ -198,12 +227,10 @@ function initialResources(): Record<ResourceKey, number> {
   return { court: START_VALUE, law: START_VALUE, army: START_VALUE, gold: START_VALUE, people: START_VALUE }
 }
 
-/** 剧本卡总槽位数：天启七年至崇祯十六年，每年 3 槽 */
 const SCRIPT_SLOTS = (LAST_SCRIPT_YEAR + 1) * CARDS_PER_YEAR
 
-/** 同一槽位（year + order-1）的候选卡：条件卡按特异性排前，无条件的史实卡在其后兜底 */
 const SLOT_CANDIDATES = new Map<string, GameEvent[]>()
-for (const e of SCRIPT_EVENTS) {
+for (const e of [...REFORM_EVENTS, ...SCRIPT_EVENTS]) {
   const key = `${e.year ?? 0}#${(e.order ?? 1) - 1}`
   const list = SLOT_CANDIDATES.get(key)
   if (list) list.push(e)
@@ -213,8 +240,7 @@ for (const list of SLOT_CANDIDATES.values()) {
   list.sort((a, b) => (b.requires?.length ?? 0) - (a.requires?.length ?? 0))
 }
 
-/** 终章候选组：改史终章优先，史实终章兜底 */
-const FINALE_CANDIDATES = [...FINALE_EVENTS].sort(
+const FINALE_CANDIDATES = [...REFORM_FINALES, ...FINALE_EVENTS].sort(
   (a, b) => (b.requires?.length ?? 0) - (a.requires?.length ?? 0),
 )
 
@@ -223,22 +249,19 @@ function ruleMet(rule: FlagRule, flags: Record<string, number>): boolean {
   return (flags[rule.flag] ?? 0) >= rule.min
 }
 
-function eligible(card: GameEvent, flags: Record<string, number>): boolean {
+function eligible(card: GameEvent, flags: Record<string, number>, resources: Record<ResourceKey, number>): boolean {
   return (card.requires ?? []).every((rule) => ruleMet(rule, flags))
+    && !(card.excludes ?? []).some((flag) => (flags[flag] ?? 0) > 0)
+    && RESOURCE_KEYS.every((key) => {
+      const bound = card.resourceBounds?.[key]
+      return !bound || (resources[key] >= (bound.min ?? 0) && resources[key] <= (bound.max ?? 100))
+    })
 }
 
-/** 随机补槽的抽牌器：一轮抽空后重洗续池，并避免与上一张同卡 */
 function makeRandomDraw() {
   const pool = shuffle(RANDOM_EVENTS)
   let cursor = 0
-  return (): GameEvent => {
-    if (cursor >= pool.length) {
-      const fresh = shuffle(RANDOM_EVENTS)
-      if (fresh[0]?.id === pool[pool.length - 1]?.id) fresh.push(fresh.shift()!)
-      pool.push(...fresh)
-    }
-    return pool[cursor++]
-  }
+  return (): GameEvent => pool[cursor++]
 }
 
 export function useGame() {
@@ -257,12 +280,12 @@ export function useGame() {
   /** 发某剧本槽位：条件卡 → 史实卡兜底 → 随机补空 */
   function dealScript(index: number): GameEvent {
     const key = `${Math.floor(index / CARDS_PER_YEAR)}#${index % CARDS_PER_YEAR}`
-    return SLOT_CANDIDATES.get(key)?.find((c) => eligible(c, flags.value)) ?? drawRandom()
+    return SLOT_CANDIDATES.get(key)?.find((c) => eligible(c, flags.value, resources.value)) ?? drawRandom()
   }
 
   /** 发终章：满足条件的改史终章优先，史实终章兜底 */
   function dealFinale(): GameEvent | undefined {
-    return FINALE_CANDIDATES.find((c) => eligible(c, flags.value))
+    return FINALE_CANDIDATES.find((c) => eligible(c, flags.value, resources.value))
   }
 
   /** 惰性发第 index 张牌；越过终章即无牌 */
@@ -285,8 +308,10 @@ export function useGame() {
   const isNewRecord = computed(() => isOver.value && reignedYears.value > bestYears.value)
   /** 终章是否被触发（区别于中途失衡而亡） */
   const reachedFinale = computed(() => isOver.value && cardIndex.value >= deck.value.length)
-  /** 国本已倾：民心跌破动乱线，此后每次决策都在同时耗尽军心与法度 */
   const unrest = computed(() => resources.value.people < UNREST_LINE)
+  const turnInYear = computed(() => cardIndex.value < SCRIPT_SLOTS ? cardIndex.value % CARDS_PER_YEAR + 1 : null)
+  const customsFunded = computed(() => !!flags.value['gewu-customs'] && !!flags.value['gewu-audit'])
+  const workshopsSupplied = computed(() => !!flags.value['gewu-tools'] && !!flags.value['gewu-denglai'])
 
   /** 事件 id → 该事件上做出的决策 */
   const decisionByEvent = computed(() => {
@@ -320,16 +345,24 @@ export function useGame() {
     return side === 'left' ? card.left.effects : card.right.effects
   }
 
-  /** 结算一次决策：时代重力常年失血；国本已倾（民心低于动乱线）时，军心与法度每判再耗一分 */
   function applyEffects(effects: Effects): Record<ResourceKey, number> {
     const next = { ...resources.value }
+    const turn = turnInYear.value
+    // 按年摊销为整数，增加抉择次数不增加年度岁耗；终章不再计时。
+    const tick = turn === null ? 0 : Math.floor(turn * YEARLY_TICKS / CARDS_PER_YEAR)
+      - Math.floor((turn - 1) * YEARLY_TICKS / CARDS_PER_YEAR)
+    const maintenance: Effects = {
+      ...ERA_DRIFT,
+      gold: customsFunded.value ? 0 : ERA_DRIFT.gold,
+      army: workshopsSupplied.value ? 0 : ERA_DRIFT.army,
+    }
     for (const key of RESOURCE_KEYS) {
-      const delta = (effects[key] ?? 0) + (ERA_DRIFT[key] ?? 0)
+      const delta = (effects[key] ?? 0) + tick * (maintenance[key] ?? 0)
       next[key] = clamp(next[key] + delta)
     }
     if (next.people < UNREST_LINE) {
       for (const key of AXIS_KEYS) {
-        next[key] = clamp(next[key] + (UNREST_PENALTY[key] ?? 0))
+        next[key] = clamp(next[key] + tick * (UNREST_PENALTY[key] ?? 0))
       }
     }
     resources.value = next
@@ -389,6 +422,20 @@ export function useGame() {
       advance()
       return gameOver(holdEnding(next))
     }
+    if (choice.finale === 'reform') {
+      const complete = eligible(card, flags.value, next)
+      advance()
+      return gameOver(complete ? REFORM_ENDINGS.perfect : REFORM_ENDINGS.unfinished)
+    }
+    if (choice.finale === 'reform-retreat') {
+      advance()
+      return gameOver(REFORM_ENDINGS.retreat)
+    }
+    if (choice.finale === 'reform-hold' || choice.finale === 'reform-battle') {
+      const result = choice.finale === 'reform-hold' ? holdEnding(next) : battleEnding(next)
+      advance()
+      return gameOver(result.kind === 'glory' ? REFORM_ENDINGS.unfinished : REFORM_ENDINGS.setback)
+    }
 
     // 失衡判定：四象任一归零或满格，国势崩解
     for (const key of AXIS_KEYS) {
@@ -438,6 +485,9 @@ export function useGame() {
     isOver,
     isNewRecord,
     unrest,
+    turnInYear,
+    customsFunded,
+    workshopsSupplied,
     decisions,
     flags,
     decisionByEvent,

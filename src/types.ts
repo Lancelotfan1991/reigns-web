@@ -17,8 +17,8 @@ export interface Decision {
   year: number
 }
 
-/** 终章分支标记：南渡、煤山、亲征决战、坚壁待敝 */
 export type FinaleBranch = 'south' | 'meishan' | 'battle' | 'hold'
+  | 'reform' | 'reform-retreat' | 'reform-hold' | 'reform-battle'
 
 /**
  * 旗标规则：用于卡牌的出现条件。
@@ -54,6 +54,8 @@ export interface GameEvent {
   order?: number
   /** 全部满足才登场（改史分叉卡）；同槽位中条件优先于无条件的史实卡 */
   requires?: FlagRule[]
+  excludes?: string[]
+  resourceBounds?: Partial<Record<ResourceKey, { min?: number; max?: number }>>
 }
 
 export interface Ending {
@@ -62,6 +64,7 @@ export interface Ending {
   description: string
   /** doom=国祚断送 neutral=宿命轮回 glory=续命中兴 */
   kind: 'doom' | 'neutral' | 'glory'
+  survived?: boolean
 }
 
 /** 人物状态：尚未登场 / 生 / 病 / 死 */
@@ -83,6 +86,7 @@ export interface FateEntry {
   note: string
   /** 这些卡中任一张被裁决（史实卡或其改史替身卡），则此条史实不再发生 */
   unlessEvent?: string[]
+  unlessFlag?: string[]
 }
 
 /** 抉择改写：玩家在指定卡上选了指定一侧，其后果覆盖同年史实轨迹 */
