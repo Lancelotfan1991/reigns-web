@@ -1,11 +1,12 @@
 import { computed } from 'vue'
-import { FINALE_EVENTS, RANDOM_EVENTS, SCRIPT_EVENTS } from '../data/events'
+import { FINALE_EVENTS, RANDOM_EVENTS } from '../data/events'
 import { CHARACTERS, CHAR_MAP, RELATION_META } from '../data/characters'
+import { STORY_EVENTS } from '../data/chapters'
 import type { CharStatus, CharView, Deed } from '../types'
 import type { Game } from './useGame'
-import { REFORM_EVENTS, REFORM_FINALES } from '../data/reforms'
+import { REFORM_FINALES } from '../data/reforms'
 
-const ALL_EVENTS = [...SCRIPT_EVENTS, ...RANDOM_EVENTS, ...FINALE_EVENTS, ...REFORM_EVENTS, ...REFORM_FINALES]
+const ALL_EVENTS = [...STORY_EVENTS, ...RANDOM_EVENTS, ...FINALE_EVENTS, ...REFORM_FINALES]
 
 interface EventMeta {
   title: string

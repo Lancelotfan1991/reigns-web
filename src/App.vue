@@ -105,10 +105,10 @@ onUnmounted(() => window.removeEventListener('keydown', onKey))
           </dl>
           <p class="root-line">
             <b :style="{ color: PEOPLE_META.color }">{{ PEOPLE_META.icon }} 民心</b>
-            是国本水位，只问厚薄、不计高下：跌破 {{ UNREST_LINE }} 便生动乱，归零则社稷无根。
+            越高越稳，满格不会亡国；低于 {{ UNREST_LINE }} 会生动乱，归零则亡国。
           </p>
           <p class="warning">
-            四象任一归零或满格，国祚立崩；撑到崇祯十七年，南渡成败先看民心（须过 {{ SOUTH_PEOPLE_LINE }}）。
+            四象任一归零或满格都会亡国。撑到崇祯十七年，南渡通常需要民心至少 {{ SOUTH_PEOPLE_LINE }}；提前准备可降低门槛，兵饷也须撑得住。
           </p>
           <p>架空革新线：技术、财政与政治环环相扣，缺一不可；关键机会错过不再重来。</p>
         </div>
@@ -156,7 +156,7 @@ onUnmounted(() => window.removeEventListener('keydown', onKey))
         <div
           class="levee"
           :class="{ breach: game.unrest.value }"
-          :title="`民心 ${peopleValue}：跌破 ${UNREST_LINE} 即生动乱；甲申南渡须过 ${SOUTH_PEOPLE_LINE}`"
+          :title="`民心 ${peopleValue}：低于 ${UNREST_LINE} 会生动乱，满格无害；南渡通常至少需 ${SOUTH_PEOPLE_LINE}，提前准备可降低门槛`"
         >
           <span class="lv-cap">{{ PEOPLE_META.icon }} 国本</span>
           <span class="lv-track">
@@ -171,6 +171,22 @@ onUnmounted(() => window.removeEventListener('keydown', onKey))
           朝中人物 <i>已识 {{ chars.appearedCount.value }} / {{ chars.views.value.length }}</i>
         </button>
       </div>
+
+      <section
+        v-if="game.chapter.value"
+        class="chapter-banner"
+        role="status"
+        aria-label="连续篇章进度"
+        aria-live="polite"
+        aria-atomic="true"
+      >
+        <div class="chapter-heading">
+          <span class="chapter-label">连续篇章</span>
+          <strong>{{ game.chapter.value.name }}</strong>
+          <span class="chapter-step">第 {{ game.chapter.value.step }} / {{ game.chapter.value.total }} 步</span>
+        </div>
+        <p>须完成本篇章全部抉择，方可返回日常政务。</p>
+      </section>
 
       <p v-if="game.customsFunded.value || game.workshopsSupplied.value" class="ad">
         <span v-if="game.customsFunded.value">海税入公库：抵消国库岁耗</span>
@@ -499,6 +515,59 @@ onUnmounted(() => window.removeEventListener('keydown', onKey))
 .play-screen {
   gap: 8px;
   padding-top: 16px;
+}
+
+.hud,
+.subhud,
+.actions {
+  flex: none;
+}
+
+/* 篇章常驻，不随塘报正文或上一议批红滚走 */
+.chapter-banner {
+  flex: none;
+  padding: 7px 10px;
+  border: 1px solid var(--line-soft);
+  border-left: 3px solid var(--cinnabar);
+  border-radius: 2px;
+  background: rgba(168, 50, 42, 0.08);
+}
+
+.chapter-heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 3px 8px;
+  font-family: var(--font-kai);
+  font-size: 14px;
+  color: var(--ink);
+}
+
+.chapter-heading strong {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.chapter-label,
+.chapter-step {
+  flex: none;
+  white-space: nowrap;
+  font-size: 11.5px;
+  color: var(--cinnabar);
+}
+
+.chapter-banner p {
+  margin-top: 3px;
+  font-size: 11.5px;
+  line-height: 1.5;
+  color: var(--ink-2);
+}
+
+.chapter-banner ~ .toast {
+  flex: none;
+  max-height: 76px;
+  overflow-y: auto;
 }
 
 .hud {
@@ -881,6 +950,23 @@ onUnmounted(() => window.removeEventListener('keydown', onKey))
     padding: 5px 9px;
     font-size: 12px;
     line-height: 1.55;
+  }
+
+  .chapter-banner {
+    padding: 4px 8px;
+  }
+
+  .chapter-heading {
+    font-size: 12px;
+  }
+
+  .chapter-banner p {
+    font-size: 11px;
+    line-height: 1.4;
+  }
+
+  .chapter-banner ~ .toast {
+    max-height: 52px;
   }
 
   .verdict-btn {

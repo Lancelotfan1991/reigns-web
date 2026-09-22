@@ -15,7 +15,7 @@ export const SCRIPT_EVENTS: GameEvent[] = [
     left: {
       label: '立刻即位',
       effects: { court: 10, law: -4, army: 4, people: -4 },
-      response: '宫门禁军连夜换了两拨——那班起草「劝进表」的人，此刻都跪在午门外候斩。',
+      response: '宫门禁军连夜换防，百官随即奉表劝进。你迅速接掌皇位，许多任命不等朝议便已传下，魏党的脸色渐渐变了。',
     },
     right: {
       label: '推辞不受',
@@ -38,7 +38,7 @@ export const SCRIPT_EVENTS: GameEvent[] = [
     right: {
       label: '照名单抓人',
       effects: { court: -10, law: -12, army: -6, gold: 6, people: -6 },
-      response: '点将录成了死亡名单，名字上者悬梁无门。朝堂噤声，人人只向厂卫行礼。',
+      response: '锦衣卫照名单抓人，被点名的官员无处申辩。朝堂上没人再敢开口，官员见了厂卫都先低头行礼。',
     },
   },
   {
@@ -51,7 +51,7 @@ export const SCRIPT_EVENTS: GameEvent[] = [
     left: {
       label: '依法诛杀',
       effects: { court: 12, law: 10, gold: 16, people: 10, army: -4 },
-      response: '魏党籍没的家产填满了半空的国库。只是此后东林盈朝，个个以道学自任，也不太好侍奉。',
+      response: '抄没魏党的家产补进了国库。东林官员重新掌权，人人自认有匡正君主的责任，往后你也少不了听他们争辩。',
     },
     right: {
       label: '留任不用',
@@ -74,7 +74,7 @@ export const SCRIPT_EVENTS: GameEvent[] = [
     right: {
       label: '先听他说再看他做',
       effects: { court: 4, law: 4, army: 2, gold: -2 },
-      response: '皇上慎言，臣不敢要全要。孙承宗的名字，开始重新出现在辽左的奏疏里。',
+      response: '你没有答应全权委任，先要袁崇焕列出用兵和筹饷的办法。朝臣也开始提议，请孙承宗一同商议辽东防务。',
     },
   },
   {
@@ -105,12 +105,12 @@ export const SCRIPT_EVENTS: GameEvent[] = [
     left: {
       label: '让他进城守城',
       effects: { army: 10, court: -6, law: -6, people: 4, gold: -6 },
-      response: '关宁军广渠门外血战，虏骑退时纵火连营。袁崇焕的声望与城外民舍，一起烧进了灰烬。',
+      response: '关宁军入城休整后，出广渠门迎战，迫使敌骑后退。城外民舍仍被战火烧毁，朝臣对袁崇焕的指责没有停。',
     },
     right: {
       label: '拒他于城外',
       effects: { army: -12, court: 6, law: 4, people: -6 },
-      response: '拒关宁军入关休整，将士夜半拔营。城头守军连一个敢战的主将都留不住，人心自此散了。',
+      response: '关宁军被拒在城外，疲惫的将士连休整的地方都没有，夜里有人擅自离营。城头守军见援军离散，也渐渐失了信心。',
     },
   },
   {
@@ -119,7 +119,7 @@ export const SCRIPT_EVENTS: GameEvent[] = [
     order: 2,
     avatar: '🗯️',
     name: '崇焕通敌流言',
-    text: '外面议论纷纷：有人说袁崇焕是自己把敌人引到这里，好讲城下之盟。锦衣卫密报也说，皇太极已在明、辽之间使了反间计。',
+    text: '外面议论纷纷：有人说袁崇焕是自己把敌人引到这里，好讲城下之盟。锦衣卫另有密报，说皇太极正在散布流言，想离间你和守辽的将领。',
     left: {
       label: '抓进诏狱',
       effects: { court: 8, law: -10, army: -12, people: -2 },
@@ -148,7 +148,7 @@ export const SCRIPT_EVENTS: GameEvent[] = [
     right: {
       label: '裁官俸保驿站',
       effects: { gold: 4, court: 2, law: -4, people: 6, army: -2 },
-      response: '官俸薄了，驿墙还在。只是逃驿的饥民，仍把驿站一座座烧了——你只是慢了半拍。',
+      response: '官员减了俸禄，驿卒暂时保住差事，公文仍能传递。可灾民照样缺粮，一些驿站仍遭饥民抢掠，保住驿站还不足以止住饥荒。',
       sets: ['post-kept'],
     },
   },
@@ -168,7 +168,7 @@ export const SCRIPT_EVENTS: GameEvent[] = [
     right: {
       label: '戴罪回辽东',
       effects: { army: 12, court: -10, law: 4, gold: -6 },
-      response: '国法今日稍弛，言官哗然。可辽镇诸将眼中皆亮——新皇不杀大将，且敢任事。',
+      response: '通敌之罪没有实证，你准袁崇焕回辽东任职。言官仍在争辩，边将却松了口气：朝廷终于没有只凭众怒杀将。',
       sets: ['yuan-alive'],
     },
   },
@@ -178,7 +178,7 @@ export const SCRIPT_EVENTS: GameEvent[] = [
     order: 1,
     avatar: '💣',
     name: '吴桥兵变',
-    text: '入援的孔有德部在吴桥哗变，占了登州造反。红夷大炮、登莱水师、造炮工匠，一夜之间全落到建州手里。',
+    text: '孔有德部在赴援途中于吴桥哗变，随后占据登州。城里的红夷大炮、水师船只和造炮工匠都落入叛军控制，他们还可能带着人和军械投奔建州。',
     left: {
       label: '发兵夺回登州',
       effects: { law: 4, gold: -10, army: 6, people: -4 },
@@ -200,12 +200,12 @@ export const SCRIPT_EVENTS: GameEvent[] = [
     left: {
       label: '再三挽留不许走',
       effects: { gold: -6, army: 8, court: 4, law: 2 },
-      response: '老人扶杖据鞍，八城安堵。高起潜辈望督师军门，未敢出一语。',
+      response: '孙承宗继续坐镇，辽东各城的守将总算有了主心骨。你明令支持督师，高起潜也不敢再公然掣肘。',
     },
     right: {
       label: '准他回乡',
       effects: { army: -12, court: 6, law: -6, gold: 4 },
-      response: '阁部归里，高城深堑之法渐废。「承宗去，而辽左日蹙」——这句话你也读过。',
+      response: '孙承宗回乡后，原定的筑城挖壕逐渐停办，防线日益收缩。「承宗去，而辽左日蹙」——这句话你也读过。',
     },
   },
   {
@@ -216,14 +216,14 @@ export const SCRIPT_EVENTS: GameEvent[] = [
     name: '武英殿灾',
     text: '禁中大火烧到武英殿。给事中说：这是上天示警，太监太多、恩泽太滥，请清理内侍。',
     left: {
-      label: '裁减太监应天变',
+      label: '裁减太监，回应天灾警示',
       effects: { gold: 10, people: 8, court: -6, law: 6 },
-      response: '闲散内员尽行减汰。内廷清静了，只是宦寺的怨气，从此积在暗处。',
+      response: '你裁去一批闲散太监，宫中省下供养费用。留下的人却担心自己也被赶走，怨言在内廷暗暗传开。',
     },
     right: {
-      label: '驳回天戒照旧修',
+      label: '不认天谴，照旧修殿',
       effects: { court: 6, law: -8, people: -4, gold: -4 },
-      response: '新殿梁柱起于陕西、湖广的楠木。修殿之日，陕西的红军已渡过汉水。',
+      response: '宫中照旧重修大殿，又向陕西、湖广征调木料。运木的民夫还在路上，流寇渡过汉水的急报已经到了京师。',
     },
   },
   {
@@ -241,7 +241,7 @@ export const SCRIPT_EVENTS: GameEvent[] = [
     right: {
       label: '用他的办法筹饷',
       effects: { gold: 16, people: -12, army: 6, court: -8, law: -14 },
-      response: '钱真来了。只是士林清议骂你「与宦官共财」，投劾去位的言官相望于道。',
+      response: '抄来的富户、盐商家产补进军饷，边军终于领到钱。士人却骂你「与宦官共财」，多名言官上疏抗议后辞职离京。',
     },
   },
   {
@@ -254,12 +254,12 @@ export const SCRIPT_EVENTS: GameEvent[] = [
     left: {
       label: '当众处决高迎祥',
       effects: { gold: 6, court: 6, law: 4, army: 6, people: -8 },
-      response: '献俘三日，长安街观者如堵。可逃兵饥驿仍结于山中——一个闯王倒了，千百个正在路上。',
+      response: '献俘连续三日，长安街上挤满看热闹的人。山里的逃兵和饥民却仍在结伙，高迎祥死了，兵乱并没有停。',
     },
     right: {
       label: '收编他的降兵',
       effects: { court: -2, law: -6, gold: -4, army: 10, people: 6 },
-      response: '降丁编伍，愿为前驱。只是那名漏网的驿卒，酒后杀了督队官，复又夜奔下山。',
+      response: '一批降兵编入官军，愿意打头阵。李鸿基却仍未归队，他牵涉的杀督队官旧案也没有结清，地方还在追查去向。',
     },
   },
   {
@@ -272,12 +272,12 @@ export const SCRIPT_EVENTS: GameEvent[] = [
     left: {
       label: '派水师出海牵制',
       effects: { gold: -10, army: 4, court: 6, law: 2, people: -2 },
-      response: '登莱舟师浮海三出，虏东顾有惧。只是东江饷单，又堆了三尺。',
+      response: '登莱水师几次出海，迫使建州分兵防备海岸。东江镇却又送来一摞要饷的清单，粮、船、兵都得花钱维持。',
     },
     right: {
       label: '闭门不管朝鲜',
       effects: { gold: 4, army: -8, court: -6, law: -4 },
-      response: '朝鲜旋为虏弟。虏得粮、得兵、得造船之匠——省了一笔，赔了一局。',
+      response: '朝鲜不久屈服，向建州提供粮食、兵员和造船工匠。朝廷省下一次出海的军费，辽东的敌人却更难对付了。',
     },
   },
   {
@@ -295,7 +295,7 @@ export const SCRIPT_EVENTS: GameEvent[] = [
     right: {
       label: '回书遣使议和',
       effects: { gold: -12, court: -14, law: 2, people: -10, army: -6 },
-      response: '报聘使还朝，虏请索无艺。「款虏」二字自此成为死罪——虽是从你口中先说出的。',
+      response: '议和使者回京，带回清方一再加码的索求。主战官员把「与敌议和」骂成通敌，连奉你命出使的人也遭到弹劾。',
     },
   },
   {
@@ -304,7 +304,7 @@ export const SCRIPT_EVENTS: GameEvent[] = [
     order: 2,
     avatar: '🎭',
     name: '福王的银钱',
-    text: '洛阳福王府富冠天下，喝酒听戏的声音传出几里。户部请拿藩王的钱补辽饷，给事中王铎争得最凶。',
+    text: '洛阳福王府富冠天下，喝酒听戏的声音传出几里。户部请福王出银补辽东军饷，王铎却带头反对，认为不能动宗室的家产。',
     left: {
       label: '下诏要福王出钱',
       effects: { gold: 14, people: 12, court: -6, law: -4, army: 4 },
@@ -322,16 +322,16 @@ export const SCRIPT_EVENTS: GameEvent[] = [
     order: 1,
     avatar: '🗡️',
     name: '围剿方略',
-    text: '兵部一条条列出四正、群击、分信地、搜余穴的办法，请增饷九十八万两，练天下精兵来歼灭流寇。',
+    text: '兵部提出围剿办法：各路官军分区驻守、互相策应，不让流寇越境逃散，再派兵搜查藏身处。为此要增拨九十八万两军饷，招练精兵。',
     left: {
       label: '照案全办',
       effects: { law: 8, gold: -12, army: 12, people: -6 },
-      response: '饷增而兵骄，剿抚皆以财计为命。四正之兵，渐成尾大之势。',
+      response: '围剿各军领到了增拨的军饷，兵力也壮大了。可将领越来越会借出兵索钱，朝廷想调动他们，先得答应新的饷额。',
     },
     right: {
       label: '钱先给边关',
       effects: { law: -6, gold: 6, army: -10, people: 2 },
-      response: '边饷重于内地之兵。然流贼一散一聚，剿字诀，终要饷来填。',
+      response: '朝廷没有增拨这笔围剿经费，先保边关粮饷。内地官军却缺钱招练，流寇被打散后又聚起来，地方仍不断求援。',
     },
   },
   {
@@ -340,7 +340,7 @@ export const SCRIPT_EVENTS: GameEvent[] = [
     order: 2,
     avatar: '🦁',
     name: '左良玉要挟',
-    text: '左良玉的楚军是各镇之冠，可他养寇要挟、就粮避战。地方大吏都说：左良玉的饷，朝廷不必问，取足于民间罢了。',
+    text: '左良玉在湖广兵力最强，却借追剿流寇索饷，常把兵带到粮多的地方，迟迟不肯接战。地方官说，他缺多少饷就向百姓取多少，朝廷若不管，州县根本拦不住。',
     left: {
       label: '催他限期出战',
       effects: { gold: -6, army: 8, people: 6, court: 2, law: 10 },
@@ -358,11 +358,11 @@ export const SCRIPT_EVENTS: GameEvent[] = [
     order: 1,
     avatar: '📚',
     name: '安内与攘外',
-    text: '杨嗣昌进对：中原寇乱急，边防且缓。请抚流亡、禁欺隐、汰繁兵、清均地、宽宿逋、精军令，总名「四正六隅」。',
+    text: '杨嗣昌认为中原兵乱比边患更急，请先集中兵力围剿。他的办法叫「四正六隅」：各省分区守堵，邻省协同追击，防止流寇往来逃窜。户部提醒，增兵还得向民间加征军费。',
     left: {
       label: '加饷进剿流寇',
       effects: { gold: 14, people: -14, army: 8, court: 2, law: 4 },
-      response: '「内库饶而外府虚。」新政加派及于训兵，流贼饥民之源，皆赖加派而成——养虎于野，饲虎以民。',
+      response: '新增税银收进官库，围剿官军领到了粮饷。可灾民原已无粮，加征又逼走一批农户，其中不少人转投了流寇。',
     },
     right: {
       label: '先顾辽东防务',
@@ -376,16 +376,16 @@ export const SCRIPT_EVENTS: GameEvent[] = [
     order: 1,
     avatar: '🚩',
     name: '受抚复叛',
-    text: '张献忠在谷城带着粮草受抚，暗地整修军械，不受约束。督师熊文灿却上奏说「抚局大好」。',
+    text: '张献忠在谷城接受招抚，领了朝廷的粮草，却仍暗中整修军械，不听调遣。督师熊文灿上奏说「抚局大好」，兵部则担心降兵仍只听旧头领的话。',
     left: {
       label: '把降兵拆开调走',
       effects: { army: 6, court: -6, law: 6, gold: -8, people: 4 },
-      response: '降众半编半遣，将散未散。半载之后复叛，编降之兵与「流」合矣。',
+      response: '官府把部分降兵调入别营，遣散其余人，但旧头领仍能暗中联络他们。半年后有人再度起兵，一部分收编的降兵也跟着逃走。',
     },
     right: {
-      label: '接受他的招抚',
+      label: '维持招抚，暂不拆营',
       effects: { court: 8, law: -8, gold: 2, army: -8 },
-      response: '抚局「成」，九边兵得省，朝廷皆以为上算。半年后，谷城反旗复树。',
+      response: '朝廷把招抚报作成功，暂不再增派围剿军队。张献忠却仍控制着旧部，半年后谷城又竖起了反旗。',
     },
   },
   {
@@ -403,7 +403,7 @@ export const SCRIPT_EVENTS: GameEvent[] = [
     right: {
       label: '许他坚守勿战',
       effects: { gold: -6, army: -4, court: -6, law: 6, people: -2 },
-      response: '师老粮匮，关内外声援渐绝。锦州成为孤城，围城之师更迭不来。',
+      response: '援军久驻，粮草越来越少，关内外的接济也渐渐断了。锦州守军盼不到解围的兵，洪承畴只能继续在松山苦撑。',
     },
   },
   {
@@ -430,7 +430,7 @@ export const SCRIPT_EVENTS: GameEvent[] = [
     order: 1,
     avatar: '🌊',
     name: '水灌开封',
-    text: '李自成掘开马家口，黄河水灌进开封。城中士民一百万口陷于水底；督抚互相看着，只等朝廷回复。',
+    text: '李自成掘开马家口，黄河水灌进开封。大批军民被洪水围困，死伤惨重；督抚互相推诿，仍等着朝廷下令救援。',
     left: {
       label: '把守城将领问罪',
       effects: { gold: -4, army: 2, people: -10, court: 6, law: -2 },
@@ -440,7 +440,7 @@ export const SCRIPT_EVENTS: GameEvent[] = [
     right: {
       label: '拨内库钱赈济',
       effects: { gold: -12, people: 12, army: 2, court: -2, law: 4 },
-      response: '河复故道，漂庐渐复。只是赈单入内库，有司怨望。',
+      response: '内库拨出银粮，官府救济灾民、修补河堤，幸存者开始重建房屋。宫中却不愿长期承担赈费，催着地方另筹钱粮。',
     },
   },
   {
@@ -453,12 +453,12 @@ export const SCRIPT_EVENTS: GameEvent[] = [
     left: {
       label: '收拾残兵再守',
       effects: { court: 6, law: 4, army: -6, gold: -8 },
-      response: '收余兵于桑乾，保关以须。将骄士散，三载为期。',
+      response: '兵部收拢残兵，拨饷补守山海关。可各营建制已散，将领又不愿交出兵权，重新整练还要耗费许多时日。',
     },
     right: {
       label: '往清营议和拖延',
       effects: { gold: 2, army: -4, court: -10, law: -4, people: -8 },
-      response: '虏书益嫚，请「直入」议和。和局一露，则「众叛之几」成。',
+      response: '清军见你急于停战，提出更苛刻的条件。议和消息传回朝中，主战官员纷纷弹劾，原本想借谈判拖延的打算也被打乱。',
     },
   },
   {
@@ -467,11 +467,11 @@ export const SCRIPT_EVENTS: GameEvent[] = [
     order: 1,
     avatar: '🕯️',
     name: '传庭出狱',
-    text: '孙传庭在狱里关了三年，到这时朝野都再说：传庭出，贼必授首。可他督师无兵，催他出战是死，让他持重也是死。',
+    text: '孙传庭在狱里关了三年，如今朝野又指望他平定流寇。可陕西缺兵缺饷，即使让他出狱督师，也得先筹钱募兵，不能马上拉出一支大军。',
     left: {
       label: '出狱督师陕西',
       effects: { gold: -10, army: 14, court: 2, law: 6, people: 4 },
-      response: '你知他的结局：兵未集而催战之诏日下，必死而后已。你仍给了他旗牌尚方。',
+      response: '孙传庭获释，领命赴陕西督师。你拨给他募兵的银钱和调兵的权力，朝中却已有人催他尽快出战；新军还没练成，战期便成了争执。',
     },
     right: {
       label: '继续关着他',
@@ -486,16 +486,16 @@ export const SCRIPT_EVENTS: GameEvent[] = [
     order: 2,
     avatar: '🐺',
     name: '皇太极暴亡',
-    text: '辽东探报进来：虏酋突然死了，正白、两黄旗按剑相持，多尔衮与豪格各树其党。主少国疑，或可乘其间。',
+    text: '辽东探报说皇太极突然去世，多尔衮和豪格各有旗兵支持，正在争夺继位大权。兵部认为清军内乱是个机会，请你决定先安抚边境各部，还是调兵试探进攻。',
     left: {
       label: '趁乱安抚边境',
       effects: { gold: -8, army: 8, court: 4, law: 2, people: -2 },
-      response: '抚赏下行，诸部受之。间者复命：虏之摄政王已定议矣。',
+      response: '朝廷送出赏银，争取边境各部暂不助清。探子随后回报：清廷已定下新君和摄政人选，内部争执暂时平息。',
     },
     right: {
       label: '整兵伺机进取',
       effects: { gold: -6, army: 10, court: 8, law: -6, people: 4 },
-      response: '乘衅薄关，得堡二、俘数百而还。举朝称庆，虏方内定——边衅自此更深。',
+      response: '明军趁乱攻取两座堡寨，俘获数百人后撤回。朝臣纷纷道贺，清廷却也已平息内争，开始调兵应对边境攻势。',
     },
   },
   {
@@ -504,16 +504,16 @@ export const SCRIPT_EVENTS: GameEvent[] = [
     order: 3,
     avatar: '🌾',
     name: '大顺立国',
-    text: '李自成陷关中，建国号大顺。陕西巡按请传首勤王，兵科请督师出关；督抚都说：山西、河南都撑不住了。',
+    text: '李自成占据关中，建国号大顺。陕西急报催请各路军队勤王，兵科请求命督师出关迎敌；山西、河南的督抚却都说，本省兵粮已快撑不住了。',
     left: {
       label: '调江南兵粮北伐',
       effects: { gold: -16, army: -8, people: 8, court: 2, law: -4 },
-      response: '倾国往讨，饷尽兵疲。东南粮船入直沽渐少，晋、秦已无饷。',
+      response: '江南兵粮奉命北上，长途征调却耗去大笔银钱。运抵天津的粮船越来越少，山西、陕西前线仍领不到足额军饷。',
     },
     right: {
       label: '就地守御自保',
       effects: { gold: 4, army: -12, people: -10, court: 6, law: 4 },
-      response: '守益固，饷不增。三载为期。',
+      response: '各地奉命守住现有城池，朝廷暂不再花钱远征。可城外村镇接连失守，守军又等不到增饷，谁也不敢保证还能撑多久。',
     },
   },
   {
@@ -531,7 +531,7 @@ export const SCRIPT_EVENTS: GameEvent[] = [
     right: {
       label: '派文官节制他',
       effects: { court: 6, law: 6, army: -8, gold: 4 },
-      response: '督抚经镇如弈。中后所、宁远，非复国家有矣。',
+      response: '文官奉命监督吴三桂，朝廷多了一道核查军务的手续。可督抚与总兵争执不休，中后所、宁远的将士常常等不到一致的军令。',
     },
   },
 
@@ -543,17 +543,17 @@ export const SCRIPT_EVENTS: GameEvent[] = [
     requires: ['yuan-free'],
     avatar: '🧱',
     name: '袁崇焕请修大凌河',
-    text: '袁崇焕不曾下狱，仍在辽东任事。他上疏请在大凌河筑城屯田，把防线推进到广宁旧境；阁臣谏阻：向者夸口五年平辽，今又假全权于边外，且饷尽于三城之地。',
+    text: '袁崇焕没有下狱，仍在辽东任职。他请求在大凌河筑城屯田，向广宁方向推进防线。阁臣反对：他曾夸口五年平辽，如今又要增兵增饷，朝廷恐怕供不起这几座城。',
     left: {
       label: '准他筑城屯田',
       effects: { army: 10, gold: -12, law: -4, court: -4 },
-      response: '城工起于大凌河，屯田继之。锦州、松山之间始有耕垒——虏骑岁扰此三城，太仓岁耗此三城。',
+      response: '大凌河开始筑城，军户随后开垦屯田。前线多了据点，可敌骑连年侵扰，朝廷每年都得拨出大笔银粮守住这些城。',
       sets: ['yuan-alive'],
     },
     right: {
-      label: '饷绌，只守宁远',
+      label: '不增军饷，收缩防线',
       effects: { gold: 6, court: 2, army: -6, law: 2 },
-      response: '饷不出关，城不越远。疏留中不报，崇焕退保宁远、锦州一线——他从此只是个守边的人。',
+      response: '你没有拨出增修城池的经费，袁崇焕只能守住宁远、锦州一线。国库暂时省下银钱，向外推进的计划也搁置了。',
       sets: ['yuan-alive'],
     },
   },
@@ -564,7 +564,7 @@ export const SCRIPT_EVENTS: GameEvent[] = [
     requires: ['post-kept'],
     avatar: '🐫',
     name: '银川驿的驿卒',
-    text: '驿站既未大裁，缺额仍要募兵补。延绥巡抚报上籍册：银川驿驿卒李鸿基，酒后杀了督队官，按逃兵律当逮，今已在外。捕状与募册同案送到。',
+    text: '驿站保住了，延绥军中却仍缺兵。巡抚送来两份文书：募兵册上写着原银川驿驿卒李鸿基，捕令里也有他的名字，说他牵涉杀督队官的旧案，仍在逃亡。巡抚请你决定是否招他入伍。',
     left: {
       label: '招他入延绥军',
       effects: { army: 4, law: -6, gold: -4, people: 6 },
@@ -574,7 +574,7 @@ export const SCRIPT_EVENTS: GameEvent[] = [
     right: {
       label: '发兵捕拿',
       effects: { army: -4, court: 4, people: -6, gold: -6 },
-      response: '捕牒下于陕西各府。逸犯逾墙走，山谷中自此多一面「闯」字旗号。',
+      response: '捕令发到陕西各府，李鸿基却又逃过追兵。山谷中的流寇接纳了他，官军没能把人带回。',
     },
   },
   {
@@ -603,16 +603,16 @@ export const SCRIPT_EVENTS: GameEvent[] = [
     requires: [{ flag: 'exec', min: 3 }],
     avatar: '🍶',
     name: '督抚托病',
-    text: '几年之间，督抚相继就逮、弃市。新任的边才称病不肯受印，外补的巡抚留京不发；吏部的催赴牌到了门上，其人已从后门走了。',
+    text: '几年间，多位督抚被捕处死。如今新任边将称病不肯接印，外派巡抚也拖在京城不走。吏部派人催他们赴任，有人竟从后门躲了出去。',
     left: {
-      label: '宽恤前罪，责成后效',
+      label: '宽免旧过，准其立功补救',
       effects: { law: 8, court: -6, army: 6, gold: -4 },
       response: '诏曰「往者不可追」。起复者衔恩赴镇，人言谓上宽而法弛——城上到底又站了人。',
     },
     right: {
       label: '仍按前罪追究',
       effects: { court: 8, law: -10, army: -8, people: -2 },
-      response: '堂上官接本即失色。自是以不赴任为智，以养寇为功，封疆之吏半成传舍。',
+      response: '官员一见问罪的公文就变了脸色。有人宁肯拖着不赴任，有人留着敌患为自己求饷保官，边地督抚频繁更换，防务无人长期负责。',
       sets: ['exec'],
     },
   },
@@ -623,7 +623,7 @@ export const SCRIPT_EVENTS: GameEvent[] = [
     requires: ['yuan-alive'],
     avatar: '🏹',
     name: '松山对垒',
-    text: '围锦州的虏兵屯于松山。袁崇焕督诸军往援，说可先驻塔山、以步制骑，坚壁勿与战；催战的敕书日内将至，兵部也盼一快。',
+    text: '围攻锦州的清军也在松山一带驻兵。袁崇焕率各军来援，请先驻守塔山，依托营垒抵挡骑兵，等粮草接上再战。兵部却催他尽快解围，催战诏书正等你落笔。',
     left: {
       label: '催他即刻解围',
       effects: { army: -14, court: 8, law: -6, gold: -8 },
@@ -632,7 +632,7 @@ export const SCRIPT_EVENTS: GameEvent[] = [
     right: {
       label: '许他缓守一年',
       effects: { army: 8, court: -8, law: -6, gold: -14 },
-      response: '转饷续援，岁费巨万。锦州、松山相为犄角，虏不得其隙；朝中则交章劾以「费饷养寇」。',
+      response: '朝廷继续运粮增援，花去大笔军费。锦州、松山互相策应，清军一时找不到突破口；朝臣却纷纷弹劾袁崇焕「费饷养寇」。',
     },
   },
   {
@@ -641,15 +641,15 @@ export const SCRIPT_EVENTS: GameEvent[] = [
     order: 2,
     avatar: '📯',
     name: '与虏密议',
-    text: '松山军前忽得虏书：愿「划界东西，各守其土」，条件是岁币百万。此书不敢入内阁，递本的兵部尚书陈新甲夜里进宫。',
+    text: '松山前线收到清方来信，愿划界停战，条件是明朝每年付银一百万两。兵部尚书陈新甲不敢把信交给内阁，夜里独自进宫，请你决定是否秘密谈判。',
     left: {
-      label: '命他密议，成算在朕',
+      label: '准他密谈，由朕担责',
       effects: { gold: 12, army: 6, court: -8, law: -8 },
-      response: '密旨不经内阁，和议始于帷中。省下的饷，够孙传庭再练一年秦兵。',
+      response: '陈新甲奉密旨接触清方，内阁没有参与。朝廷暂缓一批进攻军费，省下的钱可拨作练兵之用，停战的条件却仍待谈妥。',
       sets: ['peace-talks'],
     },
     right: {
-      label: '明诏拒之，以谢天下',
+      label: '公开拒绝和议',
       effects: { court: 8, law: 4, army: -6, gold: -8 },
       response: '虏书焚于殿前，名分则正矣。辽饷仍日出——你从此只有一条路可走。',
     },
@@ -661,17 +661,17 @@ export const SCRIPT_EVENTS: GameEvent[] = [
     requires: ['peace-talks'],
     avatar: '📕',
     name: '和议事泄',
-    text: '陈新甲与虏往来十余次，幕友误付抄传，邸报一下，言官交章。会辽东又报：虏酋暴亡，正白、两黄旗按剑相持。内阁请旨三事：和议果有之乎？主之者谁？可否执新甲以谢天下？',
+    text: '陈新甲与清方多次通信，幕僚误把密信交人传抄，和议消息就此泄露。言官纷纷上疏问罪，辽东又传来皇太极去世、清廷争位的消息。内阁追问：谈判是谁批准的，要不要拿陈新甲治罪？',
     left: {
       label: '认下此议，保陈新甲',
       effects: { gold: 10, army: 6, court: -10, law: -6 },
-      response: '谕曰：兵机得失，朕自任之。新甲留任，和议不辍。外廷皆谓国是出自中旨——关外的兵，却真省下来了。',
+      response: '你公开承认议和出自授意，陈新甲得以留任，继续与清方商谈。边境攻势暂缓，朝廷省去部分军费；外朝却指责你绕过内阁决定大事。',
       sets: ['peace-kept'],
     },
     right: {
       label: '斩新甲以掩其迹',
       effects: { court: 6, law: -10, gold: -6, army: -6 },
-      response: '新甲弃市，和议之迹尽湮。虏亦不复以为信，还兵攻锦。你从此再无人肯受密旨。',
+      response: '陈新甲被处死，朝廷拒不承认曾准许议和。清军不再相信来使，重新发起攻势；朝中也再没人愿意替你办这样的密差。',
       sets: ['exec'],
     },
   },
@@ -682,16 +682,16 @@ export const SCRIPT_EVENTS: GameEvent[] = [
     requires: ['peace-kept'],
     avatar: '🗡️',
     name: '传庭练兵',
-    text: '关宁之饷既省，孙传庭在西安募秦兵数万，造车营、习火器，疏言三年而后敢言战。催战的部文与请战的疏章，同日到京。',
+    text: '边境停战省下一部分军费，孙传庭用这笔钱在西安招募秦兵，编练战车、火器部队。他说还需练兵三年才有把握出战，兵部却催着要他尽快东进，两份奏报一同摆在御案上。',
     left: {
       label: '催他即刻东出',
       effects: { army: -8, court: 6, law: -4, gold: -6 },
       response: '檄符三下。传庭泣疏：「兵聚而未更战阵，未可用也。」——你读过这句话的下文。',
     },
     right: {
-      label: '守关中，俟其敝',
+      label: '守住关中，继续练兵',
       effects: { army: 12, gold: -8, court: -6, law: 6, people: 4 },
-      response: '诏曰：秦兵未可轻用。饷岁增，兵岁习；贼亦以秦军未至为缓。',
+      response: '你准许秦兵留守训练，继续拨饷供给。孙传庭不必带新兵仓促上阵，可中原流寇也因此得到了一段喘息时间。',
       sets: ['chuanting-wait'],
     },
   },
@@ -702,16 +702,16 @@ export const SCRIPT_EVENTS: GameEvent[] = [
     requires: ['lz-absorbed'],
     avatar: '🏕️',
     name: '闯营无主',
-    text: '李鸿基既隶延绥军籍，闯营旧部群龙无首：张献忠自称八大王，罗汝才、马守应各拥其众，降而复叛、叛而复降。陕西巡抚请定抚剿之方。',
+    text: '李鸿基已经编入延绥军，原属闯营的兵马失了统一号令。张献忠、罗汝才、马守应各带一支人马，有时投降，有时又起兵。陕西巡抚请求定下办法：给降众生计，还是继续追剿？',
     left: {
       label: '以工代赈，就地屯田',
       effects: { gold: -14, people: 16, army: 2, law: 4 },
       response: '赈粮易民力，荒田有主。山中寇众渐散为屯户，册上报「关中底定」——这一回，不全是假话。',
     },
     right: {
-      label: '仍按剿例追兵',
+      label: '继续派兵追剿',
       effects: { army: -6, people: -10, gold: -4, court: 4 },
-      response: '诸降卒复叛，散而之他。追兵所过，民居为之一空，空者又尽为贼。',
+      response: '降兵再度逃散，转投别处流寇。官军追过村庄，百姓怕遭抢粮也纷纷离家，其中又有人为求口粮加入乱军。',
     },
   },
 ]
@@ -726,7 +726,7 @@ export const RANDOM_EVENTS: GameEvent[] = [
     left: {
       label: '买夷炮募夷匠',
       effects: { gold: -12, army: 12, court: 2, law: 2 },
-      response: '大炮上城头，虏不敢近。只是炮匠皆通夷语，教习之费，一年又万金。',
+      response: '新炮架上城头，敌骑不敢轻易靠近。朝廷还得雇翻译、请炮匠教兵丁操作，每年又要付一笔教习费。',
     },
     right: {
       label: '只用旧火器',
@@ -738,11 +738,11 @@ export const RANDOM_EVENTS: GameEvent[] = [
     id: 'r-lixi',
     avatar: '✝️',
     name: '修历之争',
-    text: '耶稣会龙华民、汤若望等请开历局修新历；钦天监旧官合疏拒之。',
+    text: '龙华民、汤若望等传教士请求设立历局，重新编修历法。钦天监的旧官员联名反对，认为不该让外国人接手此事。',
     left: {
       label: '开历局修新历',
       effects: { gold: -6, court: 4, law: 4, people: 2 },
-      response: '新历成，推算朔食渐有准。旧历官退舍，而西法聚讼未息。',
+      response: '新历对月相和日食的推算更准了。旧历官让出了编历的差事，朝中对西洋算法的争论却没有停。',
     },
     right: {
       label: '守大统历不改',
@@ -754,27 +754,27 @@ export const RANDOM_EVENTS: GameEvent[] = [
     id: 'r-zonglu',
     avatar: '🏘️',
     name: '宗藩禄米',
-    text: '户部言：天下岁赋，半给宗藩。洪武子孙今已数十万，禄米日增。',
+    text: '户部上奏：皇室子孙已有数十万人，每年供养他们的银粮越来越多，已挤占大笔税收。边军又在催饷，户部请求削减宗室的供养。',
     left: {
       label: '核减宗藩禄米',
       effects: { gold: 14, court: -10, law: -4, army: 6 },
-      response: '各府禄米大减，宗室诣阙哭于太庙。辽饷却实增了几十万。',
+      response: '各王府的供养银粮削减，宗室赶到京城，在太庙哭诉你违背祖训。户部把省下的几十万两拨给了辽东边军。',
     },
     right: {
       label: '恪守祖训不减',
       effects: { gold: -6, court: 8, law: 8, people: -4 },
-      response: '宗藩生齿日繁，禄米仰给日绌。河南甚至「贫宗呼博」。',
+      response: '宗室人口越来越多，朝廷虽答应照旧供养，却已难以按数发足。河南一些贫寒宗室甚至靠赌博谋生。',
     },
   },
   {
     id: 'r-cao',
     avatar: '⛵',
     name: '漕运受阻',
-    text: '黄河淤，漕舟阻。总河请帑挑浚；户部议改海运，以闽船任之。',
+    text: '黄河淤塞，运粮船堵在途中。河道总督请求朝廷拨银疏浚，户部则建议雇福建海船，把这批粮从海上运往京师。',
     left: {
-      label: '发帑挑浚河道',
+      label: '拨银疏浚河道',
       effects: { gold: -12, people: 8, court: 4, law: 2 },
-      response: '河道得通，挽输无虞。挑河夫役死者亦以千计。',
+      response: '河道疏通后，粮船终于能继续北上。可清淤征发了大批民夫，因劳累和事故死去的人数以千计。',
     },
     right: {
       label: '这批粮改走海运',
@@ -786,43 +786,43 @@ export const RANDOM_EVENTS: GameEvent[] = [
     id: 'r-mashi',
     avatar: '🐎',
     name: '关市马价',
-    text: '北虏款关求市，以茶布易马，且请授其酋以官。',
+    text: '蒙古部落来到边关，请求拿马匹换茶叶和布匹，还想让朝廷授给部落首领官职。边军缺马，官员却担心往来商队探听到边防虚实。',
     left: {
       label: '授官开市买马',
       effects: { gold: -6, army: 10, court: -2, law: 4 },
-      response: '马日肥而边少事。诸酉渐通汉语、渐知中国虚实。',
+      response: '边军买到了好马，边境冲突也少了。只是往来的部落首领渐通汉语，对明军的兵力和粮储也越来越熟悉。',
     },
     right: {
       label: '压低马价',
       effects: { law: -4, gold: 6, army: -8 },
-      response: '省了一价之直，瘦了一群之马，虏酋不乐，边市渐废。',
+      response: '朝廷买马上少花了钱，部落却不肯再送好马来。首领们对压价不满，边市生意渐渐冷清。',
     },
   },
   {
     id: 'r-yan',
     avatar: '🧂',
     name: '两淮盐政',
-    text: '两淮盐引壅积，巡盐御史请增价济度支；灶户流亡，苦不堪言。',
+    text: '两淮官盐卖不动，售盐凭证积压，煮盐人家也纷纷逃走。巡盐御史仍想抬高官盐售价，用多收的钱补军饷；另一派官员请求减轻盐户负担，维持平价。',
     left: {
-      label: '加盐价济饷',
+      label: '提高盐价补军饷',
       effects: { law: -6, gold: 12, people: -10 },
-      response: '盐贵则民淡食，而度支稍舒。',
+      response: '盐税多收了一笔，户部暂能补上部分军费。百姓买不起盐，只好把饭菜做得更淡。',
     },
     right: {
-      label: '恤灶户平盐价',
+      label: '减轻盐户负担，维持平价',
       effects: { law: 6, gold: -6, people: 10 },
-      response: '盐贱商悦、灶户得所，然度支又少一孔。',
+      response: '盐价没有再涨，盐户少受一轮催逼，商人也有了销路。户部却少了原想用来补饷的这笔收入。',
     },
   },
   {
     id: 'r-jinyi',
     avatar: '🦅',
     name: '锦衣密疏',
-    text: '锦衣卫密疏：兵部侍郎某与敌阴通，书证俱在。',
+    text: '锦衣卫呈上密报，指控一名兵部侍郎私通敌军，声称握有往来书信。案卷尚未送交法司核验，他们就请你下旨拿人。',
     left: {
       label: '立刻逮捕审问',
       effects: { court: 6, law: -8, army: -6, gold: 10 },
-      response: '簿录党羽，通敌之实未得。边枢诸臣，人人自危。',
+      response: '锦衣卫按名单抄没了被指为同党的官员家产，银子入了官库，通敌的实证却仍未查出。兵部官员人人自危。',
     },
     right: {
       label: '烧掉密疏不查',
@@ -834,7 +834,7 @@ export const RANDOM_EVENTS: GameEvent[] = [
     id: 'r-jiangyan',
     avatar: '📖',
     name: '经筵日讲',
-    text: '内阁请循例举行经筵日讲，讲官以上，并及边事、民困诸题。',
+    text: '内阁请求照例安排官员给你讲经读史，也借讲课讨论边防和百姓生计。这些讲席要花钱置办宴席，户部已催着削减宫中支出。',
     left: {
       label: '照常经筵日讲',
       effects: { gold: -2, court: 4, law: 6, people: 6 },
@@ -850,87 +850,87 @@ export const RANDOM_EVENTS: GameEvent[] = [
     id: 'r-zhizao',
     avatar: '🧵',
     name: '苏杭织造',
-    text: '苏杭织造中官请以「上用」益机三张，且先输「羡余」五万两。',
+    text: '主管苏杭织造的太监，以替宫中织造为由，请添设三张织机，还答应先向内库交五万两「羡余」。他把这笔钱说成办差的结余，地方却担心最终又要向织户摊派。',
     left: {
       label: '退回贡物罢新机',
       effects: { gold: -4, people: 8, court: 2, law: 6 },
-      response: '机额如旧，织监怨望。江南士民颂上俭德。',
+      response: '你不准添织机，也退回了那笔额外贡银。织造太监失了邀功的机会，江南百姓却少受一轮摊派，称赞你节俭。',
     },
     right: {
       label: '添机收下羡余',
       effects: { gold: 12, people: -8, court: -4, law: -10 },
-      response: '羡余入内库。吴下加派及于额，织造自请兼榷关之利。',
+      response: '五万两银子进了内库，苏州织户的摊派也跟着增加。织造太监又请求兼管关税，想把更多财源握在手里。',
     },
   },
   {
     id: 'r-keju',
     avatar: '🖋️',
     name: '时务科',
-    text: '礼部题准下科会试。有御史请增「时务策」五道，专论盐、漕、河、马、兵。',
+    text: '礼部正在准备下一科会试。有御史建议加考五道实务题，让考生谈谈盐税、运粮、治河、养马和用兵，别只考经书文章。',
     left: {
       label: '加试时务策',
       effects: { gold: 6, army: 4, people: 4, court: -2, law: -2 },
-      response: '新科多晓事之才。帖括之士怨望，以为祖制坏矣。',
+      response: '新录取的进士中，多了一批懂政务的人。只擅长八股文章的考生却不服，指责朝廷坏了祖宗的取士规矩。',
     },
     right: {
       label: '一依旧章出题',
       effects: { court: 6, law: 6, people: -2 },
-      response: '场屋如常，得士皆能作锦绣文；度支河漕之问，仍无人能对。',
+      response: '会试照旧考经书文章，新科进士文辞漂亮。可问起怎样筹钱、治河、运粮，仍少有人答得出来。',
     },
   },
   {
     id: 'r-xianxian',
     avatar: '🫖',
     name: '一块粗布',
-    text: '河南某知县入觐后期，仅持粗布一端、土果一裹为献；守令多厚赆者。',
+    text: '一名河南知县进京朝见迟到了，只带一匹粗布和一包本地果子。别的地方官多带厚礼，他却说自己一向不向百姓多收钱，实在备不起贵重贡物。',
     left: {
       label: '表彰提拔清官',
       effects: { court: 4, law: 6, people: 10, gold: 2 },
-      response: '廉能知县，越次召对。中朝请托之门，一时敛迹。',
+      response: '你破格召见并提拔这名清廉知县。官员见送厚礼未必得宠，进京托人求官的风气暂时收敛了。',
     },
     right: {
       label: '处罚迟到的知县',
       effects: { court: 6, law: -4, people: -8 },
-      response: '有司以为上好货贿。清与不肖，同归于差遣而已。',
+      response: '你按迟到之罪罚了知县，官场却传成他因礼薄获罪。官员进京更忙着筹礼，清廉与否反倒无人过问。',
     },
   },
   {
     id: 'r-chaoxianyin',
     avatar: '🧺',
     name: '客兵抢粮',
-    text: '入卫之客兵掠畿南，仓粮为之一空；有司不敢阻，请上区处。',
+    text: '外地调来保卫京师的军队，在京城以南抢走了官仓粮食。地方官不敢阻拦，请你决定：拨内库银赏军，劝他们离开，还是拒绝赏银、下令制止抢掠？',
     left: {
-      label: '发内帑赏客兵',
+      label: '拨内库银赏军',
       effects: { law: -6, gold: -10, army: 10, people: -4 },
-      response: '客兵出境时呼「万岁」。只是州县又加派矣。',
+      response: '军队领了内库赏银，离开时高呼万岁。被抢空的地方官仓却没有补上，州县又向百姓摊派补粮。',
     },
     right: {
-      label: '拒赏钱压住哗变',
+      label: '拒绝赏银，下令止掠',
       effects: { gold: 2, court: 4, law: 6, army: -10 },
-      response: '哗兵过境如蝗。边兵自此以「勤王」为市。',
+      response: '军队拒不听令，沿途继续抢粮。京师虽未付出赏银，却也没能制止哗变；有些边军从此把勤王当成向朝廷讨价的机会。',
     },
   },
   {
     id: 'r-taijian',
     avatar: '🌟',
     name: '客星犯心',
-    text: '钦天监台官密奏：客星犯心宿，其应在辽。阁臣留中，谓「边事重，此等不可闻」。',
+    text: '钦天监密报：心宿附近出现异星，按占星的说法，辽东恐有变故。阁臣不愿公开这封奏报，怕边军听了动摇；兵部则请借此检查边防粮仓。',
     left: {
-      label: '专心修人事',
+      label: '不传星象，照常办政务',
       effects: { court: 4, law: -4, gold: 2 },
-      response: '星异止于奏留。辽事不待星而日蹙。',
+      response: '星象奏报留在宫中，没有传出去。辽东的缺兵少粮却不是天象造成的，边报仍一封比一封紧急。',
     },
     right: {
       label: '整顿边防仓储',
       effects: { law: 4, army: 6, gold: -6 },
-      response: '边储渐实。有司曰：「朝廷闻客星而增堉乎？」',
+      response: '朝廷拨银补充边仓，守军终于多了些储粮。管仓的官员私下嘀咕：催了许久的粮，竟要等一颗异星才肯拨。',
     },
   },
   {
     id: 'r-jiuku',
     avatar: '🗝️',
     name: '牢里的冤狱',
-    text: '刑科都给事中言：两京狴犴尘满，冤滞者多，请会鞫直省冤狱。',
+    text: '刑科官员上奏：北京、南京的监牢积压着许多多年未结的案子，有人含冤关押至今。他请求召集法司复查各省积案，查明该放哪些人。',
     left: {
       label: '清积案出冤囚',
       effects: { gold: 4, people: 10, court: 2, law: 10 },
@@ -939,14 +939,14 @@ export const RANDOM_EVENTS: GameEvent[] = [
     right: {
       label: '照旧关着不放',
       effects: { gold: 2, court: -4, law: -10, people: -8 },
-      response: '囹圄充塞，狱气熏为疵疠。',
+      response: '积案无人复查，监牢越关越挤。囚犯缺衣少食，病倒的人也越来越多。',
     },
   },
   {
     id: 'r-niujie',
     avatar: '🐂',
     name: '宰牛之禁',
-    text: '凶年民多宰耕牛以食。律：宰牛者徒。按察使请一切论如律。',
+    text: '灾年里，不少百姓饿得宰了耕牛充饥。律法规定，私宰耕牛要判徒刑。按察使请求一律处罚，可灾民若不吃牛肉，眼下又无粮可吃。',
     left: {
       label: '放开宰牛禁令',
       effects: { law: -8, gold: -2, people: 12, army: -4 },
@@ -962,43 +962,43 @@ export const RANDOM_EVENTS: GameEvent[] = [
     id: 'r-piaoning',
     avatar: '🕯️',
     name: '内阁票拟',
-    text: '章奏填委，上自览批，至夜分不寐。阁臣请得如阁故事，票拟以进。',
+    text: '奏疏堆满御案，你逐本亲批，常忙到半夜。阁臣请求恢复旧例：由内阁先拟处理意见，你再决定是否照办，不必事事从头审阅。',
     left: {
       label: '章奏仍旧亲批',
       effects: { court: 6, law: -6, army: 4, people: 2, gold: -2 },
-      response: '上宵旰勤劳，事无大小皆自上出。阁部奉行文书，不置可否。',
+      response: '你仍从早忙到深夜，大小事务都亲自裁决。内阁和六部只等御批，不再主动提出不同意见。',
     },
     right: {
       label: '交内阁票拟',
       effects: { court: -8, law: 8, gold: 4, people: 2 },
-      response: '票拟尽委阁臣。阁部互市恩威。',
+      response: '内阁先拟意见，积压的奏疏处理得快了。可阁臣也借这道手续照顾亲近官员，各部纷纷上门求情。',
     },
   },
   {
     id: 'r-qingshang',
     avatar: '🎋',
     name: '国子生伏阙',
-    text: '南监诸生伏阙讼师友，鼜鼓声彻禁中。九门使请逐之。',
+    text: '南京国子监的一批学生来到京城，跪在宫门外，敲鼓为获罪的师友申冤。守门官怕人越聚越多，请求驱散他们。',
     left: {
       label: '把生员下狱',
       effects: { court: 8, law: 4, people: -8 },
-      response: '诸生屏迹，台谏风生。只是朝廷失天下士心，渐矣。',
+      response: '学生被关进牢里，宫门前安静了。言官仍不断上疏争论，读书人对朝廷的怨言也越来越多。',
     },
     right: {
       label: '嘉奖他们敢言',
       effects: { court: -6, law: -4, people: 10 },
-      response: '诸生归学，清议遂盛。异日「品题将相」，亦始于此。',
+      response: '学生获准回学舍，公开议论朝政的人多了起来。朝廷听到了更多批评，也有官员担心士人借声望左右官员任免。',
     },
   },
   {
     id: 'r-daoge',
     avatar: '🎵',
     name: '街上的歌',
-    text: '游方瞽者弦歌入市：「输尽辽饷贼转来，大门自己打开了。」总旗执以来。',
+    text: '一个流浪的盲人歌手在街头弹唱：「输尽辽饷贼转来，大门自己打开了。」巡街军官认为他在煽动民怨，将他抓来请你发落。',
     left: {
       label: '放了唱歌的人',
       effects: { court: 4, law: 6, people: 6 },
-      response: '歌益传于道。你记得这首歌——三年之后，它成了谶。',
+      response: '歌手获释，街上学唱的人反而更多。官员能放走一个唱歌的人，却还没有解决歌里抱怨的重税与兵乱。',
     },
     right: {
       label: '打一顿板子',
@@ -1010,7 +1010,7 @@ export const RANDOM_EVENTS: GameEvent[] = [
     id: 'r-taizi',
     avatar: '🧒',
     name: '册立东宫',
-    text: '元子渐长。辅臣请择端士开讲东宫，且请豫教以定大本。',
+    text: '皇长子渐渐长大。辅臣请求早立太子，挑选品行端正的老师教他读书理政，让朝臣和百姓知道将来由谁继位。',
     left: {
       label: '早立太子勤加教导',
       effects: { gold: -6, court: 10, law: 6, people: 6 },
@@ -1019,18 +1019,18 @@ export const RANDOM_EVENTS: GameEvent[] = [
     right: {
       label: '暂缓立太子',
       effects: { court: -6, law: -8, people: -4, army: -2 },
-      response: '储位久虚。外间渐有「玉牒待举」之语，非佳谶。',
+      response: '太子迟迟未立，朝中开始猜测皇帝是否另有人选。继位之事没有定下来，流言反而越传越多。',
     },
   },
   {
     id: 'r-shinü',
     avatar: '🏮',
     name: '选市民女',
-    text: '内官监请以「上用」为由，选民间女史三百人。',
+    text: '内官监说宫中缺人伺候，请从民间选三百名女子入宫。采选的差役已经下到坊间，许多人家为此匆忙嫁女。',
     left: {
       label: '停止采选',
       effects: { gold: -2, people: 10, court: 2, law: 4 },
-      response: '宫女放归者数百。坊间有「圣德」之谣。',
+      response: '已经被集中待选的女子获准回家，差役不再逐户挑人。许多人家终于松了口气，街坊也传开了称颂你的歌。',
     },
     right: {
       label: '照选三百人',
@@ -1042,7 +1042,7 @@ export const RANDOM_EVENTS: GameEvent[] = [
     id: 'r-mijia',
     avatar: '🍚',
     name: '京师米贵',
-    text: '京师米翔贵，银贱物贵。五城御史请以次发仓平粜。',
+    text: '京师米价不断上涨，同样一两银子能买到的粮越来越少。五城御史请求分批出售官仓存粮，用较低的价格压住市价。',
     left: {
       label: '开仓平抑米价',
       effects: { gold: -8, people: 10, court: 2, law: 4 },
@@ -1058,7 +1058,7 @@ export const RANDOM_EVENTS: GameEvent[] = [
     id: 'r-tuanlian',
     avatar: '⛩️',
     name: '团练',
-    text: '河南乡绅自结堡寨以拒「流贼」，请「官吏不得入门」；巡抚畏其违例，两难。',
+    text: '河南乡绅想自筑堡寨、招募乡兵抵挡流寇，却要求官吏不得进寨查问。巡抚担心他们拥兵自立，又怕禁了团练，村庄便无人保护。',
     left: {
       label: '准许乡绅办团练',
       effects: { law: -8, gold: -2, army: 10, people: 2 },
@@ -1074,59 +1074,59 @@ export const RANDOM_EVENTS: GameEvent[] = [
     id: 'r-zhaozhe',
     avatar: '🪧',
     name: '骁将请降',
-    text: '边报：「流营骁将某，请举所部降。」兵部：许之则饷无所出；拒之则为渊驱鱼。',
+    text: '军报说，流寇中一名勇将愿率全营投降。兵部左右为难：收编就要另筹军饷，拒绝又会把这支人马推回敌营。',
     left: {
       label: '接受他投降',
       effects: { gold: -6, army: 8, court: -4, law: 2 },
-      response: '降者至。诸镇渐知：「降」字可骗饷、可养寇。',
+      response: '降兵入营，朝廷拨钱供养，官军多了一支人马。可有些将领也看出了空子，开始虚报收编人数，借招降多领军饷。',
     },
     right: {
       label: '严词拒绝',
       effects: { court: 4, law: -4, army: -4, people: 2 },
-      response: '使者归而尽泄机议。其人复入「流」中。',
+      response: '使者回营后，把沿途打探到的官军部署告诉了头领。这支人马没有归降，继续随流寇作战。',
     },
   },
   {
     id: 'r-bianmao',
     avatar: '🐪',
     name: '关外私贩',
-    text: '关外米豆私贩，「以济边亦以资虏」。抚臣两难：禁之则边食贵，弛之则资敌。',
+    text: '商人私运粮豆出关，既卖给明军边镇，也卖给敌军。巡抚担心禁运会让边镇粮价上涨，放任不管又会资敌，请你决定如何处置。',
     left: {
       label: '改官府办贸易',
       effects: { law: 6, gold: -4, army: 8, people: 4 },
-      response: '官籴边食。关内外米豆流通，价平兵饱。',
+      response: '官府出钱收购粮豆，统一运往边镇。守军有粮可吃，关外粮价也平稳下来。',
     },
     right: {
       label: '一律严禁',
       effects: { gold: -6, army: -6, court: 4, law: -2 },
-      response: '商贾斩尽、米豆不至，边镇哗然。',
+      response: '官府严惩私贩，商人不敢再运粮出关。边镇粮价暴涨，守军缺粮，纷纷向朝廷讨要接济。',
     },
   },
   {
     id: 'r-qianzhuang',
     avatar: '🧧',
     name: '叙功赏银',
-    text: '叙功赏赉之费日繁；督抚入觐亦以赏赉为市。户部请以军功升赏折色减半。',
+    text: '军功赏银越发越多，督抚进京也忙着替部下求赏。户部请求把赏银减半，改用升职补偿，免得国库无力支付。',
     left: {
       label: '削减赏功银',
       effects: { gold: 10, army: -8, court: 2, law: -6, people: 2 },
-      response: '诸军失望。以「升」代「赏」，将日多而兵日少。',
+      response: '将士领到的赏银少了一半，升职也抵不了家里的米钱。军中官衔越来越多，肯卖命的士兵却越来越少。',
     },
     right: {
       label: '全依旧例照赏',
       effects: { gold: -8, army: 8, court: -2, law: 8 },
-      response: '赏行而威立。只是太仓之粟，不足以供三年之赏。',
+      response: '赏银照数发下，将士相信朝廷说话算数。可国库现银有限，照这样发赏，几年内就会难以为继。',
     },
   },
   {
     id: 'r-lingmiao',
     avatar: '🏛️',
     name: '皇陵浸水',
-    text: '凤阳皇陵霖潦浸垣。留守请帑缮之。',
+    text: '凤阳连日大雨，皇陵围墙被积水浸坏。负责守陵的官员请求朝廷拨银修缮，户部却说眼下处处都在要钱。',
     left: {
       label: '拨银修皇陵',
       effects: { gold: -10, court: 6, law: 4, people: 4 },
-      response: '陵工既竣，人情大慰。只是庐、寿间「掘冢」之谣，起于里下。',
+      response: '皇陵修好了，守陵官员和当地百姓稍稍安心。可庐州、寿州一带仍有乱军掘墓的传闻，修墙不能让兵乱停下。',
     },
     right: {
       label: '缓一缓再说',
@@ -1138,32 +1138,32 @@ export const RANDOM_EVENTS: GameEvent[] = [
     id: 'r-zhongdu',
     avatar: '🔔',
     name: '厂卫办案',
-    text: '内厂缉事。顺天府民「坐告私史」，请谪戍。',
+    text: '厂卫接到告发，说顺天府一名百姓私自编写史书、议论朝政。他们请求将此人发配边地充军，案卷已经送到御前。',
     left: {
       label: '宽免被告的人',
       effects: { people: 8, court: -4, law: 8 },
-      response: '告讦渐息。野史仍行于坊肆。',
+      response: '写史的百姓获释，书坊仍能出售民间史书。靠告发别人求赏的人，暂时少了一些。',
     },
     right: {
       label: '照厂卫的话办',
       effects: { law: -10, gold: 4, people: -10, army: -2 },
-      response: '告讦之风复炽。人人得而诛心。',
+      response: '被告发的人遭抄家发配，家产收入官库。告密的人更多了，连私下说过的一句话，也可能被拿来指控不忠。',
     },
   },
   {
     id: 'r-tianxun',
     avatar: '🌦️',
     name: '灾异宽恤',
-    text: '夏淫雨，霜杀禾，有司皆请宽恤。户部：惟加征如期。',
+    text: '夏季连日暴雨，又有霜冻伤了庄稼。地方官请求减免灾民欠税，户部却坚持旧欠和加征的钱粮都要按期收齐。',
     left: {
       label: '免掉拖欠赋税',
       effects: { gold: -10, people: 12, court: -2, law: -4 },
-      response: '逋赋者散。催科与抚字，两字难以相兼。',
+      response: '拖欠税粮的灾户获准免缴，不必再躲催税差役。户部却少了一笔收入，原定开支还得另找钱。',
     },
     right: {
       label: '限期追征旧欠',
       effects: { law: 6, gold: 12, people: -14, army: 2 },
-      response: '钱粮比完，考成为最。只是「逃」字册中，又添若干丁口。',
+      response: '地方官限期催缴，税粮终于凑足，因此在考核中得了上等。可不少人家交税后断了口粮，逃户名册又厚了一层。',
     },
   },
   {
@@ -1174,7 +1174,7 @@ export const RANDOM_EVENTS: GameEvent[] = [
     left: {
       label: '借军车翻晒',
       effects: { gold: -5, people: 4, army: -2 },
-      response: '准借军车翻晒，工钱由官府支给。好粮保住了，原定运往营中的草料却晚了几日。',
+      response: '军营借出车辆，官府付工钱，把粮食运出去翻晒。好粮保住了，原定用这些车运往军营的草料却晚了几日。',
     },
     right: {
       label: '卖作牲口料',
@@ -1211,7 +1211,7 @@ export const RANDOM_EVENTS: GameEvent[] = [
     right: {
       label: '准包修收桥钱',
       effects: { gold: 4, people: -4, court: 2 },
-      response: '准富户包修，余下桥款拨回官库。地方官卸下一件急差，挑菜过桥的人却多了一笔开销。',
+      response: '富户出钱修桥，官府收回原先预留的修桥款。地方官不用再张罗施工，挑菜过桥的人却得向富户交钱，连交三年。',
     },
   },
   {
@@ -1222,7 +1222,7 @@ export const RANDOM_EVENTS: GameEvent[] = [
     left: {
       label: '排水赶工复采',
       effects: { gold: 7, people: -5, law: -2 },
-      response: '令矿头排水赶工，矿课总算照额入库。工期压得太紧，工伤也被写成了矿工失足。',
+      response: '矿头奉命排水赶工，采矿税款总算按数缴进官库。可工期太紧，有人受伤，矿头却把事故报成矿工自己失足。',
     },
     right: {
       label: '封掉下层矿道',
@@ -1234,14 +1234,14 @@ export const RANDOM_EVENTS: GameEvent[] = [
     id: 'r-qianse',
     avatar: '钱',
     name: '一串钱两种价',
-    text: '县库收到一批铜钱，颜色发白，铺户只肯折价收。钱局说停收会耽误解款，市民却怕官府按足钱征来，再把薄钱发给他们。',
+    text: '县库收到一批成色不足的铜钱，铺户只肯折价收。钱局说拒收会耽误向上缴款，百姓却担心官府收税时只要足值好钱，发钱时又拿劣钱抵数。',
     left: {
-      label: '验钱收回薄钱',
+      label: '验钱，收回劣钱换足值钱',
       effects: { gold: -5, law: 4, people: 2 },
-      response: '令钱局验收薄钱，兑换的亏空由官府承担。街上不再争钱色，库款却少了实在一截。',
+      response: '钱局收回劣钱，按足值换给持钱人，差额由县库补上。街上少了争执，官府也实实在在花去一笔钱。',
     },
     right: {
-      label: '准按旧数解款',
+      label: '不问成色，照数缴款',
       effects: { gold: 5, law: -4, people: -3 },
       response: '准这批铜钱照数入库，不问铺户折价。账面钱款足了，领钱的人却买不回同样的米。',
     },
@@ -1291,7 +1291,7 @@ export const RANDOM_EVENTS: GameEvent[] = [
     right: {
       label: '征果木抵船料',
       effects: { gold: 4, army: 3, people: -6, law: -2 },
-      response: '准料官就地取木，余款收回库中。船工如期开工，补偿却只按木料算，不管来年的果子。',
+      response: '料官征了果林，按木料价付给村民补偿，省下的外购和运费留在官库。船工如期开工，村民今后卖果子的收入却无人补偿。',
     },
   },
   {
@@ -1316,9 +1316,9 @@ export const RANDOM_EVENTS: GameEvent[] = [
     name: '灾棚里的孩子',
     text: '灾棚要撤，几十个失去父母的孩子还没人领。县里可借空屋继续供饭，也有富户愿领回家养，只是不肯让官差常来查问孩子的去向。',
     left: {
-      label: '留屋供养查亲',
+      label: '官府供养，派人寻亲',
       effects: { gold: -6, people: 6, court: -2 },
-      response: '留空屋供饭，另派人寻亲认领。孩子有了落脚处，地方官却抱怨这笔差事不知何时能结。',
+      response: '县里借屋供饭，派人寻找孩子的亲属。孩子有了落脚处，地方官却抱怨要长期安排人手和口粮，不知何时才能交差。',
     },
     right: {
       label: '交富户领养',
@@ -1330,16 +1330,16 @@ export const RANDOM_EVENTS: GameEvent[] = [
     id: 'r-shangbing',
     avatar: '伤',
     name: '伤兵等一口饭',
-    text: '一队伤兵退下阵来，已拿不动长枪，却还得养家。兵部请按伤情发口粮，关卡愿让他们看货收过路钱，说不用另添官府的开销。',
+    text: '一批伤兵已无法上阵，也失去了养家的生计。兵部请求拨粮抚恤；另一派官员主张让他们到关卡当差，向过路商旅收费，从中领取口粮，以省下朝廷的开销。',
     left: {
-      label: '按伤给口粮',
+      label: '拨粮抚恤伤兵',
       effects: { gold: -5, army: 5, court: -2 },
-      response: '按伤情给粮，不拿残兵充关差。营中知道受伤仍有饭吃，核粮的官员却抱怨又添长年支出。',
+      response: '准按伤情发放抚恤粮。伤兵有了生计，将士也知道受伤后有人照管；国库却添了一笔长期开销，反对增支的官员仍在上疏争论。',
     },
     right: {
-      label: '安置关卡收钱',
+      label: '派往关卡收费',
       effects: { gold: 3, army: -4, people: -2, law: 2 },
-      response: '给关卡名册按额收钱，省下抚粮。伤兵仍须站一整日，行旅嫌收费，将士也嫌朝廷薄情。',
+      response: '将伤兵编入关卡差役，按官定税额收费，从中拨粮供养。朝廷省下了抚恤开支，伤兵却仍要带伤当差；商旅多了一道负担，将士也寒了心。',
     },
   },
   {
@@ -1366,12 +1366,12 @@ export const RANDOM_EVENTS: GameEvent[] = [
     left: {
       label: '借营牛轮流耕',
       effects: { army: -3, people: 5, gold: -2 },
-      response: '添草料借营牛，排日轮耕不许插队。屯户赶上了春耕，营里运料不足，操练也跟着减了。',
+      response: '官府添钱备草料，让屯户按日轮借营牛耕地。春耕赶上了，军营运送操练器材却缺了牛，几场操练只好推迟。',
     },
     right: {
       label: '准租牛扣收成',
       effects: { gold: 4, army: 3, people: -4, law: -2 },
-      response: '准以收成抵牛租，原拨牛款转作库用。营务照常，屯户未收粮先欠租，衙门也不过问租数。',
+      response: '屯户向地主租牛，约定收粮时先交牛租；官府原先预留的购牛款不再拨出。营里的牛照常运料，屯户却在播种前就背上了租债，衙门也不过问租价。',
     },
   },
   {
@@ -1401,9 +1401,9 @@ export const RANDOM_EVENTS: GameEvent[] = [
       response: '准查校书账本，照抄本暂不得卖。出钱校书的人服了判，想买廉价农书的乡民却失望而归。',
     },
     right: {
-      label: '收印钱准并卖',
+      label: '两坊交费，都准卖书',
       effects: { gold: 4, law: -4, people: 3, court: -2 },
-      response: '两坊交印钱后都准卖书，便宜本流入乡间。原坊主却说官府拿他的本钱，替别人做了生意。',
+      response: '两家书坊向县库交费后都获准售书，便宜本流入乡间。原坊主不服：自己花钱校书，抄书的人却交一笔钱就能卖。',
     },
   },
   {
@@ -1412,7 +1412,7 @@ export const RANDOM_EVENTS: GameEvent[] = [
     name: '船工不肯白摆渡',
     text: '官渡船工连着替公差摆渡，误了自家的生计，几个人索性收起船桨。县官请发工食钱，里长则提议让沿河各户轮流出人摇船。',
     left: {
-      label: '给船工发工食',
+      label: '由官府付摆渡工钱',
       effects: { gold: -5, people: 4, army: 2 },
       response: '按趟给工食，不许公差白占船工。渡船开了，军使也能及时过河，只是这笔钱不能再省。',
     },
@@ -1435,18 +1435,18 @@ export const RANDOM_EVENTS: GameEvent[] = [
     right: {
       label: '照册发下自修',
       effects: { gold: 5, army: -4, law: -3 },
-      response: '器械照册出库，修缮余款缴回。兵丁得自买弦油，账上件数齐全，点验时却拉不开几张弓。',
+      response: '库官按名册发出弓甲，将没有用掉的修理费缴回官库。兵丁得自己出钱买弓弦和养护皮甲的油，账上件数齐全，操练时却没几张弓能用。',
     },
   },
   {
     id: 'r-yiyu',
     avatar: '译',
     name: '堂上听不懂的话',
-    text: '外地脚夫与货主争运费，口音不同，连证人说的数目都记不准。货主愿出钱请商会通事，县里另雇两人对译却得多等几日。',
+    text: '外地脚夫与货主争运费，县里的书记听不懂方言，连证人说的数目都记不准。货主愿出钱请商会的人翻译；县里若另雇两人分别翻译核对，就得出钱，也得多等几日。',
     left: {
-      label: '让商会出通事',
+      label: '由货主出钱，请商会翻译',
       effects: { gold: 3, law: -5, people: -2 },
-      response: '通事由商会出钱，余下审案款留库。案子结得快，可脚夫发现自己的话，总被翻成认错。',
+      response: '货主出钱请来商会的翻译，县库省下了另雇人的费用。案子结得快，可脚夫发现，自己的话总被翻成认错。',
     },
     right: {
       label: '雇两人对着译',
@@ -1483,7 +1483,7 @@ export const RANDOM_EVENTS: GameEvent[] = [
     right: {
       label: '按卖鱼数收税',
       effects: { gold: -4, people: 4, law: 3, court: -2 },
-      response: '在鱼市按实数收，不许向空船追税。渔户能喘口气，税吏却因收入少、核数多而连连叫苦。',
+      response: '税吏在鱼市按卖出的筐数征税，不再向停船的渔户追缴。渔户能喘口气，县库收入却少了；税吏还得逐笔核数，连连抱怨难办。',
     },
   },
   {
@@ -1499,7 +1499,7 @@ export const RANDOM_EVENTS: GameEvent[] = [
     right: {
       label: '照旧数买蜡',
       effects: { gold: -4, court: 4, law: 2, people: -2 },
-      response: '照旧例核数采买，不许借价涨加报。宫宴体面保住了，铺户却被限期赶货，赔进不少工夫。',
+      response: '宫中按旧例购买灯烛，照实支付涨价后的蜡钱，但不许虚报用量。宫宴照旧热闹，铺户却被催着赶货，赔进不少工夫。',
     },
   },
   {
@@ -1542,7 +1542,7 @@ export const RANDOM_EVENTS: GameEvent[] = [
     left: {
       label: '拆旧宫帘作夹里',
       effects: { gold: 3, court: -5, army: 3, law: -2 },
-      response: '旧帘拆洗填衣，余款收回库中。兵丁先得了暖衣，内臣却说未经移交就拆御物，坏了规矩。',
+      response: '工匠把旧宫帘拆洗后改作冬衣夹里，省下的购布款退回官库。兵丁先穿上了暖衣，内臣却指责军方未办移交就拆用宫中物品。',
     },
     right: {
       label: '照价买布棉',
@@ -1668,14 +1668,14 @@ export const RANDOM_EVENTS: GameEvent[] = [
     name: '军粮车压断轴',
     text: '一队承运军粮的民车断了轴，车主说军官临行加装了粮袋，军官却咬定车木不结实。修车得先出钱，双方都请把损失记在对方名下。',
     left: {
-      label: '官出钱按载重修',
+      label: '官府付修车钱，减载起运',
       effects: { gold: -4, army: 4, people: 3 },
       response: '官出修车钱，按车力减装后起运。粮队重新上路，车主不再争吵，库里却多付了一笔运费。',
     },
     right: {
       label: '扣车主押金修车',
       effects: { gold: 5, army: -2, people: -4 },
-      response: '从押金扣修费，原拨车款交回。省下了现银，车主却怕再赔，沿途愿接军运的人明显少了。',
+      response: '官府从车主交的押金中扣除修理费，原先预留的修车款留在库里。车主担心再被扣钱，沿途愿意承运军粮的人明显少了。',
     },
   },
 ]
@@ -1688,7 +1688,7 @@ export const FINALE_EVENTS: GameEvent[] = [
     order: 1,
     avatar: '👑',
     name: '国破之日',
-    text: '崇祯十七年三月十九，外城已陷，宫卫都散了，百官或逃或降。只有王承恩还侍立在身后，眼前是煤山的青石；城南，秘备的仪从已经戒途。三百年基业，在你一念之间。',
+    text: '崇祯十七年三月十九，外城已陷，宫卫都散了，百官或逃或降。王承恩仍跟在你身后，眼前是通往煤山的石阶。有人劝你趁天未明试着突围，南下南京；宫门之外，还能否走通，无人敢保证。三百年基业，在你一念之间。',
     left: {
       label: '上煤山取义',
       effects: {},
@@ -1709,7 +1709,7 @@ export const FINALE_EVENTS: GameEvent[] = [
     requires: ['peace-kept', 'chuanting-wait'],
     avatar: '🏹',
     name: '勤王兵至',
-    text: '三月，贼锋抵昌平，城外忽报：孙传庭练定的秦兵自关中东来，登莱水师浮海至天津，关外因和议而撤之兵亦陆续入关。诸军请御前方略；京中仍有劝你「且守且议」的，也有劝你「且战且走」的。三百年基业，系于此一二月间。',
+    text: '三月，敌军逼近昌平，孙传庭率秦兵从关中来援，水师也赶到天津。边境停战后调回的兵马陆续抵京，各军请你定下方略：出城决战，还是依托城墙坚守，等待敌军缺粮？三百年基业，系于眼前这一战。',
     left: {
       label: '亲督诸军，决战近畿',
       effects: {},

@@ -1,7 +1,8 @@
 import { computed, ref } from 'vue'
-import { FINALE_EVENTS, RANDOM_EVENTS, SCRIPT_EVENTS } from '../data/events'
-import { REFORM_EVENTS, REFORM_FINALES } from '../data/reforms'
-import type { AxisKey, Decision, Ending, Effects, FlagRule, GameEvent, ResourceKey, Side } from '../types'
+import { FINALE_EVENTS, RANDOM_EVENTS } from '../data/events'
+import { REFORM_FINALES } from '../data/reforms'
+import { STANDALONE_EVENTS, STORY_CHAPTERS } from '../data/chapters'
+import type { AxisKey, ChapterProgress, Decision, Ending, Effects, FlagRule, GameEvent, ResourceKey, Side, StoryChapter } from '../types'
 
 /** 四象：归零与满格同样致命 */
 export const AXIS_KEYS: AxisKey[] = ['court', 'law', 'army', 'gold']
@@ -13,7 +14,7 @@ export const RESOURCE_META: Record<ResourceKey, { icon: string; name: string; co
   law: { icon: '⚖️', name: '法度', color: '#6b4f86', hint: '章程还管不管用' },
   army: { icon: '⚔️', name: '军心', color: '#3a5f83', hint: '兵还肯不肯战' },
   gold: { icon: '💰', name: '国库', color: '#ab8430', hint: '饷银周转得开吗' },
-  people: { icon: '🌾', name: '民心', color: '#4b7a5c', hint: '国本水位：只跌不盈' },
+  people: { icon: '🌾', name: '民心', color: '#4b7a5c', hint: '越高越稳，满格无害' },
 }
 
 /** 国本线：民心低于此值即为动乱，军心与法度随岁耗额外失血 */
@@ -114,7 +115,7 @@ const PEOPLE_ENDING: Ending = {
   kind: 'doom',
   title: '万民倒戈',
   description:
-    '不是百姓不忠君——你给了他们荒年、加派与瘟疫，却连活路也收走了。城门从内部打开，香烛「迎闯王」，闯王的兵未放一箭。国本一倾，宗庙、府库、边军随之而去：你失去的从来不是一项指标，是天命本身。',
+    '不是百姓不忠君——你给了他们荒年、加派与瘟疫，却连活路也收走了。城门从内部打开，街巷为新来的军队指路，守城者已不愿为你放箭。国本一倾，宗庙、府库、边军随之而去：你失去的从来不是一项指标，是天命本身。',
 }
 
 /** 南渡所需的四象底线 */
@@ -162,7 +163,7 @@ const FINALE_ENDINGS: {
     kind: 'glory',
     title: '中兴第一',
     description:
-      '甲申之春，你没有上煤山，也没有南渡。你把最后的家底押在城下，守军以银为励，炮石俱发，闯军连夜引去；关外铁骑见隙不得，却于蓟镇之外。勤王之师四集，河南、陕西次第底定。三百年基业在你手里折过一次，又被你接上——后世读甲申事者，每于此处搁卷：「危哉崇祯，几失天下，卒能反之。」',
+      '甲申之春，你没有上煤山，也没有南渡。你把最后的家底押在城下，守军以银为励，炮石俱发，围城之军连夜引去；关外铁骑见隙不得，却于蓟镇之外。勤王之师四集，河南、陕西次第底定。三百年基业在你手里折过一次，又被你接上——后世读甲申事者，每于此处搁卷：「危哉崇祯，几失天下，卒能反之。」',
   },
   restoreLose: {
     avatar: '🥀',
@@ -228,9 +229,10 @@ function initialResources(): Record<ResourceKey, number> {
 }
 
 const SCRIPT_SLOTS = (LAST_SCRIPT_YEAR + 1) * CARDS_PER_YEAR
+const CHAPTER_STARTS = new Map(STORY_CHAPTERS.map((chapter) => [chapter.start, chapter]))
 
 const SLOT_CANDIDATES = new Map<string, GameEvent[]>()
-for (const e of [...REFORM_EVENTS, ...SCRIPT_EVENTS]) {
+for (const e of STANDALONE_EVENTS) {
   const key = `${e.year ?? 0}#${(e.order ?? 1) - 1}`
   const list = SLOT_CANDIDATES.get(key)
   if (list) list.push(e)
@@ -275,10 +277,24 @@ export function useGame() {
   const decisions = ref<Decision[]>([])
   /** 旗标计数：关键抉择写下的痕迹，决定后续槽位发哪张分叉卡 */
   const flags = ref<Record<string, number>>({})
+  const activeChapter = ref<{ story: StoryChapter; step: number } | null>(null)
+  const chapter = computed<ChapterProgress | null>(() => {
+    const active = activeChapter.value
+    if (!active || ending.value) return null
+    return { id: active.story.id, name: active.story.name, step: active.step + 1, total: active.story.steps.length }
+  })
   let drawRandom = makeRandomDraw()
 
-  /** 发某剧本槽位：条件卡 → 史实卡兜底 → 随机补空 */
   function dealScript(index: number): GameEvent {
+    if (!activeChapter.value) {
+      const story = CHAPTER_STARTS.get(index)
+      if (story) activeChapter.value = { story, step: 0 }
+    }
+    const active = activeChapter.value
+    if (active) {
+      // 每一步都有本篇章的无条件收束分支，前置失败不能退回随机池。
+      return active.story.steps[active.step].find((card) => eligible(card, flags.value, resources.value))!
+    }
     const key = `${Math.floor(index / CARDS_PER_YEAR)}#${index % CARDS_PER_YEAR}`
     return SLOT_CANDIDATES.get(key)?.find((c) => eligible(c, flags.value, resources.value)) ?? drawRandom()
   }
@@ -330,6 +346,7 @@ export function useGame() {
   function startGame() {
     resources.value = initialResources()
     flags.value = {}
+    activeChapter.value = null
     drawRandom = makeRandomDraw()
     deck.value = [dealScript(0)]
     cardIndex.value = 0
@@ -451,6 +468,12 @@ export function useGame() {
 
   /** 推进一张：到堆尾时按当前旗标现发下一张，故分叉卡总在上一道决策之后才决定 */
   function advance() {
+    const active = activeChapter.value
+    if (active) {
+      activeChapter.value = active.step + 1 < active.story.steps.length
+        ? { story: active.story, step: active.step + 1 }
+        : null
+    }
     const nextIndex = cardIndex.value + 1
     if (nextIndex >= deck.value.length) {
       const dealt = dealCard(nextIndex)
@@ -486,6 +509,7 @@ export function useGame() {
     isNewRecord,
     unrest,
     turnInYear,
+    chapter,
     customsFunded,
     workshopsSupplied,
     decisions,

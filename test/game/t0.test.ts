@@ -1,9 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { CARDS_PER_YEAR, RESOURCE_KEYS, useGame } from '../../src/composables/useGame'
-import { SCRIPT_EVENTS, RANDOM_EVENTS, FINALE_EVENTS } from '../../src/data/events'
-import { REFORM_EVENTS, REFORM_FINALES, REFORM_REQUIREMENTS } from '../../src/data/reforms'
-import type { ResourceKey, Side } from '../../src/types'
-import { atFinale, healthy, reach, seedRandom } from './helpers'
+import { RANDOM_EVENTS, FINALE_EVENTS } from '../../src/data/events'
+import { REFORM_FINALES, REFORM_REQUIREMENTS } from '../../src/data/reforms'
+import { STANDALONE_EVENTS, STORY_CHAPTERS, STORY_EVENTS } from '../../src/data/chapters'
+import type { ResourceKey } from '../../src/types'
+import { atFinale, healthy, progressSide, reach, seedRandom } from './helpers'
 
 beforeEach(() => {
   seedRandom(2026)
@@ -19,11 +20,93 @@ afterEach(() => {
 })
 
 const fullFlags = () => Object.fromEntries(REFORM_REQUIREMENTS.map((flag) => [flag, 1]))
-const stages = REFORM_EVENTS.filter((card) => (card.order ?? 0) >= 4)
-const successfulSide = (id: string): Side => {
-  const card = REFORM_EVENTS.find((event) => event.id === id)
-  return card?.left.sets?.some((flag) => flag.startsWith('gewu-')) ? 'left' : 'right'
-}
+const stages = REFORM_REQUIREMENTS.slice(0, 34).map((flag) => STORY_EVENTS.find((card) =>
+  [...(card.left.sets ?? []), ...(card.right.sets ?? [])].includes(flag))!)
+const successfulSide = progressSide
+
+describe('T0 连续篇章', () => {
+  it('当排入十四篇章时，49步不重叠，章内每一步都有无条件分支', () => {
+    expect(STORY_CHAPTERS.map((story) => story.steps.length)).toEqual([4, 3, 4, 4, 4, 5, 3, 3, 3, 3, 3, 3, 3, 4])
+    const occupied = new Set<number>()
+    for (const story of STORY_CHAPTERS) {
+      for (const [step, candidates] of story.steps.entries()) {
+        const index = story.start + step
+        expect(index).toBeLessThan(85)
+        expect(occupied.has(index)).toBe(false)
+        occupied.add(index)
+        expect(candidates.some((card) => !card.requires?.length && !card.excludes?.length && !card.resourceBounds)).toBe(true)
+        for (const card of candidates) {
+          expect(card.year).toBe(Math.floor(index / 5))
+          expect(card.order).toBe(index % 5 + 1)
+          expect(card.left.finale).toBeUndefined()
+          expect(card.right.finale).toBeUndefined()
+        }
+      }
+    }
+    expect(occupied.size).toBe(49)
+    for (const card of STANDALONE_EVENTS) expect(occupied.has(card.year! * 5 + card.order! - 1)).toBe(false)
+    expect(new Set(STANDALONE_EVENTS.map((card) => `${card.year}#${card.order}`)).size).toBe(28)
+  })
+
+  it.each(STORY_CHAPTERS)('当进入$name时，任意章内选法均连续走到收束，失败也不插随机卡', (story) => {
+    for (const withReforms of [false, true]) {
+      for (let mask = 0; mask < 2 ** story.steps.length; mask++) {
+        const game = useGame()
+        game.startGame()
+        reach(game, story.start, withReforms ? successfulSide : () => 'right')
+        for (let step = 0; step < story.steps.length; step++) {
+          expect(game.chapter.value).toEqual({ id: story.id, name: story.name, step: step + 1, total: story.steps.length })
+          expect(story.steps[step].map((card) => card.id)).toContain(game.currentCard.value?.id)
+          expect(game.currentCard.value?.id.startsWith('r-')).toBe(false)
+          expect(game.year.value).toBe(Math.floor((story.start + step) / 5))
+          expect(game.turnInYear.value).toBe((story.start + step) % 5 + 1)
+          game.resources.value = healthy()
+          game.choose(mask & (1 << step) ? 'left' : 'right')
+        }
+        expect(game.chapter.value?.id).not.toBe(story.id)
+        expect(game.decisions.value).toHaveLength(story.start + story.steps.length)
+      }
+    }
+  })
+
+  it('当器院立项不同意时，下一步即时改为本章旧制作法，不会偷发公账成果', () => {
+    const accept = useGame()
+    const reject = useGame()
+    accept.startGame()
+    reject.startGame()
+    for (const game of [accept, reject]) reach(game, 3, successfulSide)
+    accept.choose('left')
+    reject.choose('right')
+    expect(accept.currentCard.value?.id).toBe('g-budget')
+    expect(reject.currentCard.value?.id).not.toBe('g-budget')
+    expect(accept.chapter.value).toEqual(reject.chapter.value)
+    expect(reject.chapter.value?.step).toBe(2)
+    const card = reject.currentCard.value!
+    for (const side of ['left', 'right'] as const) expect(card[side].sets ?? []).not.toContain('gewu-budget')
+    expect(reject.seenEventIds.value.has('g-budget')).toBe(false)
+  })
+
+  it('当在篇章内重开或国势失衡时，不会残留旧篇章或继续发牌', () => {
+    const game = useGame()
+    game.startGame()
+    reach(game, 5, successfulSide)
+    expect(game.chapter.value?.step).toBe(3)
+    game.startGame()
+    expect(game.chapter.value).toBeNull()
+    expect(game.currentCard.value?.id).toBe('s-tuogu')
+    reach(game, 3, successfulSide)
+    game.resources.value = { ...healthy(), gold: 1 }
+    game.choose('left')
+    expect(game.isOver.value).toBe(true)
+    expect(game.chapter.value).toBeNull()
+    const count = game.decisions.value.length
+    game.choose('right')
+    expect(game.decisions.value).toHaveLength(count)
+    game.startGame()
+    expect(game.chapter.value).toBeNull()
+    expect(game.flags.value).toEqual({})
+  })
+})
 
 describe('T0 五次抉择和无放回发牌', () => {
   it('当走满一局时，会经历85次常规抉择后才进入甲申终章且事件不重复', () => {
@@ -52,15 +135,15 @@ describe('T0 五次抉择和无放回发牌', () => {
     expect(new Set(game.decisions.value.map((decision) => decision.eventId)).size).toBe(86)
   })
 
-  it('当卡池最坏情况下全部走史实时，随机池仍覆盖每个空位', () => {
-    const unconditional = new Set([...SCRIPT_EVENTS, ...REFORM_EVENTS]
+  it('当卡池最坏情况下缺少改革前置时，随机池仍覆盖每个非篇章空位', () => {
+    const unconditional = new Set(STORY_EVENTS
       .filter((card) => !card.requires?.length && !card.excludes?.length && !card.resourceBounds)
       .map((card) => `${card.year}#${card.order}`))
     expect(RANDOM_EVENTS.length).toBeGreaterThanOrEqual(85 - unconditional.size)
-    const all = [...SCRIPT_EVENTS, ...RANDOM_EVENTS, ...FINALE_EVENTS, ...REFORM_EVENTS, ...REFORM_FINALES]
+    const all = [...STORY_EVENTS, ...RANDOM_EVENTS, ...FINALE_EVENTS, ...REFORM_FINALES]
     expect(new Set(all.map((card) => card.id)).size).toBe(all.length)
-    expect(new Set(all.map((card) => card.name)).size).toBe(all.length)
     for (const card of all) {
+      expect(card.name.length).toBeGreaterThan(0)
       expect(card.text.length).toBeGreaterThan(0)
       for (const side of ['left', 'right'] as const) {
         expect(card[side].label.length).toBeGreaterThan(0)
@@ -70,7 +153,7 @@ describe('T0 五次抉择和无放回发牌', () => {
         }
       }
     }
-    for (const card of [...SCRIPT_EVENTS, ...REFORM_EVENTS]) {
+    for (const card of STORY_EVENTS) {
       expect(card.year).toBeGreaterThanOrEqual(0)
       expect(card.year).toBeLessThanOrEqual(16)
       expect(card.order).toBeGreaterThanOrEqual(1)
@@ -99,7 +182,7 @@ describe('T0 五次抉择和无放回发牌', () => {
 
 describe('T0 革新条件链', () => {
   it('当从初始资源逐项裁决时，存在不注入资源与旗标的完整中兴路径', () => {
-    const path = 'LLRLRRRRLRLRRLRRLRLRLLLLRLLRLRLRRLRLRRLRRRLLRLRRLRRLLLRLRRLRRLLLRLRRLRLRLLRRLLLRLRLLRL'
+    const path = 'LLLLRLLLRRRRRLRLLRRRRRLLLLLLRLLRLLRLRLLRRRLLRRLLLLLRLLRLLRLRLLRRLLLLRLLLRRLLLRLLRLLRRL'
     const game = useGame()
     game.startGame()
     for (const side of path.slice(0, -1)) {
@@ -112,48 +195,91 @@ describe('T0 革新条件链', () => {
     game.choose('left')
     expect(game.ending.value?.title).toBe('格物中兴')
     expect(game.decisions.value).toHaveLength(86)
-    expect(game.resources.value).toEqual({ court: 57, law: 57, army: 59, gold: 73, people: 100 })
+    expect(game.resources.value).toEqual({ court: 55, law: 67, army: 57, gold: 51, people: 100 })
   })
 
-  it('当关键阶段排定时，每年第四五议各有一个机会且所有前置可按时获得', () => {
+  it.each([1, 17, 2026, 1644])('当随机种子为%s时，34项建设和42项条件仍按时提供而不靠抽签', (seed) => {
+    vi.restoreAllMocks()
+    seedRandom(seed)
     expect(stages).toHaveLength(34)
-    const ordered = [...stages].sort((a, b) => a.year! - b.year! || a.order! - b.order!)
-    for (let index = 0; index < ordered.length; index++) {
-      const card = ordered[index]
-      expect(card.year).toBe(Math.floor(index / 2))
-      expect(card.order).toBe(4 + index % 2)
-      if (index > 0) {
-        const previous = ordered[index - 1]
-        const sets = previous[successfulSide(previous.id)].sets!
-        expect(card.requires).toEqual(expect.arrayContaining(sets))
-      }
-    }
-    const sources = [...SCRIPT_EVENTS, ...REFORM_EVENTS].flatMap((card) => [
-      ...(card.left.sets ?? []), ...(card.right.sets ?? []),
-    ])
-    for (const flag of REFORM_REQUIREMENTS) expect(sources).toContain(flag)
+    expect(REFORM_REQUIREMENTS).toHaveLength(42)
+    const game = useGame()
+    game.startGame()
+    reach(game, 85, successfulSide)
+    for (const flag of REFORM_REQUIREMENTS) expect(game.flags.value[flag], flag).toBeGreaterThan(0)
+    expect(game.flags.value.exec).toBeUndefined()
+    expect(game.currentCard.value?.id).toBe('g-finale-gewu')
   })
 
   it.each(stages.map((card) => [card.id, card.year! * 5 + card.order! - 1] as const))(
     '当%s选错时，该阶段和完美路线不会补考', (id, index) => {
       const game = useGame()
       game.startGame()
-      const choose = (cardId: string): Side => {
-        if (cardId.startsWith('g-')) return successfulSide(cardId)
-        if (['s-mihe', 's-mihe-leak'].includes(cardId)) return 'left'
-        return 'right'
-      }
-      reach(game, index, choose)
+      reach(game, index, successfulSide)
       expect(game.currentCard.value?.id).toBe(id)
       game.resources.value = healthy()
+      const lostFlags = game.currentCard.value![successfulSide(id)].sets!
+        .filter((flag) => REFORM_REQUIREMENTS.includes(flag))
       game.choose(successfulSide(id) === 'left' ? 'right' : 'left')
-      const lostFlags = REFORM_EVENTS.find((card) => card.id === id)![successfulSide(id)].sets!
-      reach(game, 85, choose)
+      reach(game, 85, successfulSide)
       for (const flag of lostFlags) expect(game.flags.value[flag]).toBeUndefined()
       expect(game.currentCard.value?.id).not.toBe('g-finale-gewu')
       expect(new Set(game.decisions.value.map((decision) => decision.eventId)).size).toBe(85)
     },
   )
+
+  it('当同一建设有互斥变体时，只能在同一个时点获得，不能延后补考', () => {
+    for (const flag of REFORM_REQUIREMENTS) {
+      const producers = STORY_EVENTS.filter((card) =>
+        [...(card.left.sets ?? []), ...(card.right.sets ?? [])].includes(flag))
+      expect(producers.length, flag).toBeGreaterThan(0)
+      expect(new Set(producers.map((card) => `${card.year}#${card.order}`)).size, flag).toBe(1)
+    }
+  })
+
+  it.each([
+    ['s-wuqiao', 'gewu-denglai'],
+    ['g-wuqiao-protect', 'gewu-denglai'],
+    ['g-wuqiao-rations', 'gewu-denglai'],
+    ['g-shipping-dispute', 'gewu-market'],
+    ['s-jinzhou', 'gewu-inspection'],
+    ['s-yuan-songjin', 'gewu-inspection'],
+    ['s-chuangjiang', 'lz-absorbed'],
+    ['g-tool-seals', 'gewu-pump'],
+    ['s-xianzhong', 'gewu-settlement'],
+    ['g-gucheng-households', 'gewu-settlement'],
+    ['g-guanning', 'gewu-frontier'],
+    ['g-river-survey', 'gewu-river'],
+    ['s-chuanti', 'chuanting-wait'],
+    ['g-guanzhong', 'chuanting-wait'],
+    ['s-htj', 'gewu-inspection'],
+    ['g-capital', 'gewu-succession'],
+  ])('当篇章中间步骤%s选择失败时，后续不能补出%s', (id, lostFlag) => {
+    const card = STORY_EVENTS.find((event) => event.id === id)!
+    const game = useGame()
+    game.startGame()
+    reach(game, card.year! * 5 + card.order! - 1, successfulSide)
+    expect(game.currentCard.value?.id).toBe(id)
+    game.resources.value = healthy()
+    game.choose(successfulSide(id) === 'left' ? 'right' : 'left')
+    reach(game, 85, successfulSide)
+    expect(game.flags.value[lostFlag]).toBeUndefined()
+    expect(game.currentCard.value?.id).not.toBe('g-finale-gewu')
+  })
+
+  it.each(['left', 'right'] as const)('当松锦接济已成并选择%s收束时，有序撤军与轮防均能保军通过验收', (side) => {
+    const game = useGame()
+    game.startGame()
+    const card = STORY_EVENTS.find((event) => event.id === 'g-songjin')!
+    reach(game, card.year! * 5 + card.order! - 1, successfulSide)
+    expect(game.currentCard.value?.id).toBe('g-songjin')
+    game.resources.value = healthy()
+    game.choose(side)
+    expect(game.flags.value['gewu-songjin']).toBe(1)
+    reach(game, 85, successfulSide)
+    expect(game.flags.value['gewu-inspection']).toBe(1)
+    expect(game.currentCard.value?.id).toBe('g-finale-gewu')
+  })
 
   it.each(REFORM_REQUIREMENTS)('当缺少%s时，即使其余条件全部满足也不会触发完美终章', (flag) => {
     const flags = fullFlags()

@@ -58,6 +58,20 @@ export interface GameEvent {
   resourceBounds?: Partial<Record<ResourceKey, { min?: number; max?: number }>>
 }
 
+export interface StoryChapter {
+  id: string
+  name: string
+  start: number
+  steps: GameEvent[][]
+}
+
+export interface ChapterProgress {
+  id: string
+  name: string
+  step: number
+  total: number
+}
+
 export interface Ending {
   avatar: string
   title: string

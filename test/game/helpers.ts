@@ -1,6 +1,21 @@
 import { vi } from 'vitest'
 import { useGame, type Game } from '../../src/composables/useGame'
+import { STORY_EVENTS } from '../../src/data/chapters'
+import { REFORM_REQUIREMENTS } from '../../src/data/reforms'
 import type { ResourceKey, Side } from '../../src/types'
+
+const storyCards = new Map(STORY_EVENTS.map((card) => [card.id, card]))
+const prerequisites = new Set(STORY_EVENTS.flatMap((card) =>
+  (card.requires ?? []).map((rule) => typeof rule === 'string' ? rule : rule.flag)))
+
+export function progressSide(id: string): Side {
+  const card = storyCards.get(id)
+  if (!card) return 'right'
+  const sides = (['left', 'right'] as const).filter((side) => !card[side].sets?.includes('exec'))
+  return sides.find((side) => card[side].sets?.some((flag) => REFORM_REQUIREMENTS.includes(flag)))
+    ?? sides.find((side) => card[side].sets?.some((flag) => prerequisites.has(flag)))
+    ?? 'right'
+}
 
 export const healthy = (): Record<ResourceKey, number> => ({ court: 60, law: 60, army: 60, gold: 60, people: 80 })
 
