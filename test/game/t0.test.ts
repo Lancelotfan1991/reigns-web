@@ -25,8 +25,8 @@ const stages = REFORM_REQUIREMENTS.slice(0, 34).map((flag) => STORY_EVENTS.find(
 const successfulSide = progressSide
 
 describe('T0 连续篇章', () => {
-  it('当排入十四篇章时，49步不重叠，章内每一步都有无条件分支', () => {
-    expect(STORY_CHAPTERS.map((story) => story.steps.length)).toEqual([4, 3, 4, 4, 4, 5, 3, 3, 3, 3, 3, 3, 3, 4])
+  it('当排入十五篇章时，52步不重叠，章内每一步都有无条件分支', () => {
+    expect(STORY_CHAPTERS.map((story) => story.steps.length)).toEqual([3, 4, 3, 4, 4, 4, 5, 3, 3, 3, 3, 3, 3, 3, 4])
     const occupied = new Set<number>()
     for (const story of STORY_CHAPTERS) {
       for (const [step, candidates] of story.steps.entries()) {
@@ -43,11 +43,11 @@ describe('T0 连续篇章', () => {
         }
       }
     }
-    expect(occupied.size).toBe(49)
+    expect(occupied.size).toBe(52)
     for (const card of STANDALONE_EVENTS) expect(occupied.has(card.year! * 5 + card.order! - 1)).toBe(false)
-    expect(new Set(STANDALONE_EVENTS.map((card) => `${card.year}#${card.order}`)).size).toBe(32)
+    expect(new Set(STANDALONE_EVENTS.map((card) => `${card.year}#${card.order}`)).size).toBe(31)
     for (const card of STANDALONE_EVENTS) occupied.add(card.year! * 5 + card.order! - 1)
-    expect(Array.from({ length: 85 }, (_, index) => index).filter(index => !occupied.has(index))).toEqual([19, 20, 40, 41])
+    expect(Array.from({ length: 85 }, (_, index) => index).filter(index => !occupied.has(index))).toEqual([20, 40])
   })
 
   it.each(STORY_CHAPTERS)('当进入$name时，任意章内选法均连续走到收束，失败也不插随机卡', (story) => {
@@ -94,7 +94,7 @@ describe('T0 连续篇章', () => {
     reach(game, 5, successfulSide)
     expect(game.chapter.value?.step).toBe(3)
     game.startGame()
-    expect(game.chapter.value).toBeNull()
+    expect(game.chapter.value).toEqual({ id: 'wei', name: '宫门定策', step: 1, total: 3 })
     expect(game.currentCard.value?.id).toBe('s-tuogu')
     reach(game, 3, successfulSide)
     game.resources.value = { ...healthy(), gold: 1 }
@@ -105,7 +105,7 @@ describe('T0 连续篇章', () => {
     game.choose('right')
     expect(game.decisions.value).toHaveLength(count)
     game.startGame()
-    expect(game.chapter.value).toBeNull()
+    expect(game.chapter.value).toEqual({ id: 'wei', name: '宫门定策', step: 1, total: 3 })
     expect(game.flags.value).toEqual({})
   })
 })
@@ -293,7 +293,7 @@ describe('T0 国用积弊', () => {
 
 describe('T0 革新条件链', () => {
   it('当从初始资源逐项裁决时，存在不注入资源与旗标的完整中兴路径', () => {
-    const path = 'LLLLRLLLRRRRLLRRLRLRRLLLLLLLRLLRLLRLRLRRRLLLRRLLLLLRRLRLLRLRLLRRLLLLRLLLRRLLLRLLRLLRRL'
+    const path = 'RRLLRLLRRRRRLLRRLRLRRLLLLLLLRLLRLLRLRLLRRLLLRRLLLLLRRLRLLRLRLLRRLLLLRLLLRRLLLRLLRLLRRL'
     const game = useGame()
     game.startGame()
     expect(game.resources.value).toEqual({ court: 50, law: 40, army: 45, gold: 35, people: 45 })
@@ -307,7 +307,7 @@ describe('T0 革新条件链', () => {
     game.choose('left')
     expect(game.ending.value?.title).toBe('格物中兴')
     expect(game.decisions.value).toHaveLength(86)
-    expect(game.resources.value).toEqual({ court: 55, law: 64, army: 50, gold: 45, people: 100 })
+    expect(game.resources.value).toEqual({ court: 45, law: 68, army: 47, gold: 47, people: 100 })
   })
 
   it.each([1, 17, 2026, 1644])('当随机种子为%s时，34项建设和42项条件仍按时提供而不靠抽签', (seed) => {

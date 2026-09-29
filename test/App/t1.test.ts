@@ -29,10 +29,16 @@ async function clickChoice(wrapper: AppWrapper, side: 0 | 1) {
   await readVerdict(wrapper)
 }
 
+/** 走完天启七年的开篇篇章「宫门定策」三步，停在器院立局第 1 步 */
 async function enterChapter(wrapper: AppWrapper) {
   await wrapper.findAll('button').find((button) => button.text() === '入宫即位')!.trigger('click')
-  for (const side of [0, 0, 1] as const) {
-    expect(wrapper.find(chapterSelector).exists()).toBe(false)
+  // 先换九门钥匙、再当众焚册：焚册折了军心，逮牌出不了宫门，以未遂收束开篇
+  const opening = [['捧玺入宫', 1], ['辞爵与点将录', 0], ['逮牌不出宫门', 0]] as const
+  for (const [step, [title, side]] of opening.entries()) {
+    const banner = wrapper.get(chapterSelector)
+    expect(banner.text()).toContain('宫门定策')
+    expect(banner.text()).toContain(`第 ${step + 1} / 3 步`)
+    expect(wrapper.get('h2').text()).toBe(title)
     await clickChoice(wrapper, side)
   }
 }
@@ -208,9 +214,10 @@ it('当篇章中死亡后点击重开时，会清空篇章且再次进入从第�
     expect(wrapper.find(chapterSelector).exists()).toBe(false)
     expect(game.chapter.value).toBeNull()
     await wrapper.findAll('button').find((button) => button.text() === '再着龙袍')!.trigger('click')
-    expect(wrapper.find(chapterSelector).exists()).toBe(false)
-    expect(game.chapter.value).toBeNull()
-    expect(wrapper.get('h2').text()).toBe('天启帝托孤')
+    expect(wrapper.find(chapterSelector).exists()).toBe(true)
+    expect(game.chapter.value).toEqual({ id: 'wei', name: '宫门定策', step: 1, total: 3 })
+    expect(wrapper.get(chapterSelector).text()).toContain('第 1 / 3 步')
+    expect(wrapper.get('h2').text()).toBe('捧玺入宫')
     expect(wrapper.get('header').text()).toContain('西元 1627')
     expect(wrapper.get('header').text()).toContain('第 1 / 5 议')
     for (const title of ['君威 50', '法度 40', '军心 45', '国库 35']) {

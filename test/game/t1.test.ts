@@ -1,10 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { useCharacters } from '../../src/composables/useCharacters'
-import { RESOURCE_KEYS, useGame } from '../../src/composables/useGame'
+import { RESOURCE_KEYS, useGame, type Game } from '../../src/composables/useGame'
 import { REFORM_REQUIREMENTS, REFORM_FINALES } from '../../src/data/reforms'
 import { STORY_EVENTS } from '../../src/data/chapters'
 import { CHARACTERS } from '../../src/data/characters'
 import { RANDOM_EVENTS, FINALE_EVENTS } from '../../src/data/events'
+import type { Side } from '../../src/types'
 import { atFinale, healthy, reach, seedRandom } from './helpers'
 
 beforeEach(() => {
@@ -235,5 +236,169 @@ describe('T1 批红单页', () => {
     expect(game.verdict.value).not.toBeNull()
     game.startGame()
     expect(game.verdict.value).toBeNull()
+  })
+})
+
+describe('T1 宫门定策四档', () => {
+  /** 走完开篇前两步，停在拿人的第三步 */
+  const toArrest = (first: Side, second: Side) => {
+    const game = useGame()
+    game.startGame()
+    game.choose(first)
+    game.choose(second)
+    return game
+  }
+  const weiView = (game: Game) => {
+    const view = useCharacters(game).views.value.find((item) => item.char.id === 'wei')
+    return { status: view?.status, note: view?.note ?? '', deeds: view?.deeds.map((deed) => deed.eventId) ?? [] }
+  }
+  /** 只把逆案裁在“止坐首恶”，其余各议按需要选 */
+  const narrowVerdict = (id: string): Side => id === 's-ni-an' ? 'left' : 'right'
+
+  it.each([
+    ['right', 'right', 's-wei', '换过九门钥匙再焚册警省：门内有人、名分已定，逮牌照章程出宫'],
+    ['left', 'right', 's-wei-rash', '受玺即位仍让他掌厂卫：只能靠京营当值硬办，成算打折'],
+    ['left', 'left', 's-wei-rash', '连辞爵都未慰留，军心尚在，仍可连夜逼他出京'],
+    ['right', 'left', 's-wei-failed', '焚册折了京营当值：军心已溃，缇骑出不了城门'],
+  ] as const)('当开局依次选%s、%s时，第三步发出%s（%s）', (first, second, id, why) => {
+    const game = toArrest(first, second)
+    expect(why.length).toBeGreaterThan(0)
+    expect(game.chapter.value).toEqual({ id: 'wei', name: '宫门定策', step: 3, total: 3 })
+    expect(game.currentCard.value?.id).toBe(id)
+  })
+
+  it('当凤阳与逮牌同名两档时，稳杀不欠人情、险胜必欠人情', () => {
+    const steady = toArrest('right', 'right')
+    const goldBefore = steady.resources.value.gold
+    steady.choose('left')
+    expect(steady.currentCard.value?.id).toBe('g-institute')
+    expect(steady.flags.value).toEqual({ 'wei-watched': 2, 'wei-soothed': 1, 'wei-down': 1 })
+    expect(steady.resources.value.gold - goldBefore).toBe(12)
+
+    const rash = toArrest('left', 'right')
+    rash.choose('left')
+    expect(rash.flags.value['wei-down']).toBe(1)
+    expect(rash.flags.value['eunuch-debt']).toBe(1)
+  })
+
+  it('当法度与军心都不足四十又未曾焚册时，第三步落到中止且仍以未遂收束', () => {
+    const game = useGame()
+    game.startGame()
+    game.choose('left')
+    game.resources.value = { ...healthy(), law: 41, army: 37 }
+    game.choose('right')
+    expect(game.flags.value.warned).toBeUndefined()
+    expect(game.currentCard.value?.id).toBe('s-wei-stalled')
+    const stalled = game.currentCard.value!
+    for (const side of ['left', 'right'] as const) expect(stalled[side].sets).toContain('wei-failed')
+    game.choose('left')
+    expect(game.flags.value['wei-failed']).toBe(1)
+    expect(game.flags.value['wei-down']).toBeUndefined()
+  })
+
+  it.each(['left', 'right'] as const)('当逮牌未遂并选择%s时，魏忠贤照旧在任，史实一节被改写', (side) => {
+    const game = toArrest('right', 'left')
+    expect(game.currentCard.value?.id).toBe('s-wei-failed')
+    game.choose(side)
+    expect(game.flags.value['wei-failed']).toBe(1)
+    const wei = weiView(game)
+    expect(wei.status).toBe('alive')
+    expect(wei.note).not.toContain('阜城')
+    expect(wei.deeds).toContain('s-wei-failed')
+  })
+
+  it('当逮牌未遂但军心未至绝境时，崇祯三年不发再举之请', () => {
+    const game = toArrest('right', 'left')
+    game.choose('left')
+    reach(game, 18, narrowVerdict)
+    game.resources.value = { ...healthy(), army: 50 }
+    game.choose('right')
+    expect(game.decisions.value).toHaveLength(19)
+    expect(game.currentCard.value?.id).not.toBe('s-wei-coup')
+  })
+
+  it('当再举之请选夜合宫门时，当年即入宫门之变而不拖到甲申', () => {
+    const game = toArrest('right', 'left')
+    game.choose('left')
+    reach(game, 18, narrowVerdict)
+    game.resources.value = { ...healthy(), army: 30 }
+    game.choose('right')
+    expect(game.currentCard.value?.id).toBe('s-wei-coup')
+    expect(game.year.value).toBe(3)
+    expect(game.turnInYear.value).toBe(5)
+    game.choose('left')
+    expect(game.isOver.value).toBe(true)
+    expect(game.ending.value?.title).toBe('宫门之变')
+    expect(game.ending.value?.kind).toBe('doom')
+    expect(game.ending.value?.survived).toBeUndefined()
+    expect(game.decisions.value).toHaveLength(20)
+    expect(game.reignedYears.value).toBe(4)
+    expect(weiView(game).status).toBe('alive')
+    expect(game.chapter.value).toBeNull()
+    game.startGame()
+    expect(game.flags.value).toEqual({})
+    expect(game.currentCard.value?.id).toBe('s-tuogu')
+  })
+
+  it('当再举之请选收手时，欠下的人情在崇祯八年变成监军之请', () => {
+    const game = toArrest('right', 'left')
+    game.choose('left')
+    reach(game, 18, narrowVerdict)
+    game.resources.value = { ...healthy(), army: 30 }
+    game.choose('right')
+    game.choose('right')
+    expect(game.flags.value['eunuch-debt']).toBe(1)
+    expect(game.currentCard.value?.id).not.toBe('s-ni-an')
+    reach(game, 40, narrowVerdict)
+    game.resources.value = healthy()
+    game.choose('right')
+    expect(game.currentCard.value?.id).toBe('c-eunuch-marshal-owed')
+    expect(game.currentCard.value?.text).toContain('落闸开门')
+  })
+
+  it('当魏忠贤已诛而逆案扩大时，监军之请以部院无人任事为由头', () => {
+    const game = toArrest('right', 'right')
+    game.choose('left')
+    reach(game, 19, narrowVerdict)
+    expect(game.currentCard.value?.id).toBe('s-ni-an')
+    expect(game.flags.value['eunuch-debt']).toBeUndefined()
+    game.resources.value = healthy()
+    game.choose('right')
+    expect(game.flags.value['ni-an-broad']).toBe(1)
+    reach(game, 40, narrowVerdict)
+    game.resources.value = healthy()
+    game.choose('right')
+    expect(game.currentCard.value?.id).toBe('c-eunuch-marshal-empty')
+    expect(game.currentCard.value?.text).toContain('二百五十多人')
+    expect(weiView(game).note).toContain('逆案定二百五十余人')
+  })
+
+  it('当两种由头同时存在时，只发欠人情的那一张', () => {
+    const game = useGame()
+    game.startGame()
+    reach(game, 40, narrowVerdict)
+    game.flags.value = { ...game.flags.value, 'eunuch-debt': 1, 'ni-an-broad': 1 }
+    game.resources.value = healthy()
+    game.choose('right')
+    expect(game.currentCard.value?.id).toBe('c-eunuch-marshal-owed')
+  })
+
+  it('当逆案止坐首恶时，崇祯八年没有中官监军之请', () => {
+    const game = toArrest('right', 'right')
+    game.choose('left')
+    reach(game, 19, narrowVerdict)
+    game.resources.value = healthy()
+    game.choose('left')
+    expect(game.flags.value['ni-an-broad']).toBeUndefined()
+    reach(game, 40, narrowVerdict)
+    game.resources.value = healthy()
+    game.choose('right')
+    expect(game.currentCard.value?.id).not.toMatch(/^c-eunuch-marshal/)
+  })
+
+  it('当只换九门钥匙而慰留魏忠贤时，两步都记在旗标上而不靠人名说破', () => {
+    const game = toArrest('right', 'right')
+    expect(Object.keys(game.flags.value).sort()).toEqual(['wei-soothed', 'wei-watched'])
+    expect(game.resources.value).toEqual({ court: 40, law: 44, army: 46, gold: 26, people: 47 })
   })
 })

@@ -49,6 +49,16 @@ function chapter(id: string, name: string, start: number, steps: GameEvent[][]):
 // 同一步按数组顺序取首张可用卡；条件变体在前，最后一张永远无条件兜底。
 // 同一原卡只归属一个步骤；新增的中间决定用旗标进入本章后续验收。
 export const STORY_CHAPTERS: StoryChapter[] = [
+  chapter('wei', '宫门定策', 0, [
+    [source('s-tuogu')],
+    [source('s-dianjianglu')],
+    [
+      source('s-wei', ['wei-watched'], { resourceBounds: { law: { min: 40 }, army: { min: 40 } } }),
+      source('s-wei-rash', [], { resourceBounds: { army: { min: 40 } } }),
+      source('s-wei-failed', ['warned'], { resourceBounds: { army: { max: 39 } } }),
+      source('s-wei-stalled'),
+    ],
+  ]),
   chapter('institute', '器院立局', 3, [
     [source('g-institute')],
     [
@@ -67,7 +77,7 @@ export const STORY_CHAPTERS: StoryChapter[] = [
     ],
     [
       source('g-measure', ['gewu-institute', 'gewu-budget', 'gewu-artisans'], {
-        text: '器院铸成官样尺、官样秤各一副，徐光启奏请颁行天下，所当断者三事：官样掌于何衙门、几年一校验；验收不合者，驳换之费任之何司；擅造私秤者以何罪坐之。边营催取火器，嫌立法为缓。',
+        text: '器院铸成官样的尺和秤各一副，徐光启奏请发到各省与九边：今后量田亩、造军器、收发钱粮，都照这一副官样来算。要朝廷定三件事——官样归哪个衙门掌管、隔几年校验一次；验收不合的，退换和赔累算在哪个衙门头上；私造尺秤的人由谁拿问、按什么罪办。边营正催取火器，嫌这些步骤太慢。',
       }),
       card('c-institute-measure-samples', '军器验收不合，退换与赔累算谁的',
         '官样的尺和秤还没有颁到各省，工部也找不到常年负责校验的人。军营催着领车轴和火器，工部请定一条明白的例：未经官样验过的不许发营，退换的费用与追赔的责任落在哪个衙门。营官说边务正急，这个例一行，军器必定误期。',
@@ -549,11 +559,20 @@ export const STORY_CHAPTERS: StoryChapter[] = [
   ]),
 ]
 
-// 独立长期改革缺前提时允许随机卡补位；危机节点另行合入，四个日常空位不写入本表。
+// 同一道请求有两条来路：欠了禁门的人情，或逆案之后部院无人任事。批语相同，只换奏疏的由头。
+function eunuchMarshal(id: string, text: string, requires: string[]): GameEvent {
+  return card(
+    id,
+    '中官出京监军之请',
+    text,
+    option('准其监督军饷，许密疏奏事', { army: 4, gold: 2, law: -6, court: 4, people: -2 }, '你准内侍出京监督军饷，许他不时密疏奏闻。军报自此直入宫门，饷银也不至层层被部里克扣，登莱、宣府按月都有密折送到御前，催来的银子比往年快。只是督抚自此多了一条不必经内阁的路；后来被密疏说了一句话的人，连回辨的本子也递不上去。'),
+    option('只令部院督饷，勿遣内臣', { court: -4, law: 4, army: -4, gold: -2 }, '你把来旨退了，说监军之权重开弊窦，军饷仍令户部与督抚自行核算。内侍在宫门里失望，密疏之请也止于这一疏。军报慢了一程，饷银仍凭部文周转，边镇与户部的文书往来照旧对不出一份一致的数目。'),
+    requires,
+  )
+}
+
+// 独立长期改革缺前提时允许随机卡补位；危机节点另行合入，两个日常空位不写入本表。
 const standalone: [number, GameEvent[]][] = [
-  [0, [source('s-tuogu')]],
-  [1, [source('s-dianjianglu')]],
-  [2, [source('s-wei')]],
   [7, [source('s-ych-huajian')]],
   [8, [source('s-hanzai')]],
   [9, [source('g-seeds', ['gewu-institute'])]],
@@ -563,6 +582,10 @@ const standalone: [number, GameEvent[]][] = [
   [11, [source('g-payroll', ['gewu-budget', 'gewu-measure'])]],
   [16, [source('g-waterworks', ['gewu-measure', 'gewu-seeds'])]],
   [17, [source('g-review', ['gewu-waterworks'])]],
+  [19, [
+    source('s-wei-coup', ['wei-failed'], { resourceBounds: { army: { max: 35 } } }),
+    source('s-ni-an', ['wei-down']),
+  ]],
   [22, [source('s-suncheng')]],
   [31, [source('g-apprentices', ['gewu-artisans', 'gewu-audit'])]],
   [32, [source('s-dadian')]],
@@ -572,6 +595,10 @@ const standalone: [number, GameEvent[]][] = [
   [36, [source('g-council', ['gewu-budget', 'gewu-audit', 'gewu-tenure'])]],
   [37, [source('g-revenue', ['gewu-customs', 'gewu-audit']), source('s-yingdi')]],
   [39, [source('g-charter', ['gewu-budget', 'gewu-audit', 'gewu-tenure', 'gewu-council'])]],
+  [41, [
+    eunuchMarshal('c-eunuch-marshal-owed', '禁门那一夜替你落闸开门、替你换了门上钥匙的那几个内侍，如今都在各衙门当差。兵部催饷、登莱造炮、宣府守边，几处都缺一个能直达御前的人。内侍因此有请出京监督军饷：他们不要兵权，只要能在军前宣读诏旨、按月密疏奏闻。', ['eunuch-debt']),
+    eunuchMarshal('c-eunuch-marshal-empty', '逆案一次定了二百五十多人，六部与督抚同时缺额，题补的章奏常在中途。凡有军情，朝臣先要避嫌，边镇也懒得再等部覆。内侍因此有请出京监督军饷：他们不要兵权，只要能在军前宣读诏旨、按月密疏奏闻。', ['ni-an-broad']),
+  ]],
   [42, [source('g-market', ['gewu-shipping', 'gewu-customs', 'gewu-audit', 'gewu-apprentices', 'gewu-manuals', 'gewu-charter', 'shipping-arbitrated'], {
     name: '民坊不只给军营做东西',
     text: '学徒已能凭契约受雇，基础图册也送进民坊。作坊依靠人力和水力生产，海商愿承接布匹、农具与船具外销；军营却想包下熟手与材料。地方请照公开税约保留民用订单，让百姓有活做，官府有税收。',

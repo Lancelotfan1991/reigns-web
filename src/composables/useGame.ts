@@ -117,6 +117,15 @@ const PEOPLE_ENDING: Ending = {
     '不是百姓不忠君——你给了他们荒年、加派与瘟疫，却连活路也收走了。城门从内部打开，街巷为新来的军队指路，守城者已不愿为你放箭。国本一倾，宗庙、府库、边军随之而去：你失去的从来不是一项指标，是天命本身。',
 }
 
+/** 操切动手、禁门不遂：即位当年即废于宫墙之内 */
+const COUP_ENDING: Ending = {
+  avatar: '🔒',
+  kind: 'doom',
+  title: '宫门之变',
+  description:
+    '你选了夜半动手，宫门却在三更换了锁。内值房先绑住传旨的太监，京营的兵天明才进——围住的不是司礼监，是你自己的殿。五更天色未明，内阁与司礼监同奉一道懿旨，说你「急病，不能亲万机」，移居西内，甲士列于阶下，票拟批红照旧行来，只是不复出你的手。宫墙之内另议长君，边镇与宗室各有所属望。史臣欲为这一朝系年，只系到崇祯三年。',
+}
+
 /** 南渡所需的四象底线 */
 const AXIS_GATE: Record<AxisKey, number> = { court: 40, law: 35, army: 40, gold: 25 }
 
@@ -447,6 +456,10 @@ export function useGame() {
     }
 
     // 终章分支：按国势数值决定南渡、决战、坚守成败
+    if (choice.finale === 'coup') {
+      // 宫门之变死在即位未久的某一年内，与失衡致死同例，不翻进下一年
+      return gameOver(COUP_ENDING)
+    }
     if (choice.finale === 'meishan') {
       advance()
       return gameOver(FINALE_ENDINGS.meishan)

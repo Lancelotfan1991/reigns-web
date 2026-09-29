@@ -19,6 +19,8 @@ export interface Decision {
 
 export type FinaleBranch = 'south' | 'meishan' | 'battle' | 'hold'
   | 'reform' | 'reform-retreat' | 'reform-hold' | 'reform-battle'
+  /** 宫门之变：即位未久即操切动手，败于禁门之内，当年即入结局 */
+  | 'coup'
 
 /**
  * 旗标规则：用于卡牌的出现条件。

@@ -59,6 +59,9 @@ function choose(game: Game, side: Side) {
   game.choose(side)
 }
 
+/** 革新之举一律选到断链的一侧：格物中辍时，史实卡仍按抽签归来 */
+const stalledSide = (id: string): Side => progressSide(id) === 'left' ? 'right' : 'left'
+
 function character(game: Game, id: string) {
   const view = useCharacters(game).views.value.find((item) => item.char.id === id)
   if (!view) throw new Error(`Unknown character: ${id}`)
@@ -296,7 +299,7 @@ describe('T1 保匠、海贸与军政局部成果', () => {
     const game = start()
     toCard(game, 'g-shipping')
     choose(game, 'left')
-    reach(game, 40, progressSide)
+    reach(game, 33, stalledSide)
     expect(game.chapter.value).toBeNull()
     expect(game.currentCard.value?.id).toBe('r-cao')
     choose(game, 'right')
