@@ -45,7 +45,9 @@ describe('T0 连续篇章', () => {
     }
     expect(occupied.size).toBe(49)
     for (const card of STANDALONE_EVENTS) expect(occupied.has(card.year! * 5 + card.order! - 1)).toBe(false)
-    expect(new Set(STANDALONE_EVENTS.map((card) => `${card.year}#${card.order}`)).size).toBe(28)
+    expect(new Set(STANDALONE_EVENTS.map((card) => `${card.year}#${card.order}`)).size).toBe(32)
+    for (const card of STANDALONE_EVENTS) occupied.add(card.year! * 5 + card.order! - 1)
+    expect(Array.from({ length: 85 }, (_, index) => index).filter(index => !occupied.has(index))).toEqual([19, 20, 40, 41])
   })
 
   it.each(STORY_CHAPTERS)('当进入$name时，任意章内选法均连续走到收束，失败也不插随机卡', (story) => {
@@ -180,11 +182,121 @@ describe('T0 五次抉择和无放回发牌', () => {
   })
 })
 
-describe('T0 革新条件链', () => {
-  it('当从初始资源逐项裁决时，存在不注入资源与旗标的完整中兴路径', () => {
-    const path = 'LLLLRLLLRRRRRLRLLRRRRRLLLLLLRLLRLLRLRLLRRRLLRRLLLLLRLLRLLRLRLLRRLLLLRLLLRRLLLRLLRLLRRL'
+describe('T0 国用积弊', () => {
+  const slots = [12, 18, 21, 38]
+  const crisisCards = STORY_EVENTS.filter(card => card.id.startsWith('k-'))
+
+  it('当积弊候选接入时，十二张卡只占四议，不增加中兴条件或覆盖原有成果', () => {
+    expect(crisisCards).toHaveLength(12)
+    expect([...new Set(crisisCards.map(card => card.year! * 5 + card.order! - 1))]).toEqual(slots)
+    expect(REFORM_REQUIREMENTS).toHaveLength(42)
+    for (const card of crisisCards) {
+      for (const side of ['left', 'right'] as const) {
+        expect(card[side].sets?.every(flag => flag.startsWith('crisis-')) ?? true).toBe(true)
+        expect(card[side].finale).toBeUndefined()
+      }
+    }
+  })
+
+  describe.each([false, true])('海税审计齐备=%s', (withReforms) => {
+    it.each([
+      ['LRR', 'k-tax-shift', 'k-tax-flight', 'k-tax-spiral'],
+      ['RRR', 'k-pay-arrears', 'k-army-foraging', 'k-pay-spiral'],
+      ['LLR', 'k-tax-shift', 'k-tax-recovery', 'k-fiscal-relapse'],
+      ['RLR', 'k-pay-arrears', 'k-pay-recovery', 'k-fiscal-relapse'],
+      ['LRL', 'k-tax-shift', 'k-tax-flight', 'rebalanced'],
+      ['RRL', 'k-pay-arrears', 'k-army-foraging', 'rebalanced'],
+      ['LLL', 'k-tax-shift', 'k-tax-recovery', 'rebalanced'],
+      ['RLL', 'k-pay-arrears', 'k-pay-recovery', 'rebalanced'],
+    ])('当依次选择%s时，会跨年承接对应后果而不重复或跳过危机', (path, second, third, outcome) => {
+      const game = useGame()
+      game.startGame()
+      const decide = (id: string) => !withReforms && id === 'g-institute' ? 'right' as const : successfulSide(id)
+      const finalId = outcome === 'rebalanced'
+        ? withReforms ? 'k-fiscal-customs' : 'k-fiscal-contained'
+        : outcome
+      const expected = ['k-fiscal-gap', second, third, finalId]
+      for (const [step, slot] of slots.entries()) {
+        reach(game, slot, decide)
+        expect(game.currentCard.value?.id).toBe(expected[step])
+        expect(game.year.value + 1627).toBe([1629, 1630, 1631, 1634][step])
+        expect(game.turnInYear.value).toBe(slot % 5 + 1)
+        expect(game.chapter.value).toBeNull()
+        game.resources.value = healthy()
+        game.choose(path[step] === 'R' ? 'right' : 'left')
+      }
+      expect(game.flags.value['gewu-customs'] ?? 0).toBe(withReforms ? 1 : 0)
+      expect(game.flags.value['gewu-audit'] ?? 0).toBe(withReforms ? 1 : 0)
+      const pressure = path[0] === 'L' ? 'crisis-levy' : 'crisis-arrears'
+      expect(game.flags.value[pressure]).toBe(1 + [...path.slice(1)].filter(side => side === 'R').length)
+      expect(game.flags.value['crisis-rebalanced'] ?? 0).toBe(outcome === 'rebalanced' ? 1 : 0)
+      expect(game.flags.value['crisis-relapse'] ?? 0).toBe(outcome === 'k-fiscal-relapse' ? 1 : 0)
+      reach(game, 85, decide)
+      expect(game.decisions.value.filter(decision => decision.eventId.startsWith('k-')).map(decision => decision.eventId)).toEqual(expected)
+      expect(new Set(game.decisions.value.map(decision => decision.eventId)).size).toBe(85)
+    })
+  })
+
+  it.each(['g-customs', 'g-audit'])('当%s未获批准时，停止透支仍不能凭单项改革获得公税接续', (rejected) => {
     const game = useGame()
     game.startGame()
+    reach(game, 38, id => {
+      if (id.startsWith('k-')) return 'left'
+      if (id === rejected) return successfulSide(id) === 'left' ? 'right' : 'left'
+      return successfulSide(id)
+    })
+    expect(game.flags.value['crisis-rebalanced']).toBe(1)
+    expect(game.flags.value[rejected.replace('g-', 'gewu-')]).toBeUndefined()
+    expect(game.currentCard.value?.id).toBe('k-fiscal-contained')
+  })
+
+  it('当连续四次催征时，临时收益递减且民生损失加重，迟治所需国库代价更高', () => {
+    const game = useGame()
+    game.startGame()
+    const gains: number[] = []
+    const harms: number[] = []
+    for (const [step, slot] of slots.entries()) {
+      reach(game, slot, successfulSide)
+      const side = step === 0 ? 'left' : 'right'
+      const effects = game.currentCard.value![side].effects
+      gains.push(effects.gold!)
+      game.resources.value = healthy()
+      game.choose(side)
+      harms.push(game.resources.value.people - 80)
+    }
+    expect(gains).toEqual([8, 5, 3, 1])
+    expect(harms).toEqual([-4, -7, -11, -12])
+    expect(game.flags.value['crisis-levy']).toBe(3)
+    for (const ids of [
+      ['k-tax-shift', 'k-tax-flight', 'k-tax-spiral'],
+      ['k-pay-arrears', 'k-army-foraging', 'k-pay-spiral'],
+    ]) {
+      expect(ids.map(id => crisisCards.find(card => card.id === id)!.left.effects.gold)).toEqual([-5, -9, -12])
+    }
+  })
+
+  it('当危机中重开时，旧计数清空且下一局能转入欠饷分支', () => {
+    const game = useGame()
+    game.startGame()
+    reach(game, 22, id => id === 'k-fiscal-gap' ? 'left' : id.startsWith('k-') ? 'right' : successfulSide(id))
+    expect(game.flags.value['crisis-levy']).toBe(3)
+    game.startGame()
+    expect(game.flags.value).toEqual({})
+    expect(game.decisions.value).toEqual([])
+    expect([...game.seenEventIds.value]).toEqual(['s-tuogu'])
+    reach(game, 18, id => id === 'k-fiscal-gap' ? 'right' : successfulSide(id))
+    expect(game.currentCard.value?.id).toBe('k-pay-arrears')
+    expect(game.flags.value['crisis-levy']).toBeUndefined()
+    expect(game.flags.value['crisis-arrears']).toBe(1)
+  })
+})
+
+describe('T0 革新条件链', () => {
+  it('当从初始资源逐项裁决时，存在不注入资源与旗标的完整中兴路径', () => {
+    const path = 'LLLLRLLLRRRRLLRRLRLRRLLLLLLLRLLRLLRLRLRRRLLLRRLLLLLRRLRLLRLRLLRRLLLLRLLLRRLLLRLLRLLRRL'
+    const game = useGame()
+    game.startGame()
+    expect(game.resources.value).toEqual({ court: 50, law: 40, army: 45, gold: 35, people: 45 })
     for (const side of path.slice(0, -1)) {
       expect(game.isOver.value).toBe(false)
       game.choose(side === 'L' ? 'left' : 'right')
@@ -195,7 +307,7 @@ describe('T0 革新条件链', () => {
     game.choose('left')
     expect(game.ending.value?.title).toBe('格物中兴')
     expect(game.decisions.value).toHaveLength(86)
-    expect(game.resources.value).toEqual({ court: 55, law: 67, army: 57, gold: 51, people: 100 })
+    expect(game.resources.value).toEqual({ court: 55, law: 64, army: 50, gold: 45, people: 100 })
   })
 
   it.each([1, 17, 2026, 1644])('当随机种子为%s时，34项建设和42项条件仍按时提供而不靠抽签', (seed) => {

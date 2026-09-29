@@ -28,7 +28,6 @@ const UNREST_PENALTY: Partial<Record<AxisKey, number>> = { army: -1, law: -1 }
 export const CARDS_PER_YEAR = 5
 const YEARLY_TICKS = 3
 const LAST_SCRIPT_YEAR = 16
-const START_VALUE = 50
 const BEST_KEY = 'chongzhen-best-years'
 
 const CN_YEAR = ['〇', '元', '二', '三', '四', '五', '六', '七', '八', '九', '十', '十一', '十二', '十三', '十四', '十五', '十六', '十七']
@@ -225,7 +224,7 @@ function clamp(value: number): number {
 }
 
 function initialResources(): Record<ResourceKey, number> {
-  return { court: START_VALUE, law: START_VALUE, army: START_VALUE, gold: START_VALUE, people: START_VALUE }
+  return { court: 50, law: 40, army: 45, gold: 35, people: 45 }
 }
 
 const SCRIPT_SLOTS = (LAST_SCRIPT_YEAR + 1) * CARDS_PER_YEAR

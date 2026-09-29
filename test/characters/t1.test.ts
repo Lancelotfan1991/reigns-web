@@ -292,12 +292,11 @@ describe('T1 保匠、海贸与军政局部成果', () => {
   })
 
   it('当契约成立后再遇漕粮海运时，单批运输不改既定航路契约', () => {
-    // 两次洗牌后，第六个随机事件落在实际 R 槽 38，不篡改卡组或决策。
-    seedRandom(3)
+    seedRandom(81)
     const game = start()
     toCard(game, 'g-shipping')
     choose(game, 'left')
-    reach(game, 38, progressSide)
+    reach(game, 40, progressSide)
     expect(game.chapter.value).toBeNull()
     expect(game.currentCard.value?.id).toBe('r-cao')
     choose(game, 'right')

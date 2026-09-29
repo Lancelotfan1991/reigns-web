@@ -1,6 +1,7 @@
 import type { Choice, Effects, GameEvent, StoryChapter } from '../types'
 import { SCRIPT_EVENTS } from './events'
 import { REFORM_EVENTS } from './reforms'
+import { CRISIS_EVENTS } from './crises'
 
 // 原卡只作素材。所有复制、条件覆盖及排期都发生在新对象上。
 const originals = new Map([...SCRIPT_EVENTS, ...REFORM_EVENTS].map(event => [event.id, event]))
@@ -548,7 +549,7 @@ export const STORY_CHAPTERS: StoryChapter[] = [
   ]),
 ]
 
-// 独立长期改革缺前提时允许引擎用随机卡补位；八个 R 槽不写入本表。
+// 独立长期改革缺前提时允许随机卡补位；危机节点另行合入，四个日常空位不写入本表。
 const standalone: [number, GameEvent[]][] = [
   [0, [source('s-tuogu')]],
   [1, [source('s-dianjianglu')]],
@@ -602,7 +603,10 @@ const standalone: [number, GameEvent[]][] = [
   })]],
 ]
 
-export const STANDALONE_EVENTS: GameEvent[] = standalone.flatMap(([slot, candidates]) => candidates.map(event => at(slot, event)))
+export const STANDALONE_EVENTS: GameEvent[] = [
+  ...standalone.flatMap(([slot, candidates]) => candidates.map(event => at(slot, event))),
+  ...CRISIS_EVENTS,
+]
 
 /** 人物事件元数据只取实际排程候选，不混入随机卡、弃用旧剧本或甲申终章。 */
 export const STORY_EVENTS: GameEvent[] = [
