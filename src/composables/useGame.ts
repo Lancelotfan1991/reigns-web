@@ -2,7 +2,7 @@ import { computed, ref } from 'vue'
 import { FINALE_EVENTS, RANDOM_EVENTS } from '../data/events'
 import { REFORM_FINALES } from '../data/reforms'
 import { STANDALONE_EVENTS, STORY_CHAPTERS } from '../data/chapters'
-import type { AxisKey, ChapterProgress, Decision, Ending, Effects, FlagRule, GameEvent, ResourceKey, Side, StoryChapter } from '../types'
+import type { AxisKey, ChapterProgress, Decision, Ending, Effects, FlagRule, GameEvent, ResourceKey, Side, StoryChapter, Verdict } from '../types'
 
 /** 四象：归零与满格同样致命 */
 export const AXIS_KEYS: AxisKey[] = ['court', 'law', 'army', 'gold']
@@ -270,7 +270,8 @@ export function useGame() {
   const deck = ref<GameEvent[]>([])
   const cardIndex = ref(0)
   const ending = ref<Ending | null>(null)
-  const lastResponse = ref('')
+  /** 待读的批红：null 表示当前在决策页，读完后回到决策页 */
+  const verdict = ref<Verdict | null>(null)
   const bestYears = ref(loadBest())
   /** 本局已做出的决策，供人物系统推导 */
   const decisions = ref<Decision[]>([])
@@ -350,7 +351,7 @@ export function useGame() {
     deck.value = [dealScript(0)]
     cardIndex.value = 0
     ending.value = null
-    lastResponse.value = ''
+    verdict.value = null
     decisions.value = []
   }
 
@@ -406,14 +407,38 @@ export function useGame() {
     return ok ? FINALE_ENDINGS.restoreWin : FINALE_ENDINGS.restoreLose
   }
 
-  /** 做出选择：结算指标、判定失衡/终章、翻开下一张卡 */
+  /** 做出选择：结算本议，留下批红供独立成页阅读 */
   function choose(side: Side) {
     const card = currentCard.value
     if (!card || isOver.value) return
 
+    const before = { ...resources.value }
+    const progress = chapter.value
+    const turn = turnInYear.value
+    const when = `${yearText.value} ${turn === null ? '甲申终章' : `第 ${turn} / ${CARDS_PER_YEAR} 议`}`
+    verdict.value = null
+    settle(card, side)
+
+    const choice = side === 'left' ? card.left : card.right
+    // 史实终章的收尾由结局页承担，无批红文字时不插一张空页
+    if (!choice.response) return
+    verdict.value = {
+      cardName: card.name,
+      choiceLabel: choice.label,
+      response: choice.response,
+      when,
+      chapter: progress ? { name: progress.name, step: progress.step, total: progress.total } : null,
+      lines: RESOURCE_KEYS
+        .filter((key) => before[key] !== resources.value[key])
+        .map((key) => ({ key, from: before[key], to: resources.value[key] })),
+      ended: isOver.value,
+    }
+  }
+
+  /** 结算一议：指标、旗标、失衡与终章判定，最后翻开下一张卡 */
+  function settle(card: GameEvent, side: Side) {
     const choice = side === 'left' ? card.left : card.right
     decisions.value.push({ eventId: card.id, side, year: year.value })
-    lastResponse.value = choice.response
     const next = applyEffects(choice.effects)
     if (choice.sets) {
       const after = { ...flags.value }
@@ -494,13 +519,18 @@ export function useGame() {
     }
   }
 
+  /** 读完批红，翻回决策页 */
+  function dismissVerdict() {
+    verdict.value = null
+  }
+
   return {
     resources,
     currentCard,
     year,
     yearText,
     ending,
-    lastResponse,
+    verdict,
     bestYears,
     reignedYears,
     reachedFinale,
@@ -517,6 +547,7 @@ export function useGame() {
     seenEventIds,
     startGame,
     choose,
+    dismissVerdict,
     previewEffects,
   }
 }

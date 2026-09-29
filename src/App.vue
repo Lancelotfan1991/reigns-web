@@ -3,6 +3,7 @@ import { computed, onMounted, onUnmounted, ref } from 'vue'
 import CharacterPanel from './components/CharacterPanel.vue'
 import GameCard from './components/GameCard.vue'
 import ResourceBadge from './components/ResourceBadge.vue'
+import VerdictSheet from './components/VerdictSheet.vue'
 import { useCharacters } from './composables/useCharacters'
 import {
   AXIS_KEYS,
@@ -59,12 +60,20 @@ function start() {
   screen.value = 'play'
 }
 
+/** 刚裁决那一议的批红；非空时屏上只有这一页可看 */
+const verdict = computed(() => game.verdict.value)
+
 function onChoose(side: Side) {
   game.choose(side)
   dragDx.value = 0
-  if (game.isOver.value) {
-    screen.value = 'over'
-  }
+  if (!verdict.value && game.isOver.value) screen.value = 'over'
+}
+
+/** 读完批红：国运已定就入结局，否则翻到下一问 */
+function continueVerdict() {
+  const ended = verdict.value?.ended ?? false
+  game.dismissVerdict()
+  if (ended) screen.value = 'over'
 }
 
 function onKey(e: KeyboardEvent) {
@@ -73,6 +82,13 @@ function onKey(e: KeyboardEvent) {
     return
   }
   if (screen.value !== 'play') return
+  if (verdict.value) {
+    if (['Enter', ' ', 'Spacebar', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
+      e.preventDefault()
+      continueVerdict()
+    }
+    return
+  }
   if (e.key === 'ArrowLeft') cardRef.value?.fly('left')
   if (e.key === 'ArrowRight') cardRef.value?.fly('right')
 }
@@ -173,7 +189,7 @@ onUnmounted(() => window.removeEventListener('keydown', onKey))
       </div>
 
       <section
-        v-if="game.chapter.value"
+        v-if="game.chapter.value && !verdict"
         class="chapter-banner"
         role="status"
         aria-label="连续篇章进度"
@@ -194,17 +210,12 @@ onUnmounted(() => window.removeEventListener('keydown', onKey))
         <span v-if="game.workshopsSupplied.value">工坊供械：抵消军心岁耗</span>
       </p>
 
-      <Transition name="toast">
-        <div v-if="game.lastResponse.value" :key="game.currentCard.value?.id" class="toast">
-          {{ game.lastResponse.value }}
-        </div>
-      </Transition>
-
       <div class="card-zone">
         <div class="stack-back back-2"></div>
         <div class="stack-back back-1"></div>
+        <VerdictSheet v-if="verdict" :verdict="verdict" @continue="continueVerdict" />
         <GameCard
-          v-if="game.currentCard.value"
+          v-else-if="game.currentCard.value"
           :key="game.currentCard.value.id"
           ref="cardRef"
           :event="game.currentCard.value"
@@ -214,7 +225,7 @@ onUnmounted(() => window.removeEventListener('keydown', onKey))
         />
       </div>
 
-      <footer v-if="game.currentCard.value" class="actions">
+      <footer v-if="game.currentCard.value && !verdict" class="actions">
         <button class="verdict-btn" @click="cardRef?.fly('left')">
           <span class="arrow">◀</span>{{ game.currentCard.value.left.label }}
         </button>
@@ -523,7 +534,7 @@ onUnmounted(() => window.removeEventListener('keydown', onKey))
   flex: none;
 }
 
-/* 篇章常驻，不随塘报正文或上一议批红滚走 */
+/* 篇章常驻，不随塘报正文滚走；批红单页属于上一议，此时不显示 */
 .chapter-banner {
   flex: none;
   padding: 7px 10px;
@@ -562,12 +573,6 @@ onUnmounted(() => window.removeEventListener('keydown', onKey))
   font-size: 11.5px;
   line-height: 1.5;
   color: var(--ink-2);
-}
-
-.chapter-banner ~ .toast {
-  flex: none;
-  max-height: 76px;
-  overflow-y: auto;
 }
 
 .hud {
@@ -726,29 +731,6 @@ onUnmounted(() => window.removeEventListener('keydown', onKey))
 
 .people-btn:active {
   border-color: var(--cinnabar);
-}
-
-/* 批红：上一手的结果 */
-.toast {
-  min-height: 42px;
-  margin: 0 6px;
-  padding: 7px 12px 7px 14px;
-  font-family: var(--font-kai);
-  font-size: 13px;
-  line-height: 1.7;
-  text-align: justify;
-  color: var(--ink-2);
-  background: rgba(168, 50, 42, 0.07);
-  border-left: 3px solid var(--cinnabar);
-}
-
-.toast-enter-active {
-  transition: all 0.4s ease;
-}
-
-.toast-enter-from {
-  opacity: 0;
-  transform: translateY(-8px);
 }
 
 .card-zone {
@@ -943,15 +925,6 @@ onUnmounted(() => window.removeEventListener('keydown', onKey))
     gap: 6px;
   }
 
-  .toast {
-    flex: none;
-    max-height: 76px;
-    overflow-y: auto;
-    padding: 5px 9px;
-    font-size: 12px;
-    line-height: 1.55;
-  }
-
   .chapter-banner {
     padding: 4px 8px;
   }
@@ -963,10 +936,6 @@ onUnmounted(() => window.removeEventListener('keydown', onKey))
   .chapter-banner p {
     font-size: 11px;
     line-height: 1.4;
-  }
-
-  .chapter-banner ~ .toast {
-    max-height: 52px;
   }
 
   .verdict-btn {

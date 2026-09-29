@@ -4,15 +4,29 @@ import { mount } from '@vue/test-utils'
 import { nextTick } from 'vue'
 import App from '../../src/App.vue'
 import * as gameModule from '../../src/composables/useGame'
-import { seedRandom } from '../game/helpers'
+import { healthy, progressSide, reach, seedRandom } from '../game/helpers'
 
 type AppWrapper = ReturnType<typeof mount<typeof App>>
 const chapterSelector = '[role="status"][aria-label="连续篇章进度"]'
+const verdictSelector = '[aria-label="本议批红"]'
+const cardBodySelector = '[aria-label="塘报正文，可上下滚动"]'
 
-async function clickChoice(wrapper: AppWrapper, side: 0 | 1) {
+/** 飞牌裁决：停在属于这一议的批红页 */
+async function flyChoice(wrapper: AppWrapper, side: 0 | 1) {
   await wrapper.get('footer').findAll('button')[side].trigger('click')
   await vi.advanceTimersByTimeAsync(300)
   await nextTick()
+}
+
+/** 读完批红，翻回决策页；国运已定时进入结局页 */
+async function readVerdict(wrapper: AppWrapper) {
+  await wrapper.get(verdictSelector).get('button').trigger('click')
+  await nextTick()
+}
+
+async function clickChoice(wrapper: AppWrapper, side: 0 | 1) {
+  await flyChoice(wrapper, side)
+  await readVerdict(wrapper)
 }
 
 async function enterChapter(wrapper: AppWrapper) {
@@ -43,14 +57,15 @@ it('当点击入宫并裁决五次时，页面显示下一年第一议且出现�
     expect(wrapper.text()).toContain('南渡通常需要民心至少 45')
     expect(wrapper.text()).toContain('提前准备可降低门槛')
     await wrapper.findAll('button').find((button) => button.text() === '入宫即位')!.trigger('click')
+    for (const title of ['君威 50', '法度 40', '军心 45', '国库 35']) {
+      expect(wrapper.find(`[title="${title}"]`).exists()).toBe(true)
+    }
+    expect(wrapper.get('[title^="民心 45："]').text()).toContain('45')
     const seen = new Set<string>()
-    for (const [index, side] of [0, 0, 1, 0, 1].entries()) {
+    for (const [index, side] of ([0, 0, 1, 0, 1] as const).entries()) {
       expect(wrapper.text()).toContain(`第 ${index + 1} / 5 议`)
       seen.add(wrapper.find('h2').text())
-      const buttons = wrapper.find('footer').findAll('button')
-      await buttons[side].trigger('click')
-      await vi.advanceTimersByTimeAsync(300)
-      await nextTick()
+      await clickChoice(wrapper, side)
     }
     expect(seen.size).toBe(5)
     expect(seen.has('给器物一个衙门')).toBe(true)
@@ -74,6 +89,8 @@ it('当打开人物面板时，方向键不会裁决卡片，关闭后仍可继�
     await nextTick()
     window.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowLeft' }))
     await vi.advanceTimersByTimeAsync(300)
+    expect(wrapper.get(verdictSelector).text()).toContain(title)
+    await readVerdict(wrapper)
     expect(wrapper.find('h2').text()).not.toBe(title)
   } finally {
     wrapper.unmount()
@@ -167,6 +184,8 @@ it('当篇章内飞牌期间连续点击或按键时，只提交当前一步', a
     window.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight' }))
     await vi.advanceTimersByTimeAsync(200)
     await nextTick()
+    expect(wrapper.get(verdictSelector).text()).toContain('给器物一个衙门')
+    await readVerdict(wrapper)
     expect(wrapper.get(chapterSelector).text()).toContain('第 2 / 4 步')
     expect(wrapper.get('header').text()).toContain('第 5 / 5 议')
     expect(wrapper.get('h2').text()).toBe('器院的钱给谁看')
@@ -194,6 +213,10 @@ it('当篇章中死亡后点击重开时，会清空篇章且再次进入从第�
     expect(wrapper.get('h2').text()).toBe('天启帝托孤')
     expect(wrapper.get('header').text()).toContain('西元 1627')
     expect(wrapper.get('header').text()).toContain('第 1 / 5 议')
+    for (const title of ['君威 50', '法度 40', '军心 45', '国库 35']) {
+      expect(wrapper.find(`[title="${title}"]`).exists()).toBe(true)
+    }
+    expect(wrapper.get('[title^="民心 45："]').text()).toContain('45')
     for (const side of [0, 0, 1] as const) await clickChoice(wrapper, side)
     expect(wrapper.get(chapterSelector).text()).toContain('器院立局')
     expect(wrapper.get(chapterSelector).text()).toContain('第 1 / 4 步')
@@ -229,6 +252,131 @@ it('当篇章中查看人物并按方向键时，不推进卡片、年度议次�
     await clickChoice(wrapper, 0)
     expect(wrapper.get(chapterSelector).text()).toContain('第 2 / 4 步')
     expect(wrapper.get('header').text()).toContain('第 5 / 5 议')
+  } finally {
+    wrapper.unmount()
+  }
+})
+
+it.each([
+  {
+    label: '反复催征',
+    sides: [0, 1, 1, 1],
+    names: ['国用积弊·旧欠与新饷', '国用积弊·逃户的税给谁', '国用积弊·旧额压在荒田上', '国用积弊·饷逼税，税逼民'],
+  },
+  {
+    label: '偿欠止损',
+    sides: [1, 0, 0, 0],
+    names: ['国用积弊·旧欠与新饷', '国用积弊·欠饷滚进新年', '国用积弊·补欠不等于足饷', '国用积弊·公账接续，才有余地'],
+  },
+] as const)('当点击走过$label路线时，页面跨年显示对应积弊后果与批复，不冒充连续篇章', async ({ sides, names }) => {
+  const game = gameModule.useGame()
+  vi.spyOn(gameModule, 'useGame').mockReturnValue(game)
+  const wrapper = mount(App)
+  try {
+    await wrapper.findAll('button').find(button => button.text() === '入宫即位')!.trigger('click')
+    for (const [step, slot] of [12, 18, 21, 38].entries()) {
+      reach(game, slot, progressSide)
+      game.resources.value = healthy()
+      await nextTick()
+      expect(wrapper.get('h2').text()).toBe(names[step])
+      expect(wrapper.get('header').text()).toContain(`西元 ${1627 + Math.floor(slot / 5)}`)
+      expect(wrapper.find(chapterSelector).exists()).toBe(false)
+      const card = game.currentCard.value!
+      expect(wrapper.get(cardBodySelector).text()).toBe(card.text)
+      const side = sides[step] === 0 ? 'left' : 'right'
+      expect(wrapper.get('footer').findAll('button')[sides[step]].text()).toContain(card[side].label)
+      await flyChoice(wrapper, sides[step])
+      expect(game.decisions.value).toHaveLength(slot + 1)
+      const sheet = wrapper.get(verdictSelector)
+      expect(sheet.text()).toContain(names[step])
+      expect(sheet.text()).toContain(card[side].response)
+      expect(sheet.find(cardBodySelector).exists()).toBe(false)
+      expect(wrapper.get('[title^="民心 "]').text()).toContain(String(80 + (card[side].effects.people ?? 0)))
+      await readVerdict(wrapper)
+    }
+  } finally {
+    wrapper.unmount()
+  }
+})
+
+it('当批红独立成页时，本议批复与国势净变化同页显示，下一问要读完才出现', async () => {
+  const game = gameModule.useGame()
+  vi.spyOn(gameModule, 'useGame').mockReturnValue(game)
+  const wrapper = mount(App)
+  try {
+    await enterChapter(wrapper)
+    const card = game.currentCard.value!
+    expect(card.name).toBe('给器物一个衙门')
+    const before = { ...game.resources.value }
+    await flyChoice(wrapper, 0)
+    const sheet = wrapper.get(verdictSelector)
+    const view = game.verdict.value!
+    expect(sheet.text()).toContain('批红')
+    expect(sheet.text()).toContain(card.name)
+    expect(sheet.text()).toContain(card.left.label)
+    expect(sheet.text()).toContain(card.left.response)
+    expect(sheet.text()).toContain('天启七年（1627） 第 4 / 5 议')
+    expect(sheet.text()).toContain('器院立局 第 1 / 4 步已定')
+    expect(sheet.findAll('li')).toHaveLength(view.lines.length)
+    for (const line of view.lines) {
+      expect(line.from).toBe(before[line.key])
+      expect(sheet.text()).toContain(`${line.from} → ${line.to}`)
+    }
+    expect(wrapper.find(cardBodySelector).exists()).toBe(false)
+    expect(wrapper.find(chapterSelector).exists()).toBe(false)
+    expect(wrapper.find('footer').exists()).toBe(false)
+    await readVerdict(wrapper)
+    expect(wrapper.find(verdictSelector).exists()).toBe(false)
+    expect(wrapper.get(cardBodySelector).text()).toBe(game.currentCard.value!.text)
+    expect(wrapper.get(chapterSelector).text()).toContain('第 2 / 4 步')
+  } finally {
+    wrapper.unmount()
+  }
+})
+
+it('当批红页上按方向键或回车时，只翻回决策页不裁决下一问', async () => {
+  const game = gameModule.useGame()
+  vi.spyOn(gameModule, 'useGame').mockReturnValue(game)
+  const wrapper = mount(App)
+  try {
+    await wrapper.findAll('button').find((button) => button.text() === '入宫即位')!.trigger('click')
+    await flyChoice(wrapper, 0)
+    expect(game.decisions.value).toHaveLength(1)
+    window.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight' }))
+    await nextTick()
+    expect(game.decisions.value).toHaveLength(1)
+    expect(wrapper.find(verdictSelector).exists()).toBe(false)
+    window.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight' }))
+    await vi.advanceTimersByTimeAsync(300)
+    expect(game.decisions.value).toHaveLength(2)
+    window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter' }))
+    await nextTick()
+    expect(wrapper.find(verdictSelector).exists()).toBe(false)
+    expect(game.decisions.value).toHaveLength(2)
+  } finally {
+    wrapper.unmount()
+  }
+})
+
+it('当这一议致死时，批红页先给出后果与归零国势，读完才见结局', async () => {
+  const game = gameModule.useGame()
+  vi.spyOn(gameModule, 'useGame').mockReturnValue(game)
+  const wrapper = mount(App)
+  try {
+    await enterChapter(wrapper)
+    game.resources.value.gold = 1
+    await nextTick()
+    const card = game.currentCard.value!
+    await flyChoice(wrapper, 0)
+    expect(game.isOver.value).toBe(true)
+    const sheet = wrapper.get(verdictSelector)
+    expect(sheet.text()).toContain(card.left.response)
+    expect(sheet.text()).toContain('国库 1 → 0')
+    expect(sheet.get('button').text()).toBe('看结局')
+    expect(wrapper.text()).not.toContain('再着龙袍')
+    await readVerdict(wrapper)
+    expect(wrapper.get('h2').text()).toBe('饷竭国空')
+    expect(wrapper.text()).toContain('再着龙袍')
   } finally {
     wrapper.unmount()
   }

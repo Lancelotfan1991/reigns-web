@@ -34,6 +34,8 @@ export function reach(game: Game, index: number, decide: (id: string) => Side = 
     game.resources.value = healthy()
     game.choose(decide(card.id))
   }
+  // 推进装置不替页面读批复：留到断言前会挡住下一问
+  game.dismissVerdict()
 }
 
 export function atFinale(flags: Record<string, number>, target = healthy()) {

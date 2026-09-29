@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { useCharacters } from '../../src/composables/useCharacters'
-import { useGame } from '../../src/composables/useGame'
+import { RESOURCE_KEYS, useGame } from '../../src/composables/useGame'
 import { REFORM_REQUIREMENTS, REFORM_FINALES } from '../../src/data/reforms'
 import { STORY_EVENTS } from '../../src/data/chapters'
 import { CHARACTERS } from '../../src/data/characters'
@@ -139,7 +139,7 @@ describe('T1 旧终章和重开', () => {
     game.startGame()
     expect(game.decisions.value).toEqual([])
     expect(game.flags.value).toEqual({})
-    expect(game.resources.value).toEqual({ court: 50, law: 50, army: 50, gold: 50, people: 50 })
+    expect(game.resources.value).toEqual({ court: 50, law: 40, army: 45, gold: 35, people: 45 })
     expect(game.customsFunded.value).toBe(false)
     expect(game.workshopsSupplied.value).toBe(false)
     expect(game.ending.value).toBeNull()
@@ -156,5 +156,84 @@ describe('T1 旧终章和重开', () => {
     game.choose('right')
     expect(game.decisions.value).toHaveLength(86)
     expect(game.ending.value).toBe(ending)
+  })
+})
+
+describe('T1 批红单页', () => {
+  it('当裁决一议时，批红记录该议的题签、批语、纪年与净变化', () => {
+    const game = useGame()
+    game.startGame()
+    reach(game, 3)
+    const card = game.currentCard.value!
+    expect(card.id).toBe('g-institute')
+    const before = { ...game.resources.value }
+    game.choose('left')
+    const verdict = game.verdict.value!
+    expect(verdict.cardName).toBe(card.name)
+    expect(verdict.choiceLabel).toBe(card.left.label)
+    expect(verdict.response).toBe(card.left.response)
+    expect(verdict.when).toBe('天启七年（1627） 第 4 / 5 议')
+    expect(verdict.chapter).toEqual({ name: '器院立局', step: 1, total: 4 })
+    expect(verdict.ended).toBe(false)
+    expect(verdict.lines).toEqual(RESOURCE_KEYS
+      .filter((key) => before[key] !== game.resources.value[key])
+      .map((key) => ({ key, from: before[key], to: game.resources.value[key] })))
+    expect(verdict.lines.length).toBeGreaterThan(0)
+    expect(verdict.cardName).not.toBe(game.currentCard.value!.name)
+  })
+
+  it('当一议使国库归零时，批红标记国运已定并列出归零项', () => {
+    const game = useGame()
+    game.startGame()
+    reach(game, 3)
+    game.resources.value = { ...healthy(), gold: 1 }
+    game.choose('left')
+    const verdict = game.verdict.value!
+    expect(game.isOver.value).toBe(true)
+    expect(verdict.ended).toBe(true)
+    expect(verdict.lines).toContainEqual({ key: 'gold', from: 1, to: 0 })
+  })
+
+  it('当读完批红时，只翻回决策页而不改写国势', () => {
+    const game = useGame()
+    game.startGame()
+    reach(game, 3)
+    game.choose('left')
+    const settled = { ...game.resources.value }
+    game.dismissVerdict()
+    expect(game.verdict.value).toBeNull()
+    expect(game.resources.value).toEqual(settled)
+  })
+
+  it('当史实终章没有批红文字时，不会留下上一议的批红', () => {
+    const game = atFinale({})
+    expect(game.currentCard.value?.id).toBe('s-finale')
+    expect(game.verdict.value).not.toBeNull()
+    game.choose('left')
+    expect(game.verdict.value).toBeNull()
+    expect(game.ending.value?.title).toBe('煤山一棵歪脖树')
+  })
+
+  it('当改史终章被裁决时，批红记为甲申终章且国势未动', () => {
+    const game = atFinale({ 'gewu-settlement': 1, 'gewu-frontier': 1 })
+    game.dismissVerdict()
+    const card = game.currentCard.value!
+    expect(card.id).toBe('g-finale-incomplete')
+    game.choose('left')
+    const verdict = game.verdict.value!
+    expect(verdict.when).toContain('甲申终章')
+    expect(verdict.response).toBe(card.left.response)
+    expect(verdict.lines).toEqual([])
+    expect(verdict.ended).toBe(true)
+  })
+
+  it('当重开新一局时，未读的批红被清除', () => {
+    const game = useGame()
+    game.startGame()
+    reach(game, 3)
+    game.choose('left')
+    expect(game.verdict.value).not.toBeNull()
+    game.startGame()
+    expect(game.verdict.value).toBeNull()
   })
 })

@@ -30,7 +30,7 @@ export interface Choice {
   /** 滑动时显示的决策印章文字 */
   label: string
   effects: Effects
-  /** 做出选择后下一张卡牌顶部的回应文字 */
+  /** 本议批红：裁决后独立成页展示，不与下一问同屏 */
   response: string
   /** 标记此选择直接触发 1644 终章结算 */
   finale?: FinaleBranch
@@ -70,6 +70,30 @@ export interface ChapterProgress {
   name: string
   step: number
   total: number
+}
+
+/** 一议对某项指标的净变化（已含岁耗与动乱） */
+export interface VerdictLine {
+  key: ResourceKey
+  from: number
+  to: number
+}
+
+/** 一议的批红：属于刚裁决的那一议，独立成页，读完才见下一问 */
+export interface Verdict {
+  /** 所裁事件的题签 */
+  cardName: string
+  /** 玩家所选一侧的批红文字 */
+  choiceLabel: string
+  /** 所采之议的后果 */
+  response: string
+  /** 裁决时的纪年与议次 */
+  when: string
+  /** 所裁之议是某连续篇章的第几步；非篇章内为 null */
+  chapter: { name: string; step: number; total: number } | null
+  lines: VerdictLine[]
+  /** 此议已定国运：读完批红即入结局 */
+  ended: boolean
 }
 
 export interface Ending {
