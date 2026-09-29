@@ -110,7 +110,7 @@ onUnmounted(() => window.removeEventListener('keydown', onKey))
           <p>
             你一觉醒来，成了刚刚登基的大明皇帝朱由检。内有党争、大旱、瘟疫、空虚的国库；外有建州铁骑、流亡驿卒。
           </p>
-          <p>每年 {{ CARDS_PER_YEAR }} 次抉择，左右滑出批红；本局事件绝不重复。朝局由四象撑着，过高与过低一样要命：</p>
+          <p>每年 {{ CARDS_PER_YEAR }} 次抉择，左右一滑定夺，批复另页读完；本局事件绝不重复。朝局由四象撑着，过高与过低一样要命：</p>
           <dl class="axis-list">
             <template v-for="key in AXIS_KEYS" :key="key">
               <dt :style="{ borderColor: RESOURCE_META[key].color }">
