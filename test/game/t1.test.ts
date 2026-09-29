@@ -267,7 +267,7 @@ describe('T1 宫门定策四档', () => {
     expect(game.currentCard.value?.id).toBe(id)
   })
 
-  it('当凤阳与逮牌同名两档时，稳杀不欠人情、险胜必欠人情', () => {
+  it('当发落司礼监同名两档时，稳杀不欠人情、险胜必欠人情', () => {
     const steady = toArrest('right', 'right')
     const goldBefore = steady.resources.value.gold
     steady.choose('left')
@@ -353,7 +353,7 @@ describe('T1 宫门定策四档', () => {
     game.resources.value = healthy()
     game.choose('right')
     expect(game.currentCard.value?.id).toBe('c-eunuch-marshal-owed')
-    expect(game.currentCard.value?.text).toContain('落闸开门')
+    expect(game.currentCard.value?.text).toContain('落过闸')
   })
 
   it('当魏忠贤已诛而逆案扩大时，监军之请以部院无人任事为由头', () => {
@@ -400,5 +400,25 @@ describe('T1 宫门定策四档', () => {
     const game = toArrest('right', 'right')
     expect(Object.keys(game.flags.value).sort()).toEqual(['wei-soothed', 'wei-watched'])
     expect(game.resources.value).toEqual({ court: 40, law: 44, army: 46, gold: 26, people: 47 })
+  })
+
+  it('当第三步发落司礼监时，崔呈秀与逮牌都已在前面交代过', () => {
+    const byId = new Map(STORY_EVENTS.map((event) => [event.id, event]))
+    expect(byId.get('s-dianjianglu')!.text).toContain('崔呈秀')
+    for (const id of ['s-wei', 's-wei-rash', 's-wei-failed', 's-wei-stalled']) {
+      expect(byId.get(id)!.text, id).toContain('逮牌')
+      expect(byId.get(id)!.text, id).toContain('牌票')
+    }
+    for (const id of ['s-wei', 's-wei-rash']) {
+      expect(byId.get(id)!.text, id).toContain('崔呈秀')
+    }
+  })
+
+  it('当档名改为发落司礼监时，凤阳只作本朝成例而不冒充选项', () => {
+    const byId = new Map(STORY_EVENTS.map((event) => [event.id, event]))
+    for (const id of ['s-wei', 's-wei-rash']) expect(byId.get(id)!.name, id).toBe('发落司礼监')
+    const steady = byId.get('s-wei')!
+    expect(steady.text).toContain('凤阳')
+    for (const side of ['left', 'right'] as const) expect(steady[side].label, side).not.toContain('凤阳')
   })
 })

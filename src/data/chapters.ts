@@ -596,7 +596,7 @@ const standalone: [number, GameEvent[]][] = [
   [37, [source('g-revenue', ['gewu-customs', 'gewu-audit']), source('s-yingdi')]],
   [39, [source('g-charter', ['gewu-budget', 'gewu-audit', 'gewu-tenure', 'gewu-council'])]],
   [41, [
-    eunuchMarshal('c-eunuch-marshal-owed', '禁门那一夜替你落闸开门、替你换了门上钥匙的那几个内侍，如今都在各衙门当差。兵部催饷、登莱造炮、宣府守边，几处都缺一个能直达御前的人。内侍因此有请出京监督军饷：他们不要兵权，只要能在军前宣读诏旨、按月密疏奏闻。', ['eunuch-debt']),
+    eunuchMarshal('c-eunuch-marshal-owed', '宫门里头那几个替你换过钥匙、落过闸、传过话的内侍，如今都在各衙门当差，等着你还这一份人情。兵部催饷、登莱造炮、宣府守边，几处都缺一个能直达御前的人。内侍因此有请出京监督军饷：他们不要兵权，只要能在军前宣读诏旨、按月密疏奏闻。', ['eunuch-debt']),
     eunuchMarshal('c-eunuch-marshal-empty', '逆案一次定了二百五十多人，六部与督抚同时缺额，题补的章奏常在中途。凡有军情，朝臣先要避嫌，边镇也懒得再等部覆。内侍因此有请出京监督军饷：他们不要兵权，只要能在军前宣读诏旨、按月密疏奏闻。', ['ni-an-broad']),
   ]],
   [42, [source('g-market', ['gewu-shipping', 'gewu-customs', 'gewu-audit', 'gewu-apprentices', 'gewu-manuals', 'gewu-charter', 'shipping-arbitrated'], {
