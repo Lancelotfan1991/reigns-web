@@ -1,13 +1,23 @@
 import { computed, ref } from 'vue'
-import { FINALE_EVENTS, RANDOM_EVENTS } from '../data/events'
-import { REFORM_FINALES } from '../data/reforms'
-import { STANDALONE_EVENTS, STORY_CHAPTERS } from '../data/chapters'
-import type { AxisKey, ChapterProgress, Decision, Ending, Effects, FlagRule, GameEvent, ResourceKey, Side, StoryChapter, Verdict } from '../types'
+import {
+  AXIS_KEYS,
+  CARDS_PER_YEAR,
+  SCRIPT_SLOTS,
+  UNREST_LINE,
+  RESOURCE_KEYS,
+  addFlags,
+  applyEffects as applyToResources,
+  chapterAt,
+  dealAt,
+  eligible,
+  initialResources,
+  makePool,
+  turnOf,
+} from './simulation'
+import type { AxisKey, ChapterProgress, Decision, Ending, Effects, GameEvent, ResourceKey, Side, Verdict } from '../types'
+import type { SimState } from './simulation'
 
-/** 四象：归零与满格同样致命 */
-export const AXIS_KEYS: AxisKey[] = ['court', 'law', 'army', 'gold']
-/** 结算与展示的统一顺序：四象在前，国本民心在后 */
-export const RESOURCE_KEYS: ResourceKey[] = ['court', 'law', 'army', 'gold', 'people']
+export { AXIS_KEYS, CARDS_PER_YEAR, RESOURCE_KEYS, SCRIPT_SLOTS, UNREST_LINE }
 
 export const RESOURCE_META: Record<ResourceKey, { icon: string; name: string; color: string; hint: string }> = {
   court: { icon: '🏛️', name: '君威', color: '#a8322a', hint: '谁的话还算数' },
@@ -17,17 +27,11 @@ export const RESOURCE_META: Record<ResourceKey, { icon: string; name: string; co
   people: { icon: '🌾', name: '民心', color: '#4b7a5c', hint: '越高越稳，满格无害' },
 }
 
-/** 国本线：民心低于此值即为动乱，军心与法度随岁耗额外失血 */
-export const UNREST_LINE = 30
 /** 南渡硬门槛：终章时民心不及此数，南渡必败 */
 export const SOUTH_PEOPLE_LINE = 45
 /** 民心厚到此处，终章可赦免一象之不足 */
 export const SOUTH_WAIVER_LINE = 70
-const UNREST_PENALTY: Partial<Record<AxisKey, number>> = { army: -1, law: -1 }
 
-export const CARDS_PER_YEAR = 5
-const YEARLY_TICKS = 3
-const LAST_SCRIPT_YEAR = 16
 const BEST_KEY = 'chongzhen-best-years'
 
 const CN_YEAR = ['〇', '元', '二', '三', '四', '五', '六', '七', '八', '九', '十', '十一', '十二', '十三', '十四', '十五', '十六', '十七']
@@ -37,8 +41,6 @@ export function yearLabel(y: number): string {
   if (y <= 0) return '天启七年'
   return `崇祯${CN_YEAR[Math.min(y, CN_YEAR.length - 1)]}年`
 }
-
-const ERA_DRIFT: Partial<Record<ResourceKey, number>> = { army: -1, gold: -1 }
 
 /** 四象失衡结局（1644 之前） */
 const AXIS_ENDINGS: Record<AxisKey, { empty: Ending; full: Ending }> = {
@@ -211,67 +213,12 @@ const REFORM_ENDINGS: Record<'perfect' | 'retreat' | 'unfinished' | 'setback', E
   },
 }
 
-function shuffle<T>(list: T[]): T[] {
-  const arr = [...list]
-  for (let i = arr.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1))
-    ;[arr[i], arr[j]] = [arr[j], arr[i]]
-  }
-  return arr
-}
-
 function loadBest(): number {
   try {
     return Number(localStorage.getItem(BEST_KEY)) || 0
   } catch {
     return 0
   }
-}
-
-function clamp(value: number): number {
-  return Math.min(100, Math.max(0, value))
-}
-
-function initialResources(): Record<ResourceKey, number> {
-  return { court: 50, law: 40, army: 45, gold: 35, people: 45 }
-}
-
-const SCRIPT_SLOTS = (LAST_SCRIPT_YEAR + 1) * CARDS_PER_YEAR
-const CHAPTER_STARTS = new Map(STORY_CHAPTERS.map((chapter) => [chapter.start, chapter]))
-
-const SLOT_CANDIDATES = new Map<string, GameEvent[]>()
-for (const e of STANDALONE_EVENTS) {
-  const key = `${e.year ?? 0}#${(e.order ?? 1) - 1}`
-  const list = SLOT_CANDIDATES.get(key)
-  if (list) list.push(e)
-  else SLOT_CANDIDATES.set(key, [e])
-}
-for (const list of SLOT_CANDIDATES.values()) {
-  list.sort((a, b) => (b.requires?.length ?? 0) - (a.requires?.length ?? 0))
-}
-
-const FINALE_CANDIDATES = [...REFORM_FINALES, ...FINALE_EVENTS].sort(
-  (a, b) => (b.requires?.length ?? 0) - (a.requires?.length ?? 0),
-)
-
-function ruleMet(rule: FlagRule, flags: Record<string, number>): boolean {
-  if (typeof rule === 'string') return (flags[rule] ?? 0) >= 1
-  return (flags[rule.flag] ?? 0) >= rule.min
-}
-
-function eligible(card: GameEvent, flags: Record<string, number>, resources: Record<ResourceKey, number>): boolean {
-  return (card.requires ?? []).every((rule) => ruleMet(rule, flags))
-    && !(card.excludes ?? []).some((flag) => (flags[flag] ?? 0) > 0)
-    && RESOURCE_KEYS.every((key) => {
-      const bound = card.resourceBounds?.[key]
-      return !bound || (resources[key] >= (bound.min ?? 0) && resources[key] <= (bound.max ?? 100))
-    })
-}
-
-function makeRandomDraw() {
-  const pool = shuffle(RANDOM_EVENTS)
-  let cursor = 0
-  return (): GameEvent => pool[cursor++]
 }
 
 export function useGame() {
@@ -286,38 +233,21 @@ export function useGame() {
   const decisions = ref<Decision[]>([])
   /** 旗标计数：关键抉择写下的痕迹，决定后续槽位发哪张分叉卡 */
   const flags = ref<Record<string, number>>({})
-  const activeChapter = ref<{ story: StoryChapter; step: number } | null>(null)
+  /** 本局随机牌序：开局洗好一次，与推演共用同一份，故 god 模式能照真实牌序算到底 */
+  let pool = makePool()
+  let cursor = 0
   const chapter = computed<ChapterProgress | null>(() => {
-    const active = activeChapter.value
-    if (!active || ending.value) return null
+    if (ending.value) return null
+    const active = chapterAt(cardIndex.value)
+    if (!active) return null
     return { id: active.story.id, name: active.story.name, step: active.step + 1, total: active.story.steps.length }
   })
-  let drawRandom = makeRandomDraw()
-
-  function dealScript(index: number): GameEvent {
-    if (!activeChapter.value) {
-      const story = CHAPTER_STARTS.get(index)
-      if (story) activeChapter.value = { story, step: 0 }
-    }
-    const active = activeChapter.value
-    if (active) {
-      // 每一步都有本篇章的无条件收束分支，前置失败不能退回随机池。
-      return active.story.steps[active.step].find((card) => eligible(card, flags.value, resources.value))!
-    }
-    const key = `${Math.floor(index / CARDS_PER_YEAR)}#${index % CARDS_PER_YEAR}`
-    return SLOT_CANDIDATES.get(key)?.find((c) => eligible(c, flags.value, resources.value)) ?? drawRandom()
-  }
-
-  /** 发终章：满足条件的改史终章优先，史实终章兜底 */
-  function dealFinale(): GameEvent | undefined {
-    return FINALE_CANDIDATES.find((c) => eligible(c, flags.value, resources.value))
-  }
 
   /** 惰性发第 index 张牌；越过终章即无牌 */
   function dealCard(index: number): GameEvent | undefined {
-    if (index < SCRIPT_SLOTS) return dealScript(index)
-    if (index === SCRIPT_SLOTS) return dealFinale()
-    return undefined
+    const dealt = dealAt(index, flags.value, resources.value, pool, cursor)
+    cursor = dealt.cursor
+    return dealt.card
   }
 
   /** 0 = 天启七年，N = 崇祯N年，17 = 甲申终章当年 */
@@ -334,7 +264,7 @@ export function useGame() {
   /** 终章是否被触发（区别于中途失衡而亡） */
   const reachedFinale = computed(() => isOver.value && cardIndex.value >= deck.value.length)
   const unrest = computed(() => resources.value.people < UNREST_LINE)
-  const turnInYear = computed(() => cardIndex.value < SCRIPT_SLOTS ? cardIndex.value % CARDS_PER_YEAR + 1 : null)
+  const turnInYear = computed(() => turnOf(cardIndex.value))
   const customsFunded = computed(() => !!flags.value['gewu-customs'] && !!flags.value['gewu-audit'])
   const workshopsSupplied = computed(() => !!flags.value['gewu-tools'] && !!flags.value['gewu-denglai'])
 
@@ -355,9 +285,9 @@ export function useGame() {
   function startGame() {
     resources.value = initialResources()
     flags.value = {}
-    activeChapter.value = null
-    drawRandom = makeRandomDraw()
-    deck.value = [dealScript(0)]
+    pool = makePool()
+    cursor = 0
+    deck.value = [dealCard(0)!]
     cardIndex.value = 0
     ending.value = null
     verdict.value = null
@@ -372,27 +302,14 @@ export function useGame() {
   }
 
   function applyEffects(effects: Effects): Record<ResourceKey, number> {
-    const next = { ...resources.value }
-    const turn = turnInYear.value
-    // 按年摊销为整数，增加抉择次数不增加年度岁耗；终章不再计时。
-    const tick = turn === null ? 0 : Math.floor(turn * YEARLY_TICKS / CARDS_PER_YEAR)
-      - Math.floor((turn - 1) * YEARLY_TICKS / CARDS_PER_YEAR)
-    const maintenance: Effects = {
-      ...ERA_DRIFT,
-      gold: customsFunded.value ? 0 : ERA_DRIFT.gold,
-      army: workshopsSupplied.value ? 0 : ERA_DRIFT.army,
-    }
-    for (const key of RESOURCE_KEYS) {
-      const delta = (effects[key] ?? 0) + tick * (maintenance[key] ?? 0)
-      next[key] = clamp(next[key] + delta)
-    }
-    if (next.people < UNREST_LINE) {
-      for (const key of AXIS_KEYS) {
-        next[key] = clamp(next[key] + tick * (UNREST_PENALTY[key] ?? 0))
-      }
-    }
-    resources.value = next
-    return next
+    resources.value = applyToResources(
+      resources.value,
+      effects,
+      turnInYear.value,
+      customsFunded.value,
+      workshopsSupplied.value,
+    )
+    return resources.value
   }
 
   /** 南渡结算：民心权重最高——不及国本线必败；已密办南迁者（船料册籍先行出京）线更宽、可赦一象 */
@@ -449,11 +366,7 @@ export function useGame() {
     const choice = side === 'left' ? card.left : card.right
     decisions.value.push({ eventId: card.id, side, year: year.value })
     const next = applyEffects(choice.effects)
-    if (choice.sets) {
-      const after = { ...flags.value }
-      for (const flag of choice.sets) after[flag] = (after[flag] ?? 0) + 1
-      flags.value = after
-    }
+    flags.value = addFlags(flags.value, choice.sets)
 
     // 终章分支：按国势数值决定南渡、决战、坚守成败
     if (choice.finale === 'coup') {
@@ -505,12 +418,6 @@ export function useGame() {
 
   /** 推进一张：到堆尾时按当前旗标现发下一张，故分叉卡总在上一道决策之后才决定 */
   function advance() {
-    const active = activeChapter.value
-    if (active) {
-      activeChapter.value = active.step + 1 < active.story.steps.length
-        ? { story: active.story, step: active.step + 1 }
-        : null
-    }
     const nextIndex = cardIndex.value + 1
     if (nextIndex >= deck.value.length) {
       const dealt = dealCard(nextIndex)
@@ -535,6 +442,16 @@ export function useGame() {
   /** 读完批红，翻回决策页 */
   function dismissVerdict() {
     verdict.value = null
+  }
+
+  /** 交给推演模块的当前局势快照：本局真实牌序也在内，故可算到底 */
+  function snapshot(): { state: SimState; pool: GameEvent[] } | null {
+    const card = currentCard.value
+    if (!card || isOver.value) return null
+    return {
+      state: { index: cardIndex.value, card, cursor, flags: flags.value, resources: resources.value },
+      pool,
+    }
   }
 
   return {
@@ -562,6 +479,7 @@ export function useGame() {
     choose,
     dismissVerdict,
     previewEffects,
+    snapshot,
   }
 }
 

@@ -1,11 +1,15 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
+import type { Advice } from '../composables/useHint'
 import type { GameEvent, Side } from '../types'
 
 const props = defineProps<{
   event: GameEvent
   /** 是否允许拖动（飞牌动画期间禁用） */
   interactive: boolean
+  /** 上帝模式推演结果：仅 ?god=1 时传入，正式玩家看不到 */
+  advice?: Advice | null
+  advicePending?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -103,6 +107,12 @@ defineExpose({ fly })
     <span class="band"></span>
     <span class="slip">提塘官敬述</span>
 
+    <div v-if="advice || advicePending" class="god-mark">
+      <b v-if="advice">宜{{ advice.side === 'left' ? '左' : '右' }}</b>
+      <b v-else>推演中</b>
+      <i v-if="advice">{{ advice.certain ? '可致格物中兴' : '未算到必胜，仅当前最优' }}</i>
+    </div>
+
     <div class="stamp stamp-left inked" :style="{ opacity: leftOpacity }">{{ event.left.label }}</div>
     <div class="stamp stamp-right" :style="{ opacity: rightOpacity }">{{ event.right.label }}</div>
 
@@ -180,6 +190,37 @@ defineExpose({ fly })
   border: 1px solid var(--line-soft);
   border-radius: 2px;
   background: rgba(255, 250, 240, 0.5);
+}
+
+/* god 模式（?god=1）：本地开关，正式玩家看不到 */
+.god-mark {
+  position: absolute;
+  top: 22px;
+  left: 14px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  padding: 3px 7px;
+  font-family: var(--font-kai);
+  border: 1.5px solid var(--ochre);
+  border-radius: 4px;
+  background: rgba(255, 250, 240, 0.85);
+  box-shadow: 0 2px 6px rgba(141, 38, 32, 0.16);
+}
+
+.god-mark b {
+  font-size: 13px;
+  letter-spacing: 1.5px;
+  color: var(--ochre);
+}
+
+.god-mark i {
+  font-style: normal;
+  font-size: 9.5px;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+  color: var(--ink-3);
 }
 
 .ring-light {

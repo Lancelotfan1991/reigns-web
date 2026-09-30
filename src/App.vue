@@ -5,6 +5,7 @@ import GameCard from './components/GameCard.vue'
 import ResourceBadge from './components/ResourceBadge.vue'
 import VerdictSheet from './components/VerdictSheet.vue'
 import { useCharacters } from './composables/useCharacters'
+import { useHint } from './composables/useHint'
 import {
   AXIS_KEYS,
   CARDS_PER_YEAR,
@@ -26,6 +27,9 @@ const VERDICT_LABEL: Record<'doom' | 'neutral' | 'glory', string> = {
 
 const game = useGame()
 const chars = useCharacters(game)
+/** 上帝模式：只在本地加 ?god=1 时打开，正式玩家看不到任何痕迹 */
+const GOD = new URLSearchParams(window.location.search).get('god') === '1'
+const { advice, pending: advicePending } = useHint(game, GOD)
 const screen = ref<Screen>('start')
 const cardRef = ref<InstanceType<typeof GameCard> | null>(null)
 const panelOpen = ref(false)
@@ -220,16 +224,18 @@ onUnmounted(() => window.removeEventListener('keydown', onKey))
           ref="cardRef"
           :event="game.currentCard.value"
           :interactive="true"
+          :advice="advice"
+          :advice-pending="advicePending"
           @choose="onChoose"
           @drag="(v: number) => (dragDx = v)"
         />
       </div>
 
       <footer v-if="game.currentCard.value && !verdict" class="actions">
-        <button class="verdict-btn" @click="cardRef?.fly('left')">
+        <button class="verdict-btn" :class="{ hinted: advice?.side === 'left' }" @click="cardRef?.fly('left')">
           <span class="arrow">◀</span>{{ game.currentCard.value.left.label }}
         </button>
-        <button class="verdict-btn" @click="cardRef?.fly('right')">
+        <button class="verdict-btn" :class="{ hinted: advice?.side === 'right' }" @click="cardRef?.fly('right')">
           {{ game.currentCard.value.right.label }}<span class="arrow">▶</span>
         </button>
       </footer>
@@ -788,6 +794,27 @@ onUnmounted(() => window.removeEventListener('keydown', onKey))
 .verdict-btn:active {
   transform: scale(0.97);
   background: rgba(168, 50, 42, 0.12);
+}
+
+/* god 模式推演所标的一侧（?god=1 才有） */
+.verdict-btn.hinted {
+  border-color: var(--ochre);
+  box-shadow: 0 0 0 3px rgba(171, 132, 48, 0.16);
+}
+
+.verdict-btn.hinted::before {
+  content: '宜';
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 17px;
+  height: 17px;
+  font-size: 11px;
+  text-indent: 0;
+  color: var(--paper-hi);
+  background: var(--ochre);
+  border-radius: 3px;
 }
 
 .arrow {
