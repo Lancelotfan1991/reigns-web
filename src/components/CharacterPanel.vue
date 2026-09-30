@@ -2,6 +2,7 @@
 import { computed, ref } from 'vue'
 import { RESOURCE_KEYS, RESOURCE_META, yearLabel } from '../composables/useGame'
 import { STATUS_META } from '../data/characters'
+import { portraitOf } from '../data/portraits'
 import type { CharView, ResourceKey } from '../types'
 
 const props = defineProps<{
@@ -34,6 +35,10 @@ function countOf(key: Filter) {
 
 function toggle(id: string) {
   openId.value = openId.value === id ? null : id
+}
+
+function faceOf(id: string) {
+  return portraitOf(id)?.sm
 }
 </script>
 
@@ -68,7 +73,10 @@ function toggle(id: string) {
           :class="{ open: openId === v.char.id }"
         >
           <button class="head" @click="toggle(v.char.id)">
-            <span class="ava" :class="v.status">{{ v.char.avatar }}</span>
+            <span class="ava" :class="v.status">
+              <img v-if="faceOf(v.char.id)" class="face" :src="faceOf(v.char.id)" :alt="v.char.name" />
+              <template v-else>{{ v.char.avatar }}</template>
+            </span>
             <span class="who">
               <span class="nm">{{ v.char.name }}</span>
               <span v-if="v.char.alias" class="al">{{ v.char.alias }}</span>
@@ -283,13 +291,22 @@ function toggle(id: string) {
   flex: none;
   width: 34px;
   height: 34px;
-  border-radius: 50%;
+  /* 圆角而非正圆：正圆会切掉展角乌纱的帽翅，那是文官在 34px 上唯一的剪影线索 */
+  border-radius: 8px;
+  overflow: hidden;
   background: rgba(255, 252, 244, 0.8);
   border: 1px solid var(--line);
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 17px;
+}
+
+.face {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
 }
 
 .ava.dead {

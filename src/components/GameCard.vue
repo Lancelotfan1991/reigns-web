@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import type { Advice } from '../composables/useHint'
+import { cardPortrait } from '../data/portraits'
 import type { GameEvent, Side } from '../types'
 
 const props = defineProps<{
@@ -92,6 +93,9 @@ const rightOpacity = computed(() => (dx.value > 0 ? Math.min(1, dx.value / 80) :
 const lead = computed(() => (/[\u4e00-\u9fff]/.test(props.event.text[0]) ? props.event.text[0] : ''))
 const body = computed(() => (lead.value ? props.event.text.slice(1) : props.event.text))
 
+/** 卡面主人：解析得出来才挂真人像，否则仍用原来的符号 emoji */
+const face = computed(() => cardPortrait(props.event))
+
 defineExpose({ fly })
 </script>
 
@@ -116,7 +120,10 @@ defineExpose({ fly })
     <div class="stamp stamp-left inked" :style="{ opacity: leftOpacity }">{{ event.left.label }}</div>
     <div class="stamp stamp-right" :style="{ opacity: rightOpacity }">{{ event.right.label }}</div>
 
-    <div class="ring-light">{{ event.avatar }}</div>
+    <div class="ring-light">
+      <img v-if="face" class="face" :src="face.lg" :alt="face.char.name" />
+      <template v-else>{{ event.avatar }}</template>
+    </div>
     <h2 class="name">{{ event.name }}</h2>
     <div class="rule"><span class="fleuron"></span></div>
     <p class="text" tabindex="0" aria-label="塘报正文，可上下滚动"><span class="body"><span v-if="lead" class="lead-char">{{ lead }}</span>{{ body }}</span></p>
@@ -232,12 +239,21 @@ defineExpose({ fly })
   justify-content: center;
   font-size: 42px;
   line-height: 1;
-  border-radius: 50%;
+  /* 圆角而非正圆：正圆会切掉展角乌纱的帽翅，那是文官唯一的剪影线索 */
+  border-radius: 22%;
+  overflow: hidden;
   border: 1.5px solid var(--line);
   background:
     radial-gradient(circle at 50% 38%, rgba(168, 50, 42, 0.13), transparent 68%),
     rgba(255, 252, 244, 0.72);
   box-shadow: 0 0 0 4px rgba(171, 142, 95, 0.14), 0 3px 8px rgba(41, 33, 26, 0.12);
+}
+
+.face {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
 }
 
 .name {
