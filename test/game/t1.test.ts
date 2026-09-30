@@ -422,3 +422,43 @@ describe('T1 宫门定策四档', () => {
     for (const side of ['left', 'right'] as const) expect(steady[side].label, side).not.toContain('凤阳')
   })
 })
+
+describe('T1 人物前情', () => {
+  const byId = new Map(STORY_EVENTS.map((event) => [event.id, event]))
+  const charById = new Map(CHARACTERS.map((char) => [char.id, char]))
+
+  it('当孙传庭第一次出场时点名其人，并在入狱前交代与中枢的用兵之争', () => {
+    expect(byId.get('s-chuangjiang')!.text).toContain('孙传庭')
+    expect(byId.get('s-chuangjiang')!.text).toContain('秦兵')
+  })
+
+  it('当孙传庭在崇祯十五年仍在狱中时，正文须写明入援获罪、削籍下狱的原委', () => {
+    const text = byId.get('s-chuanti')!.text
+    expect(text).toContain('墙子岭')
+    expect(text).toContain('下狱')
+    expect(text).toContain('诏狱')
+    const notes = (charById.get('sunchuanting')!.track ?? []).map((t) => t.note).join(' ')
+    expect(notes).toContain('下诏狱')
+    expect(notes).toContain('墙子岭')
+  })
+
+  it('当谷城受抚之局开场时，张献忠的起事与熊文灿的身份都已交代', () => {
+    const text = byId.get('s-xianzhong')!.text
+    expect(text).toContain('崇祯三年')
+    expect(text).toContain('米脂')
+    expect(text).toContain('熊文灿')
+    expect(text).toContain('五省总督')
+  })
+
+  it('当杨嗣昌提出十面之网时，张献忠已先于谷城一局被点名', () => {
+    expect(byId.get('s-annei')!.text).toContain('张献忠')
+    const zhang = charById.get('zhangxianzhong')!
+    expect((zhang.track ?? []).map((t) => t.note).join(' ')).toContain('米脂')
+  })
+
+  it('当崇祯十年以后查看人物面板时，熊文灿已因受命主抚而先期登场', () => {
+    const xiong = charById.get('xiongwenchan')!
+    expect(xiong.appearYear).toBe(10)
+    expect((xiong.track ?? []).some((t) => t.year === 10 && t.note.includes('招抚'))).toBe(true)
+  })
+})

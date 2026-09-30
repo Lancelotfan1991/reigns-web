@@ -301,6 +301,7 @@ export const CHARACTERS: Character[] = [
     born: 1606,
     events: ['s-annei', 's-xianzhong', 'g-gucheng-households', 'c-gucheng-households-claims', 'g-gucheng', 'c-gucheng-settlement-incomplete'],
     track: [
+      { year: 3, status: 'alive', note: '史实：在米脂起事，转战秦、楚、蜀，官军数剿不能灭' },
       { year: 12, status: 'alive', note: '受抚谷城，粮册与营伍有待核实' },
       { year: 14, status: 'alive', note: '复叛，陷襄阳，杀襄王', unlessFlag: ['gewu-settlement'] },
     ],
@@ -320,8 +321,11 @@ export const CHARACTERS: Character[] = [
     role: '主抚之人。以「抚局大好」入告',
     camp: '文官',
     faction: 'law',
+    /** 受命总理军务、专办招抚之年：其人先于谷城之局见于朝端 */
+    appearYear: 10,
     events: ['s-xianzhong', 'g-gucheng-households', 'c-gucheng-households-claims', 'g-gucheng', 'c-gucheng-settlement-incomplete'],
     track: [
+      { year: 10, status: 'alive', note: '史实：受命总理军务，专办招抚，数遣使招抚流营' },
       { year: 12, status: 'alive', note: '招抚一方，朝廷倚之' },
       { year: 13, status: 'dead', note: '史实：抚局败露，诏狱鞫治，弃市', unlessFlag: ['gewu-settlement'] },
     ],
@@ -388,6 +392,8 @@ export const CHARACTERS: Character[] = [
     born: 1593,
     events: ['s-chuangjiang', 's-chuanti', 'g-guanzhong', 'c-guanzhong-recruit', 'c-guanzhong-without-general', 's-chuanti-ready', 'c-chuanting-short-pay', 'c-chuanting-still-imprisoned', 's-finale-restore'],
     track: [
+      { year: 11, status: 'alive', note: '史实：清兵破墙子岭入塞，率秦兵千里入援；不肯以兵属监军，又与中枢争用兵缓急，为朝议所不容' },
+      { year: 12, status: 'alive', note: '史实：坐事削籍，下诏狱，系狱三载' },
       { year: 16, status: 'dead', note: '史实：汝州、郏山两丧，战殁于阵。或曰未死', unlessEvent: ['s-chuanti', 's-chuanti-ready'] },
     ],
     fates: [
