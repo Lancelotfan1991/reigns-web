@@ -11,11 +11,14 @@ const props = defineProps<{
   /** 上帝模式推演结果：仅 ?god=1 时传入，正式玩家看不到 */
   advice?: Advice | null
   advicePending?: boolean
+  /** 已识别人物名列表：匹配到的名字在正文中高亮可点 */
+  knownNames?: string[]
 }>()
 
 const emit = defineEmits<{
   choose: [side: Side]
   drag: [dx: number]
+  'char-click': [name: string]
 }>()
 
 /** 超过该位移松手即视为做出选择 */
@@ -96,6 +99,19 @@ const body = computed(() => (lead.value ? props.event.text.slice(1) : props.even
 /** 卡面主人：解析得出来才挂真人像，否则仍用原来的符号 emoji */
 const face = computed(() => cardPortrait(props.event))
 
+/** 把正文按已识别人物名拆成片段：纯文本段 + 可点击人名段交替 */
+interface TextSeg { text: string; link?: string }
+const textSegments = computed<TextSeg[]>(() => {
+  const raw = lead.value ? body.value : props.event.text
+  const names = props.knownNames
+  if (!names?.length) return [{ text: raw }]
+  const escaped = names.map((n) => n.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|')
+  const re = new RegExp(`(${escaped})`, 'g')
+  return raw.split(re).map((part) =>
+    names.includes(part) ? { text: part, link: part } : { text: part },
+  )
+})
+
 defineExpose({ fly })
 </script>
 
@@ -126,7 +142,7 @@ defineExpose({ fly })
     </div>
     <h2 class="name">{{ event.name }}</h2>
     <div class="rule"><span class="fleuron"></span></div>
-    <p class="text" tabindex="0" aria-label="塘报正文，可上下滚动"><span class="body"><span v-if="lead" class="lead-char">{{ lead }}</span>{{ body }}</span></p>
+    <p class="text" tabindex="0" aria-label="塘报正文，可上下滚动"><span class="body"><span v-if="lead" class="lead-char">{{ lead }}</span><template v-for="(seg, i) in textSegments" :key="i"><a v-if="seg.link" class="char-link" href="#" role="button" @click.prevent.stop="$emit('char-click', seg.link)" @pointerdown.stop>{{ seg.text }}</a><template v-else>{{ seg.text }}</template></template></span></p>
     <div class="swipe-hint">◀ 左滑 ・ 右滑 ▶</div>
   </div>
 </template>
@@ -326,6 +342,19 @@ defineExpose({ fly })
   background: linear-gradient(150deg, var(--cinnabar-hi), #8d2620);
   border-radius: 3px;
   box-shadow: 0 1px 3px rgba(141, 38, 32, 0.35);
+}
+
+/* 可点击人名：朱砂虚线下划线，不干扰拖拽 */
+.char-link {
+  color: var(--cinnabar);
+  text-decoration: none;
+  border-bottom: 1.5px dashed var(--cinnabar);
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.char-link:active {
+  background: rgba(168, 50, 42, 0.1);
 }
 
 .swipe-hint {

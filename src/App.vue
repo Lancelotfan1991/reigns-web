@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref } from 'vue'
 import CharacterPanel from './components/CharacterPanel.vue'
+import CharSheet from './components/CharSheet.vue'
 import GameCard from './components/GameCard.vue'
 import ResourceBadge from './components/ResourceBadge.vue'
 import VerdictSheet from './components/VerdictSheet.vue'
@@ -33,6 +34,24 @@ const { advice, pending: advicePending } = useHint(game, GOD)
 const screen = ref<Screen>('start')
 const cardRef = ref<InstanceType<typeof GameCard> | null>(null)
 const panelOpen = ref(false)
+const sheetCharId = ref<string | null>(null)
+
+/** 已识别人物名：卡面正文中匹配到的名字高亮可点 */
+const knownNames = computed(() =>
+  chars.views.value
+    .filter((v) => v.status !== 'hidden')
+    .map((v) => v.char.name),
+)
+
+const sheetView = computed(() => {
+  if (!sheetCharId.value) return null
+  return chars.views.value.find((v) => v.char.id === sheetCharId.value) ?? null
+})
+
+function onCharClick(name: string) {
+  const view = chars.views.value.find((v) => v.char.name === name && v.status !== 'hidden')
+  if (view) sheetCharId.value = view.char.id
+}
 
 /** 当前拖拽位移，用于顶部资源图标联动提示 */
 const dragDx = ref(0)
@@ -81,6 +100,10 @@ function continueVerdict() {
 }
 
 function onKey(e: KeyboardEvent) {
+  if (sheetCharId.value) {
+    if (e.key === 'Escape') sheetCharId.value = null
+    return
+  }
   if (panelOpen.value) {
     if (e.key === 'Escape') panelOpen.value = false
     return
@@ -226,8 +249,10 @@ onUnmounted(() => window.removeEventListener('keydown', onKey))
           :interactive="true"
           :advice="advice"
           :advice-pending="advicePending"
+          :known-names="knownNames"
           @choose="onChoose"
           @drag="(v: number) => (dragDx = v)"
+          @char-click="onCharClick"
         />
       </div>
 
@@ -267,6 +292,13 @@ onUnmounted(() => window.removeEventListener('keydown', onKey))
       <button class="btn seal inked" @click="start">再着龙袍</button>
       <button class="btn-ghost" @click="panelOpen = true">回看本朝人物</button>
     </section>
+
+    <!-- 人物弹窗卡片：从卡面人名点入 -->
+    <CharSheet
+      v-if="sheetView"
+      :view="sheetView"
+      @close="sheetCharId = null"
+    />
 
     <!-- 人物抽屉：三屏共用一个入口 -->
     <CharacterPanel
