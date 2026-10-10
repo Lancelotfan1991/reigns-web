@@ -57,11 +57,8 @@ afterEach(() => {
 it('当点击入宫并裁决五次时，页面显示下一年第一议且出现过革新入口', async () => {
   const wrapper = mount(App)
   try {
-    expect(wrapper.text()).toContain('每年 5 次抉择')
-    expect(wrapper.text()).toContain('本局事件绝不重复')
-    expect(wrapper.text()).toContain('越高越稳，满格不会亡国')
-    expect(wrapper.text()).toContain('南渡通常需要民心至少 45')
-    expect(wrapper.text()).toContain('提前准备可降低门槛')
+    expect(wrapper.text()).toContain('崇祯十七年')
+    expect(wrapper.text()).toContain('入宫即位')
     await wrapper.findAll('button').find((button) => button.text() === '入宫即位')!.trigger('click')
     for (const title of ['君威 50', '法度 40', '军心 45', '国库 35']) {
       expect(wrapper.find(`[title="${title}"]`).exists()).toBe(true)

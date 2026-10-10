@@ -35,6 +35,7 @@ const screen = ref<Screen>('start')
 const cardRef = ref<InstanceType<typeof GameCard> | null>(null)
 const panelOpen = ref(false)
 const sheetCharId = ref<string | null>(null)
+const tipOpen = ref(false)
 
 /** 已识别人物名：卡面正文中匹配到的名字高亮可点 */
 const knownNames = computed(() =>
@@ -100,6 +101,10 @@ function continueVerdict() {
 }
 
 function onKey(e: KeyboardEvent) {
+  if (tipOpen.value) {
+    if (e.key === 'Escape') tipOpen.value = false
+    return
+  }
   if (sheetCharId.value) {
     if (e.key === 'Escape') sheetCharId.value = null
     return
@@ -132,35 +137,42 @@ onUnmounted(() => window.removeEventListener('keydown', onKey))
         <div class="halo">👑</div>
         <h1 class="title">崇祯十七年</h1>
         <p class="subtitle">穿越明末 ・ 塘报挽天倾</p>
-
-        <div class="memo">
-          <p>
-            你一觉醒来，成了刚刚登基的大明皇帝朱由检。内有党争、大旱、瘟疫、空虚的国库；外有建州铁骑、流亡驿卒。
-          </p>
-          <p>每年 {{ CARDS_PER_YEAR }} 次抉择，左右一滑定夺，批复另页读完；本局事件绝不重复。朝局由四象撑着，过高与过低一样要命：</p>
-          <dl class="axis-list">
-            <template v-for="key in AXIS_KEYS" :key="key">
-              <dt :style="{ borderColor: RESOURCE_META[key].color }">
-                {{ RESOURCE_META[key].icon }} {{ RESOURCE_META[key].name }}
-              </dt>
-              <dd>{{ RESOURCE_META[key].hint }}</dd>
-            </template>
-          </dl>
-          <p class="root-line">
-            <b :style="{ color: PEOPLE_META.color }">{{ PEOPLE_META.icon }} 民心</b>
-            越高越稳，满格不会亡国；低于 {{ UNREST_LINE }} 会生动乱，归零则亡国。
-          </p>
-          <p class="warning">
-            四象任一归零或满格都会亡国。撑到崇祯十七年，南渡通常需要民心至少 {{ SOUTH_PEOPLE_LINE }}；提前准备可降低门槛，兵饷也须撑得住。
-          </p>
-          <p>架空革新线：技术、财政与政治环环相扣，缺一不可；关键机会错过不再重来。</p>
-        </div>
       </div>
 
       <div class="entry">
         <button class="btn seal inked" @click="start">入宫即位</button>
         <p v-if="game.bestYears.value > 0" class="best">前世最多撑了 {{ game.bestYears.value }} 年</p>
-        <button class="btn-ghost" @click="panelOpen = true">先看看本朝人物</button>
+        <div class="entry-row">
+          <button class="btn-ghost" @click="tipOpen = true">玩法说明</button>
+          <button class="btn-ghost" @click="panelOpen = true">本朝人物</button>
+        </div>
+      </div>
+
+      <!-- 玩法提示弹窗 -->
+      <div v-if="tipOpen" class="overlay" @click.self="tipOpen = false">
+        <div class="tip-card">
+          <header class="tip-head">
+            <h2>玩法说明</h2>
+            <button class="tip-close" aria-label="关闭" @click="tipOpen = false">✕</button>
+          </header>
+          <div class="tip-body">
+            <p>你是刚登基的崇祯帝朱由检。每年 {{ CARDS_PER_YEAR }} 次抉择，左右滑动或点击下方按钮定夺。</p>
+            <p>朝局由四象撑着，过高与过低一样亡国：</p>
+            <dl class="axis-list">
+              <template v-for="key in AXIS_KEYS" :key="key">
+                <dt :style="{ borderColor: RESOURCE_META[key].color }">
+                  {{ RESOURCE_META[key].icon }} {{ RESOURCE_META[key].name }}
+                </dt>
+                <dd>{{ RESOURCE_META[key].hint }}</dd>
+              </template>
+            </dl>
+            <p class="root-line">
+              <b :style="{ color: PEOPLE_META.color }">{{ PEOPLE_META.icon }} 民心</b>
+              越高越稳；低于 {{ UNREST_LINE }} 生动乱，归零亡国。
+            </p>
+            <p class="tip-warn">撑到崇祯十七年可图南渡，民心通常至少需 {{ SOUTH_PEOPLE_LINE }}。</p>
+          </div>
+        </div>
       </div>
     </section>
 
@@ -423,22 +435,86 @@ onUnmounted(() => window.removeEventListener('keydown', onKey))
   font-size: 13px;
 }
 
-.memo {
-  margin: 16px 0 14px;
-  padding: 12px 16px;
-  width: 100%;
-  max-width: 380px;
-  line-height: 1.7;
-  text-align: justify;
-  border: 1px solid var(--line-soft);
-  border-radius: 3px;
-  background: rgba(255, 251, 242, 0.55);
-  box-shadow: inset 0 0 0 1px rgba(171, 142, 95, 0.18);
+.entry-row {
+  display: flex;
+  gap: 10px;
+  margin-top: 12px;
 }
 
-.memo p {
-  color: var(--ink-2);
+/* ---------- 玩法提示弹窗 ---------- */
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  background: rgba(66, 52, 34, 0.42);
+  backdrop-filter: blur(2px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.tip-card {
+  width: calc(100% - 40px);
+  max-width: 380px;
+  max-height: 80dvh;
+  display: flex;
+  flex-direction: column;
+  border: 1.5px solid var(--line);
+  border-radius: 4px;
+  background:
+    var(--grain),
+    linear-gradient(168deg, var(--paper-hi) 0%, #f3e8d5 46%, #e7d6b6 100%);
+  box-shadow: 0 16px 34px rgba(41, 33, 26, 0.26);
+  animation: rise 0.22s ease;
+}
+
+@keyframes rise {
+  from { transform: translateY(18px); opacity: 0.4; }
+}
+
+.tip-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px 10px;
+  border-bottom: 1px solid var(--line-soft);
+}
+
+.tip-head h2 {
+  font-family: var(--font-kai);
+  font-size: 19px;
+  font-weight: 700;
+  letter-spacing: 5px;
+  color: var(--ink);
+}
+
+.tip-close {
+  width: 28px;
+  height: 28px;
+  border: 1.5px solid var(--cinnabar);
+  border-radius: 50%;
+  background: rgba(255, 253, 248, 0.7);
+  color: var(--cinnabar);
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.tip-body {
+  padding: 14px 16px 18px;
+  overflow-y: auto;
   font-size: 13.5px;
+  line-height: 1.8;
+  color: var(--ink-2);
+  text-align: justify;
+}
+
+.tip-body p + p {
+  margin-top: 8px;
+}
+
+.tip-warn {
+  color: var(--cinnabar);
+  text-align: center;
 }
 
 .axis-list {
@@ -482,12 +558,6 @@ onUnmounted(() => window.removeEventListener('keydown', onKey))
   letter-spacing: 1px;
 }
 
-.memo .warning {
-  color: var(--cinnabar);
-  font-size: 13px;
-  text-align: center;
-}
-
 .best {
   margin-top: 12px;
   color: var(--ink-3);
@@ -529,7 +599,7 @@ onUnmounted(() => window.removeEventListener('keydown', onKey))
   border-color: var(--cinnabar);
 }
 
-/* 矮屏（≤700px 高）：收冕缩印，让整段简介不必滚动 */
+/* 矮屏（≤700px 高）：收冕缩印 */
 @media (max-height: 700px) {
   .halo {
     width: 64px;
@@ -541,11 +611,6 @@ onUnmounted(() => window.removeEventListener('keydown', onKey))
     margin-top: 8px;
   }
 
-  .memo {
-    margin: 12px 0 10px;
-    line-height: 1.6;
-  }
-
   .entry {
     padding-top: 6px;
   }
@@ -555,7 +620,7 @@ onUnmounted(() => window.removeEventListener('keydown', onKey))
     padding: 10px 40px;
   }
 
-  .btn-ghost {
+  .entry-row {
     margin-top: 8px;
   }
 }
