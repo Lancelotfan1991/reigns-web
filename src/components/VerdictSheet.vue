@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { RESOURCE_META } from '../composables/useGame'
 import { CHAR_MAP, STATUS_META } from '../data/characters'
 import { portraitOf } from '../data/portraits'
@@ -7,10 +7,13 @@ import type { Verdict } from '../types'
 
 const props = defineProps<{ verdict: Verdict }>()
 
-defineEmits<{ continue: [] }>()
+const emit = defineEmits<{ continue: [] }>()
 
 /** 此议判了谁的生死；没有则仍是通用批红页 */
 const life = computed(() => props.verdict.life)
+
+/** 生死页分两步：先看人，再看政 */
+const lifePage = ref<'person' | 'verdict'>('person')
 
 function faceOf(id: string) {
   return portraitOf(id)?.lg
@@ -20,63 +23,91 @@ function net(line: { from: number; to: number }) {
   const delta = line.to - line.from
   return delta > 0 ? `净 +${delta}` : `净 ${delta}`
 }
+
+function onNext() {
+  if (life.value && lifePage.value === 'person') {
+    lifePage.value = 'verdict'
+  } else {
+    lifePage.value = 'person'
+    emit('continue')
+  }
+}
 </script>
 
 <template>
   <section class="verdict-sheet" :class="{ 'life-sheet': !!life }" aria-label="本议批红">
     <span class="band"></span>
-    <div class="head">
-      <span class="tag">{{ life ? '生死' : '批红' }}</span>
-      <span class="when">{{ props.verdict.when }}</span>
-    </div>
-    <p v-if="props.verdict.chapter" class="chapter">
-      连续篇章 · {{ props.verdict.chapter.name }} 第 {{ props.verdict.chapter.step }} / {{ props.verdict.chapter.total }} 步已定
-    </p>
 
-    <div v-if="life" class="life">
-      <div class="portrait-box">
-        <span
-          class="portrait"
-          :class="`s-${life.status}`"
-          :style="{ borderColor: STATUS_META[life.status].color }"
-        >
-          <img v-if="faceOf(life.charId)" :src="faceOf(life.charId)" :alt="life.name" />
-          <b v-else>{{ CHAR_MAP[life.charId].avatar }}</b>
-        </span>
-        <span
-          class="seal-word"
-          :class="{ two: life.seal.length > 1 }"
-          :style="{ color: STATUS_META[life.status].color }"
-          >{{ life.seal }}</span
-        >
+    <!-- ====== 人物退场页（仅 life 存在时的第一屏） ====== -->
+    <template v-if="life && lifePage === 'person'">
+      <div class="head">
+        <span class="tag">生死</span>
+        <span class="when">{{ props.verdict.when }}</span>
       </div>
-      <h2 class="who">
-        {{ life.name }}<small v-if="life.alias">{{ life.alias }}</small>
-      </h2>
-      <p class="role">{{ life.role }}</p>
-      <p v-if="life.pending" class="later">后日之判 · 此刻人尚在</p>
-      <p class="fate" tabindex="0" aria-label="此人下落">{{ life.note }}</p>
-      <p class="pair">
-        <span class="seal inked taken">{{ props.verdict.choiceLabel }}</span>
-        <span class="not-taken">不采 · {{ life.other.seal }}（{{ STATUS_META[life.other.status].label }}）</span>
-      </p>
-      <p class="of-card">议「{{ props.verdict.cardName }}」</p>
-    </div>
-    <template v-else>
-      <h2 class="name">{{ props.verdict.cardName }}</h2>
-      <p class="seal inked chosen">{{ props.verdict.choiceLabel }}</p>
+
+      <div class="life">
+        <div class="portrait-box">
+          <span
+            class="portrait"
+            :class="`s-${life.status}`"
+            :style="{ borderColor: STATUS_META[life.status].color }"
+          >
+            <img v-if="faceOf(life.charId)" :src="faceOf(life.charId)" :alt="life.name" />
+            <b v-else>{{ CHAR_MAP[life.charId].avatar }}</b>
+          </span>
+          <span
+            class="seal-word"
+            :class="{ two: life.seal.length > 1 }"
+            :style="{ color: STATUS_META[life.status].color }"
+            >{{ life.seal }}</span
+          >
+        </div>
+        <h2 class="who">
+          {{ life.name }}<small v-if="life.alias">{{ life.alias }}</small>
+        </h2>
+        <p class="role">{{ life.role }}</p>
+        <p v-if="life.pending" class="later">后日之判 · 此刻人尚在</p>
+        <p class="fate" tabindex="0" aria-label="此人下落">{{ life.note }}</p>
+        <p class="pair">
+          <span class="other-path">若走另一路 · {{ life.other.seal }}（{{ STATUS_META[life.other.status].label }}）</span>
+        </p>
+      </div>
+
+      <button class="continue" @click="onNext">阅毕此人，看批红</button>
     </template>
 
-    <p class="response" tabindex="0" aria-label="批红正文，可上下滚动">{{ props.verdict.response }}</p>
+    <!-- ====== 批红正文页（life 的第二屏 / 无 life 时的唯一屏） ====== -->
+    <template v-else>
+      <div class="head">
+        <span class="tag">{{ life ? '批红' : '批红' }}</span>
+        <span class="when">{{ props.verdict.when }}</span>
+      </div>
+      <p v-if="props.verdict.chapter" class="chapter">
+        连续篇章 · {{ props.verdict.chapter.name }} 第 {{ props.verdict.chapter.step }} / {{ props.verdict.chapter.total }} 步已定
+      </p>
 
-    <ul v-if="props.verdict.lines.length" class="ledger">
-      <li v-for="line in props.verdict.lines" :key="line.key">
-        {{ RESOURCE_META[line.key].icon }} {{ RESOURCE_META[line.key].name }} {{ line.from }} → {{ line.to }}（{{ net(line) }}）
-      </li>
-    </ul>
-    <p v-else-if="!props.verdict.ended" class="steady">本议国势未动。</p>
+      <template v-if="life">
+        <p class="life-ref">
+          <span class="life-ref-seal" :style="{ color: STATUS_META[life.status].color }">{{ life.seal }}</span>
+          {{ life.name }}{{ life.pending ? '（后日之判）' : '' }} · 议「{{ props.verdict.cardName }}」
+        </p>
+      </template>
+      <template v-else>
+        <h2 class="name">{{ props.verdict.cardName }}</h2>
+        <p class="seal inked chosen">{{ props.verdict.choiceLabel }}</p>
+      </template>
 
-    <button class="continue" @click="$emit('continue')">{{ props.verdict.ended ? '看结局' : '知道了' }}</button>
+      <p class="response" tabindex="0" aria-label="批红正文，可上下滚动">{{ props.verdict.response }}</p>
+
+      <ul v-if="props.verdict.lines.length" class="ledger">
+        <li v-for="line in props.verdict.lines" :key="line.key">
+          {{ RESOURCE_META[line.key].icon }} {{ RESOURCE_META[line.key].name }} {{ line.from }} → {{ line.to }}（{{ net(line) }}）
+        </li>
+      </ul>
+      <p v-else-if="!props.verdict.ended" class="steady">本议国势未动。</p>
+
+      <button class="continue" @click="onNext">{{ props.verdict.ended ? '看结局' : '知道了' }}</button>
+    </template>
   </section>
 </template>
 
@@ -284,7 +315,7 @@ function net(line: { from: number; to: number }) {
 
 .pair {
   flex: none;
-  margin-top: 10px;
+  margin-top: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -292,23 +323,35 @@ function net(line: { from: number; to: number }) {
   gap: 6px 12px;
 }
 
-.taken {
-  padding: 5px 11px;
-  font-size: 13.5px;
-  line-height: 1.4;
-}
-
-.not-taken {
-  font-size: 12.5px;
-  color: var(--ink-3);
-}
-
-.of-card {
-  flex: none;
-  margin-top: 5px;
-  font-size: 11.5px;
+.other-path {
+  font-size: 13px;
   letter-spacing: 0.5px;
   color: var(--ink-3);
+}
+
+/* 第二屏的人物引用：小印 + 名字，提醒读者这一议牵涉谁 */
+.life-ref {
+  flex: none;
+  margin-top: 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--ink-2);
+}
+
+.life-ref-seal {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  font-family: var(--font-kai);
+  font-size: 14px;
+  font-weight: 700;
+  border: 1.5px solid currentColor;
+  border-radius: 3px;
 }
 
 .response {

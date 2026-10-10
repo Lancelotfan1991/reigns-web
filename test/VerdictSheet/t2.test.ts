@@ -43,7 +43,7 @@ function sheet(life: LifeVerdict | null) {
 }
 
 describe('生死页版式', () => {
-  it('判了生死的议换下题签，只以人名、印文与下落当页', () => {
+  it('人物退场页显示肖像、印文、姓名与命运叙述', () => {
     const wrapper = sheet(WEI)
     expect(wrapper.get('.tag').text()).toBe('生死')
     expect(wrapper.find('.life').exists()).toBe(true)
@@ -51,8 +51,19 @@ describe('生死页版式', () => {
     expect(wrapper.get('.who').text()).toContain('魏忠贤')
     expect(wrapper.get('.seal-word').text()).toBe('缢')
     expect(wrapper.get('.fate').text()).toContain('夜缢于阜城旅邸')
-    expect(wrapper.get('.not-taken').text()).toBe('不采 · 留（生）')
+    expect(wrapper.get('.other-path').text()).toContain('若走另一路')
+    expect(wrapper.get('.other-path').text()).toContain('留（生）')
     expect(wrapper.find('.later').exists()).toBe(false)
+  })
+
+  it('点击继续后翻到批红正文页，显示选项回顾与资源变动', async () => {
+    const wrapper = sheet(WEI)
+    await wrapper.get('.continue').trigger('click')
+    expect(wrapper.get('.tag').text()).toBe('批红')
+    expect(wrapper.find('.life-ref').exists()).toBe(true)
+    expect(wrapper.get('.life-ref').text()).toContain('魏忠贤')
+    expect(wrapper.get('.response').text()).toContain('旧头领')
+    expect(wrapper.find('.ledger').exists()).toBe(true)
   })
 
   it('双字印文收小以免溢出方印', () => {

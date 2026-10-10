@@ -20,8 +20,18 @@ async function flyChoice(wrapper: AppWrapper, side: 0 | 1) {
 
 /** 读完批红，翻回决策页；国运已定时进入结局页 */
 async function readVerdict(wrapper: AppWrapper) {
-  await wrapper.get(verdictSelector).get('button').trigger('click')
+  const sheet = wrapper.get(verdictSelector)
+  const btn = sheet.get('button')
+  await btn.trigger('click')
   await nextTick()
+  // 生死页有两屏：人物退场 → 批红正文；若按钮仍在说明还在第一屏
+  if (wrapper.find(verdictSelector).exists()) {
+    const btn2 = wrapper.get(verdictSelector).get('button')
+    if (btn2.text().includes('批红') || btn2.text().includes('知道了') || btn2.text().includes('看结局')) {
+      await btn2.trigger('click')
+      await nextTick()
+    }
+  }
 }
 
 async function clickChoice(wrapper: AppWrapper, side: 0 | 1) {
