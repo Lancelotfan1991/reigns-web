@@ -81,6 +81,24 @@ export interface VerdictLine {
   to: number
 }
 
+/** 一议判了某人的生死：批红页据此换成生死版式 */
+export interface LifeVerdict {
+  charId: string
+  name: string
+  alias?: string
+  role: string
+  camp: string
+  status: CharStatus
+  /** 钤上的印文 */
+  seal: string
+  /** 此人此后的下落 */
+  note: string
+  /** 此议种下的后日结局：下落始于本议之后之年，此刻人尚在 */
+  pending: boolean
+  /** 不采那一侧本会留下的印 */
+  other: { seal: string; status: CharStatus }
+}
+
 /** 一议的批红：属于刚裁决的那一议，独立成页，读完才见下一问 */
 export interface Verdict {
   /** 所裁事件的题签 */
@@ -94,6 +112,8 @@ export interface Verdict {
   /** 所裁之议是某连续篇章的第几步；非篇章内为 null */
   chapter: { name: string; step: number; total: number } | null
   lines: VerdictLine[]
+  /** 此议判了谁的生死；非生死之议为 null */
+  life: LifeVerdict | null
   /** 此议已定国运：读完批红即入结局 */
   ended: boolean
 }
@@ -124,6 +144,8 @@ export interface FateEntry {
   year: number
   status: CharStatus
   note: string
+  /** 钤在此人头上的印文（斩、赦、囚、降、殁一类），缺省按状态取字 */
+  seal?: string
   /** 这些卡中任一张被裁决（史实卡或其改史替身卡），则此条史实不再发生 */
   unlessEvent?: string[]
   unlessFlag?: string[]
@@ -135,6 +157,10 @@ export interface CharFate {
   side: Side
   status: CharStatus
   note: string
+  /** 同上：此议落下时钤的印文 */
+  seal?: string
+  /** 此判何年方见分晓；缺省即本议落下之年 */
+  year?: number
 }
 
 export interface Character {

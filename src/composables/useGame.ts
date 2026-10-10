@@ -1,4 +1,5 @@
 import { computed, ref } from 'vue'
+import { findLifeVerdict } from './fates'
 import {
   AXIS_KEYS,
   CARDS_PER_YEAR,
@@ -357,6 +358,7 @@ export function useGame() {
       lines: RESOURCE_KEYS
         .filter((key) => before[key] !== resources.value[key])
         .map((key) => ({ key, from: before[key], to: resources.value[key] })),
+      life: findLifeVerdict(card, { now: year.value, decided: decisionByEvent.value, flags: flags.value }),
       ended: isOver.value,
     }
   }

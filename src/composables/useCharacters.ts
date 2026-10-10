@@ -2,7 +2,9 @@ import { computed } from 'vue'
 import { FINALE_EVENTS, RANDOM_EVENTS } from '../data/events'
 import { CHARACTERS, CHAR_MAP, RELATION_META } from '../data/characters'
 import { STORY_EVENTS } from '../data/chapters'
-import type { CharStatus, CharView, Deed } from '../types'
+import type { CharView, Deed } from '../types'
+import { resolveFate } from './fates'
+import type { Fate } from './fates'
 import type { Game } from './useGame'
 import { REFORM_FINALES } from '../data/reforms'
 
@@ -49,33 +51,20 @@ export function useCharacters(game: Game) {
     return year
   }
 
-  function fateOf(id: string, appear: number): { status: CharStatus; note: string; at: number } {
+  function fateOf(id: string, appear: number): Fate {
     const ch = CHAR_MAP[id]
-    type Node = { year: number; status: CharStatus; note: string; rank: number }
-    const nodes: Node[] = []
-
-    for (const t of ch.track ?? []) {
-      if (t.year > now.value) continue
-      if (t.unlessEvent?.some((e) => decided.value[e])) continue
-      if (t.unlessFlag?.some((flag) => (game.flags.value[flag] ?? 0) > 0)) continue
-      nodes.push({ year: t.year, status: t.status, note: t.note, rank: 0 })
-    }
-    for (const f of ch.fates ?? []) {
-      const d = decided.value[f.event]
-      if (!d || d.side !== f.side) continue
-      nodes.push({ year: d.year, status: f.status, note: f.note, rank: 1 })
-    }
-    nodes.sort((a, b) => a.year - b.year || a.rank - b.rank)
-
     // 终章或中途横死：皇帝本人即交代于此结局
     if (id === 'emperor' && game.isOver.value) {
       const result = game.ending.value
       const survived = result?.survived ?? result?.kind === 'glory'
-      return { status: survived ? 'alive' : 'dead', note: result?.title ?? '', at: now.value }
+      return {
+        status: survived ? 'alive' : 'dead',
+        note: result?.title ?? '',
+        at: now.value,
+        seal: survived ? '生' : '崩',
+      }
     }
-    const last = nodes[nodes.length - 1]
-    if (!last) return { status: 'alive', note: ch.role, at: appear }
-    return { status: last.status, note: last.note, at: last.year }
+    return resolveFate(ch, { now: now.value, decided: decided.value, flags: game.flags.value }, appear)
   }
 
   function deedsOf(id: string): Deed[] {
