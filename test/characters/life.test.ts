@@ -139,12 +139,25 @@ describe('生死之判', () => {
       vi.unstubAllGlobals()
     })
 
-    /** 开局两步照稳杀之路铺垫，第三步即御前一议「发落司礼监」 */
+    /** 走过魏忠贤篇章前七步，第八步即御前一议「发落司礼监」 */
     function toArrest() {
       const game = useGame()
       game.startGame()
+      // Step 0: s-tuogu
       game.choose('right')
+      // Step 1: s-dianjianglu — 右选设 wei-watched，s-wei 变体需要此旗标
       game.choose('right')
+      // Step 2: s-gongnv
+      game.choose('right')
+      // Step 3: s-kesi
+      game.choose('left')
+      // Step 4: s-cui
+      game.choose('left')
+      // Step 5: s-wangtiqian
+      game.choose('right')
+      // Step 6: s-impeach-wei
+      game.choose('left')
+      // Step 7: s-wei
       expect(game.currentCard.value?.id).toBe('s-wei')
       return game
     }
@@ -181,6 +194,7 @@ describe('生死之判', () => {
       const game = useGame()
       game.startGame()
       const card = pool.get('g-gucheng')!
+      game.flags.value = { 'gewu-relief': 1, 'gewu-taxroll': 1 }
       reach(game, card.year! * CARDS_PER_YEAR + card.order! - 1, progressSide)
       expect(game.currentCard.value?.id).toBe('g-gucheng')
       game.resources.value = healthy()

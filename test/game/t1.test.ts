@@ -240,12 +240,17 @@ describe('T1 批红单页', () => {
 })
 
 describe('T1 宫门定策四档', () => {
-  /** 走完开篇前两步，停在拿人的第三步 */
+  /** 走完魏忠贤篇章前七步，第八步即「发落司礼监」 */
   const toArrest = (first: Side, second: Side) => {
     const game = useGame()
     game.startGame()
-    game.choose(first)
-    game.choose(second)
+    game.choose(first)   // Step 0: s-tuogu
+    game.choose(second)  // Step 1: s-dianjianglu
+    game.choose('right') // Step 2: s-gongnv
+    game.choose('left')  // Step 3: s-kesi
+    game.choose('left')  // Step 4: s-cui
+    game.choose('right') // Step 5: s-wangtiqian
+    game.choose('left')  // Step 6: s-impeach-wei
     return game
   }
   const weiView = (game: Game) => {
@@ -260,10 +265,10 @@ describe('T1 宫门定策四档', () => {
     ['left', 'right', 's-wei-rash', '受玺即位仍让他掌厂卫：只能靠京营当值硬办，成算打折'],
     ['left', 'left', 's-wei-rash', '连辞爵都未慰留，军心尚在，仍可连夜逼他出京'],
     ['right', 'left', 's-wei-failed', '焚册折了京营当值：军心已溃，缇骑出不了城门'],
-  ] as const)('当开局依次选%s、%s时，第三步发出%s（%s）', (first, second, id, why) => {
+  ] as const)('当开局依次选%s、%s时，第八步发出%s（%s）', (first, second, id, why) => {
     const game = toArrest(first, second)
     expect(why.length).toBeGreaterThan(0)
-    expect(game.chapter.value).toEqual({ id: 'wei', name: '宫门定策', step: 3, total: 3 })
+    expect(game.chapter.value).toEqual({ id: 'wei', name: '宫门定策', step: 8, total: 8 })
     expect(game.currentCard.value?.id).toBe(id)
   })
 
@@ -272,21 +277,36 @@ describe('T1 宫门定策四档', () => {
     const goldBefore = steady.resources.value.gold
     steady.choose('left')
     expect(steady.currentCard.value?.id).toBe('g-institute')
-    expect(steady.flags.value).toEqual({ 'wei-watched': 2, 'wei-soothed': 1, 'wei-down': 1 })
+    expect(steady.flags.value).toEqual({
+      'cui-removed': 1,
+      'gongnv-refused': 1,
+      'kesi-out': 1,
+      'wang-replaced': 1,
+      'wei-down': 2,
+      'wei-soothed': 1,
+      'wei-watched': 2,
+    })
     expect(steady.resources.value.gold - goldBefore).toBe(12)
 
     const rash = toArrest('left', 'right')
     rash.choose('left')
-    expect(rash.flags.value['wei-down']).toBe(1)
+    expect(rash.flags.value['wei-down']).toBe(2)
     expect(rash.flags.value['eunuch-debt']).toBe(1)
   })
 
-  it('当法度与军心都不足四十又未曾焚册时，第三步落到中止且仍以未遂收束', () => {
+  it('当法度与军心都不足四十又未曾焚册时，第八步落到中止且仍以未遂收束', () => {
     const game = useGame()
     game.startGame()
-    game.choose('left')
+    game.choose('left')  // Step 0: s-tuogu left - no wei-watched
+    game.choose('right') // Step 1: s-dianjianglu right - sets wei-soothed, wei-watched
+    // 清除 wei-watched 以模拟未曾焚册但名分已定的情形
+    game.flags.value = { ...game.flags.value, 'wei-watched': undefined }
     game.resources.value = { ...healthy(), law: 41, army: 37 }
-    game.choose('right')
+    game.choose('right') // Step 2: s-gongnv
+    game.choose('left')  // Step 3: s-kesi
+    game.choose('left')  // Step 4: s-cui
+    game.choose('right') // Step 5: s-wangtiqian
+    game.choose('left')  // Step 6: s-impeach-wei
     expect(game.flags.value.warned).toBeUndefined()
     expect(game.currentCard.value?.id).toBe('s-wei-stalled')
     const stalled = game.currentCard.value!
@@ -398,8 +418,16 @@ describe('T1 宫门定策四档', () => {
 
   it('当只换九门钥匙而慰留魏忠贤时，两步都记在旗标上而不靠人名说破', () => {
     const game = toArrest('right', 'right')
-    expect(Object.keys(game.flags.value).sort()).toEqual(['wei-soothed', 'wei-watched'])
-    expect(game.resources.value).toEqual({ court: 40, law: 44, army: 46, gold: 26, people: 47 })
+    expect(Object.keys(game.flags.value).sort()).toEqual([
+      'cui-removed',
+      'gongnv-refused',
+      'kesi-out',
+      'wang-replaced',
+      'wei-down',
+      'wei-soothed',
+      'wei-watched',
+    ])
+    expect(game.resources.value).toEqual({ court: 64, law: 70, army: 41, gold: 37, people: 63 })
   })
 
   it('当第三步发落司礼监时，崔呈秀与逮牌都已在前面交代过', () => {
