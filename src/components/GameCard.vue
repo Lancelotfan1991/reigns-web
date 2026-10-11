@@ -2,7 +2,7 @@
 import { computed, ref } from 'vue'
 import type { Advice } from '../composables/useHint'
 import { cardPortrait } from '../data/portraits'
-import type { GameEvent, Side } from '../types'
+import type { ChapterProgress, GameEvent, Side } from '../types'
 
 const props = defineProps<{
   event: GameEvent
@@ -13,6 +13,8 @@ const props = defineProps<{
   advicePending?: boolean
   /** 已识别人物名列表：匹配到的名字在正文中高亮可点 */
   knownNames?: string[]
+  /** 连续篇章进度：非篇章内为 null */
+  chapter?: ChapterProgress | null
 }>()
 
 const emit = defineEmits<{
@@ -125,7 +127,19 @@ defineExpose({ fly })
     @pointercancel="cancelDrag"
   >
     <span class="band"></span>
-    <span class="slip">提塘官敬述</span>
+
+    <!-- 连续篇章进度：卡片内部显示 -->
+    <div v-if="chapter" class="chapter-progress">
+      <span class="chapter-name">{{ chapter.name }}</span>
+      <div class="step-blocks">
+        <span
+          v-for="step in chapter.total"
+          :key="step"
+          class="step-block"
+          :class="{ completed: step <= chapter.step }"
+        ></span>
+      </div>
+    </div>
 
     <div v-if="advice || advicePending" class="god-mark">
       <b v-if="advice">宜{{ advice.side === 'left' ? '左' : '右' }}</b>
@@ -151,7 +165,7 @@ defineExpose({ fly })
 .game-card {
   position: absolute;
   inset: 0;
-  padding: 30px 24px 46px;
+  padding: 10px 24px 46px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -198,6 +212,49 @@ defineExpose({ fly })
   height: 12px;
   background: var(--meander) repeat-x;
   opacity: 0.42;
+}
+
+/* 连续篇章进度：卡片内部显示 */
+.chapter-progress {
+  position: absolute;
+  top: 22px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 8px;
+  font-family: var(--font-kai);
+  font-size: 11px;
+  color: var(--ink-2);
+  background: rgba(255, 250, 240, 0.7);
+  border: 1px solid var(--line-soft);
+  border-radius: 3px;
+}
+
+.chapter-name {
+  font-weight: 700;
+  color: var(--ink);
+  white-space: nowrap;
+}
+
+.step-blocks {
+  display: flex;
+  gap: 2px;
+}
+
+.step-block {
+  width: 10px;
+  height: 10px;
+  border: 1px solid var(--line-soft);
+  border-radius: 1px;
+  background: rgba(255, 255, 255, 0.6);
+  transition: all 0.3s ease;
+}
+
+.step-block.completed {
+  background: var(--cinnabar);
+  border-color: var(--cinnabar);
 }
 
 /* 右上题签 */

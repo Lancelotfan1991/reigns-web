@@ -12,8 +12,8 @@ import {
   dealAt,
   eligible,
   initialResources,
+  isChapterSlot,
   makePool,
-  turnOf,
 } from './simulation'
 import type { AxisKey, ChapterProgress, Decision, Ending, Effects, GameEvent, ResourceKey, Side, Verdict } from '../types'
 import type { SimState } from './simulation'
@@ -226,6 +226,8 @@ export function useGame() {
   const resources = ref<Record<ResourceKey, number>>(initialResources())
   const deck = ref<GameEvent[]>([])
   const cardIndex = ref(0)
+  /** 非篇章决策计数：篇章步骤不推进此值，故年度推进更慢 */
+  const yearProgress = ref(0)
   const ending = ref<Ending | null>(null)
   /** 待读的批红：null 表示当前在决策页，读完后回到决策页 */
   const verdict = ref<Verdict | null>(null)
@@ -251,8 +253,8 @@ export function useGame() {
     return dealt.card
   }
 
-  /** 0 = 天启七年，N = 崇祯N年，17 = 甲申终章当年 */
-  const year = computed(() => Math.floor(cardIndex.value / CARDS_PER_YEAR))
+  /** 0 = 天启七年，N = 崇祯N年，17 = 甲申终章当年；篇章步骤不计入年度 */
+  const year = computed(() => Math.floor(yearProgress.value / CARDS_PER_YEAR))
   const yearText = computed(() => {
     const y = year.value
     return `${yearLabel(y)}（${1627 + Math.min(Math.max(y, 0), 17)}）`
@@ -265,7 +267,13 @@ export function useGame() {
   /** 终章是否被触发（区别于中途失衡而亡） */
   const reachedFinale = computed(() => isOver.value && cardIndex.value >= deck.value.length)
   const unrest = computed(() => resources.value.people < UNREST_LINE)
-  const turnInYear = computed(() => turnOf(cardIndex.value))
+  /** 当前是本年度第几议（按非篇章决策计算，用于显示） */
+  const turnInYear = computed(() => (yearProgress.value % CARDS_PER_YEAR) + 1)
+  /** 槽位对应的议次（用于岁耗计算，基于实际经过的牌数） */
+  const slotTurn = computed(() => {
+    const idx = cardIndex.value
+    return idx < SCRIPT_SLOTS ? (idx % CARDS_PER_YEAR) + 1 : null
+  })
   const customsFunded = computed(() => !!flags.value['gewu-customs'] && !!flags.value['gewu-audit'])
   const workshopsSupplied = computed(() => !!flags.value['gewu-tools'] && !!flags.value['gewu-denglai'])
 
@@ -290,6 +298,7 @@ export function useGame() {
     cursor = 0
     deck.value = [dealCard(0)!]
     cardIndex.value = 0
+    yearProgress.value = 0
     ending.value = null
     verdict.value = null
     decisions.value = []
@@ -306,7 +315,7 @@ export function useGame() {
     resources.value = applyToResources(
       resources.value,
       effects,
-      turnInYear.value,
+      slotTurn.value,
       customsFunded.value,
       workshopsSupplied.value,
     )
@@ -356,7 +365,7 @@ export function useGame() {
       when,
       chapter: progress ? { name: progress.name, step: progress.step, total: progress.total } : null,
       lines: RESOURCE_KEYS
-        .filter((key) => before[key] !== resources.value[key])
+        .filter((key) => key !== 'people' && before[key] !== resources.value[key])
         .map((key) => ({ key, from: before[key], to: resources.value[key] })),
       life: findLifeVerdict(card, { now: year.value, decided: decisionByEvent.value, flags: flags.value }),
       ended: isOver.value,
@@ -418,9 +427,13 @@ export function useGame() {
     advance()
   }
 
-  /** 推进一张：到堆尾时按当前旗标现发下一张，故分叉卡总在上一道决策之后才决定 */
+  /** 推进一张：篇章步骤不推进年度，仅非篇章事件计入 yearProgress */
   function advance() {
-    const nextIndex = cardIndex.value + 1
+    const currentIndex = cardIndex.value
+    if (!isChapterSlot(currentIndex)) {
+      yearProgress.value += 1
+    }
+    const nextIndex = currentIndex + 1
     if (nextIndex >= deck.value.length) {
       const dealt = dealCard(nextIndex)
       if (dealt) deck.value.push(dealt)

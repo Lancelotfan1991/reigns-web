@@ -194,7 +194,6 @@ onUnmounted(() => window.removeEventListener('keydown', onKey))
             <span>{{ sealLines[1] }}</span>
           </div>
           <span class="ad">西元 {{ adYear }}</span>
-          <span class="ad" aria-live="polite">{{ game.turnInYear.value === null ? '甲申终章' : `第 ${game.turnInYear.value} / ${CARDS_PER_YEAR} 议` }}</span>
         </div>
         <ResourceBadge
           v-for="key in AXIS_KEYS.slice(2)"
@@ -206,42 +205,6 @@ onUnmounted(() => window.removeEventListener('keydown', onKey))
           :active="isActive(key)"
         />
       </header>
-
-      <div class="subhud">
-        <div
-          class="levee"
-          :class="{ breach: game.unrest.value }"
-          :title="`民心 ${peopleValue}：低于 ${UNREST_LINE} 会生动乱，满格无害；南渡通常至少需 ${SOUTH_PEOPLE_LINE}，提前准备可降低门槛`"
-        >
-          <span class="lv-cap">{{ PEOPLE_META.icon }} 国本</span>
-          <span class="lv-track">
-            <i class="lv-fill" :style="{ width: `${peopleValue}%`, background: PEOPLE_META.color }"></i>
-            <i class="lv-tick" :style="{ left: `${UNREST_LINE}%` }"></i>
-            <i class="lv-tick" :style="{ left: `${SOUTH_PEOPLE_LINE}%` }"></i>
-          </span>
-          <span class="lv-num">{{ peopleValue }}</span>
-          <span v-if="game.unrest.value" class="lv-flag">动乱</span>
-        </div>
-        <button class="people-btn" @click="panelOpen = true">
-          朝中人物 <i>已识 {{ chars.appearedCount.value }} / {{ chars.views.value.length }}</i>
-        </button>
-      </div>
-
-      <section
-        v-if="game.chapter.value && !verdict"
-        class="chapter-banner"
-        role="status"
-        aria-label="连续篇章进度"
-        aria-live="polite"
-        aria-atomic="true"
-      >
-        <div class="chapter-heading">
-          <span class="chapter-label">连续篇章</span>
-          <strong>{{ game.chapter.value.name }}</strong>
-          <span class="chapter-step">第 {{ game.chapter.value.step }} / {{ game.chapter.value.total }} 步</span>
-        </div>
-        <p>须完成本篇章全部抉择，方可返回日常政务。</p>
-      </section>
 
       <p v-if="game.customsFunded.value || game.workshopsSupplied.value" class="ad">
         <span v-if="game.customsFunded.value">海税入公库：抵消国库岁耗</span>
@@ -262,6 +225,7 @@ onUnmounted(() => window.removeEventListener('keydown', onKey))
           :advice="advice"
           :advice-pending="advicePending"
           :known-names="knownNames"
+          :chapter="game.chapter.value"
           @choose="onChoose"
           @drag="(v: number) => (dragDx = v)"
           @char-click="onCharClick"
@@ -638,45 +602,6 @@ onUnmounted(() => window.removeEventListener('keydown', onKey))
 }
 
 /* 篇章常驻，不随塘报正文滚走；批红单页属于上一议，此时不显示 */
-.chapter-banner {
-  flex: none;
-  padding: 7px 10px;
-  border: 1px solid var(--line-soft);
-  border-left: 3px solid var(--cinnabar);
-  border-radius: 2px;
-  background: rgba(168, 50, 42, 0.08);
-}
-
-.chapter-heading {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: 3px 8px;
-  font-family: var(--font-kai);
-  font-size: 14px;
-  color: var(--ink);
-}
-
-.chapter-heading strong {
-  flex: 1;
-  min-width: 0;
-  overflow-wrap: anywhere;
-}
-
-.chapter-label,
-.chapter-step {
-  flex: none;
-  white-space: nowrap;
-  font-size: 11.5px;
-  color: var(--cinnabar);
-}
-
-.chapter-banner p {
-  margin-top: 3px;
-  font-size: 11.5px;
-  line-height: 1.5;
-  color: var(--ink-2);
-}
 
 .hud {
   display: flex;
@@ -710,130 +635,6 @@ onUnmounted(() => window.removeEventListener('keydown', onKey))
   font-size: 10.5px;
   letter-spacing: 1px;
   color: var(--ink-3);
-}
-
-.subhud {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-/* 国本堤坝：民心是四象之外唯一只看下限的水位 */
-.levee {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 4px 9px;
-  border: 1px solid var(--line-soft);
-  border-radius: 2px;
-  background: rgba(255, 253, 248, 0.6);
-}
-
-.lv-cap {
-  font-family: var(--font-kai);
-  font-size: 11.5px;
-  color: var(--ink-2);
-  white-space: nowrap;
-}
-
-.lv-track {
-  position: relative;
-  flex: 1;
-  min-width: 36px;
-  height: 9px;
-  overflow: hidden;
-  border: 1px solid var(--line-soft);
-  border-radius: 5px;
-  background: rgba(255, 255, 255, 0.5);
-}
-
-.lv-fill {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  left: 0;
-  opacity: 0.82;
-  transition: width 0.4s cubic-bezier(0.2, 0.8, 0.3, 1);
-}
-
-.lv-tick {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  width: 1px;
-  background: rgba(41, 33, 26, 0.5);
-}
-
-.lv-num {
-  min-width: 18px;
-  font-family: var(--font-kai);
-  font-size: 13px;
-  font-weight: 700;
-  text-align: right;
-  color: var(--ink);
-}
-
-.lv-flag {
-  flex: none;
-  white-space: nowrap;
-  padding: 1px 5px;
-  font-family: var(--font-kai);
-  font-size: 11px;
-  letter-spacing: 1px;
-  color: var(--paper-hi);
-  background: var(--cinnabar);
-  border-radius: 2px;
-}
-
-.levee.breach {
-  border-color: var(--cinnabar);
-  background: rgba(168, 50, 42, 0.07);
-}
-
-.levee.breach .lv-cap,
-.levee.breach .lv-num {
-  color: var(--cinnabar);
-}
-
-.people-btn {
-  flex: none;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 4px 13px;
-  font-family: var(--font-kai);
-  font-size: 12.5px;
-  letter-spacing: 1px;
-  color: var(--ink-2);
-  background: rgba(255, 253, 248, 0.6);
-  border: 1px solid var(--line-soft);
-  border-radius: 2px;
-  cursor: pointer;
-}
-
-@media (max-width: 360px) {
-  .people-btn i {
-    display: none;
-  }
-}
-
-.people-btn::before {
-  content: '';
-  width: 5px;
-  height: 5px;
-  background: var(--cinnabar);
-  transform: rotate(45deg);
-}
-
-.people-btn i {
-  font-style: normal;
-  color: var(--ink-3);
-}
-
-.people-btn:active {
-  border-color: var(--cinnabar);
 }
 
 .card-zone {
@@ -1049,17 +850,9 @@ onUnmounted(() => window.removeEventListener('keydown', onKey))
     gap: 6px;
   }
 
-  .chapter-banner {
-    padding: 4px 8px;
-  }
-
-  .chapter-heading {
-    font-size: 12px;
-  }
-
-  .chapter-banner p {
+  .chapter-tag {
+    padding: 3px 8px;
     font-size: 11px;
-    line-height: 1.4;
   }
 
   .verdict-btn {

@@ -50,8 +50,16 @@ function chapter(id: string, name: string, start: number, steps: GameEvent[][]):
 // 同一原卡只归属一个步骤；新增的中间决定用旗标进入本章后续验收。
 export const STORY_CHAPTERS: StoryChapter[] = [
   chapter('wei', '宫门定策', 0, [
+    // Phase 1 · 宫门定策
     [source('s-tuogu')],
     [source('s-dianjianglu')],
+    [source('s-gongnv')],
+    // Phase 2 · 先断内援
+    [source('s-kesi')],
+    [source('s-cui')],
+    // Phase 3 · 收网
+    [source('s-wangtiqian')],
+    [source('s-impeach-wei')],
     [
       source('s-wei', ['wei-watched'], { resourceBounds: { law: { min: 40 }, army: { min: 40 } } }),
       source('s-wei-rash', [], { resourceBounds: { army: { min: 40 } } }),
@@ -59,7 +67,7 @@ export const STORY_CHAPTERS: StoryChapter[] = [
       source('s-wei-stalled'),
     ],
   ]),
-  chapter('institute', '器院立局', 3, [
+  chapter('institute', '器院立局', 8, [
     [source('g-institute')],
     [
       source('g-budget', ['gewu-institute']),
@@ -573,13 +581,13 @@ function eunuchMarshal(id: string, text: string, requires: string[]): GameEvent 
 
 // 独立长期改革缺前提时允许随机卡补位；危机节点另行合入，两个日常空位不写入本表。
 const standalone: [number, GameEvent[]][] = [
-  [7, [source('s-ych-huajian')]],
-  [8, [source('s-hanzai')]],
-  [9, [source('g-seeds', ['gewu-institute'])]],
-  [10, [source('s-yizhan', [], {
+  [17, [source('s-ych-huajian')]],
+  [18, [source('s-hanzai')]],
+  [20, [source('g-seeds', ['gewu-institute'])]],
+  [21, [source('s-yizhan', [], {
     right: option('裁官俸保驿站', { gold: 4, court: 2, law: -4, people: 6, army: -2 }, '官俸削薄，部分驿路和驿卒生计得保。饥荒仍会逼人流亡，但朝廷留下了传信、核籍和招抚的通路。', ['post-kept']),
   })]],
-  [11, [source('g-payroll', ['gewu-budget', 'gewu-measure'])]],
+  [24, [source('g-payroll', ['gewu-budget', 'gewu-measure'])]],
   [16, [source('g-waterworks', ['gewu-measure', 'gewu-seeds'])]],
   [17, [source('g-review', ['gewu-waterworks'])]],
   [19, [

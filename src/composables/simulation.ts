@@ -92,6 +92,11 @@ export function chapterAt(index: number): { story: StoryChapter; step: number } 
   return story ? { story, step: index - story.start } : null
 }
 
+/** 判断某槽位是否属于连续篇章 */
+export function isChapterSlot(index: number): boolean {
+  return index >= 0 && index < SCRIPT_SLOTS && CHAPTER_BY_SLOT[index] !== null
+}
+
 /** 发第 index 张牌：篇章槽优先，其次同槽条件卡，最后按本局牌序抽取 */
 export function dealAt(
   index: number,

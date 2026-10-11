@@ -30,6 +30,8 @@ export const CHARACTERS: Character[] = [
       { to: 'huangtaiji', type: 'enemy' },
       { to: 'licheng', type: 'enemy' },
       { to: 'wei', type: 'suspicion' },
+      { to: 'kesi', type: 'suspicion' },
+      { to: 'cui', type: 'suspicion' },
       { to: 'yuanchonghuan', type: 'suspicion' },
       { to: 'sunchengzong', type: 'suspicion' },
       { to: 'sunchuanting', type: 'suspicion' },
@@ -60,7 +62,7 @@ export const CHARACTERS: Character[] = [
     camp: '内廷',
     faction: 'law',
     born: 1568,
-    events: ['s-tuogu', 's-dianjianglu', 's-wei', 's-wei-rash', 's-wei-failed', 's-wei-stalled', 's-wei-coup', 's-ni-an'],
+    events: ['s-tuogu', 's-dianjianglu', 's-gongnv', 's-kesi', 's-cui', 's-impeach-wei', 's-wangtiqian', 's-wei', 's-wei-rash', 's-wei-failed', 's-wei-stalled', 's-wei-coup', 's-ni-an'],
     fates: [
       { event: 's-wei', side: 'left', status: 'dead', seal: '缢', note: '宫门有己人、文书照章程：你先免崔呈秀，逮牌出宫，他夜缢于阜城旅邸' },
       { event: 's-wei', side: 'right', status: 'alive', seal: '留', note: '只革东厂，司礼监如故。他知道朝廷几乎办了他，从此奏疏出入先看他颜色' },
@@ -75,8 +77,53 @@ export const CHARACTERS: Character[] = [
       { event: 's-ni-an', side: 'right', status: 'dead', seal: '磔', note: '逆案定二百五十余人，追赃及于家产，磔尸之诏写在榜首' },
     ],
     relations: [
+      { to: 'kesi', type: 'friend' },
+      { to: 'cui', type: 'loyal' },
       { to: 'sunchengzong', type: 'enemy' },
       { to: 'yuanchonghuan', type: 'enemy' },
+    ],
+  },
+  {
+    id: 'kesi',
+    name: '客氏',
+    alias: '天启帝乳母',
+    avatar: '👩',
+    role: '天启帝乳母，与魏忠贤对食。出入禁闼，为魏党通传宫禁消息',
+    camp: '内廷',
+    faction: 'court',
+    appearYear: 0,
+    events: ['s-kesi'],
+    track: [
+      { year: 0, status: 'dead', note: '史实：诏遣出宫，旋以交结魏忠贤、蛊惑先帝罪，笞死於浣衣局' },
+    ],
+    fates: [
+      { event: 's-kesi', side: 'left', status: 'dead', seal: '笞', note: '遣出宫门，旋以交结阉党、蛊惑先帝罪，笞死于浣衣局' },
+      { event: 's-kesi', side: 'right', status: 'alive', note: '仍准定期出入宫禁，魏忠贤在宫内的耳目未断' },
+    ],
+    relations: [
+      { to: 'wei', type: 'friend' },
+      { to: 'tiangqi', type: 'loyal' },
+    ],
+  },
+  {
+    id: 'cui',
+    name: '崔呈秀',
+    alias: '魏忠贤头号党羽',
+    avatar: '⚔️',
+    role: '兵部尚书兼都察院左都御史。掌兵部与都察院，为魏党把持言路与军权之人',
+    camp: '文官',
+    faction: 'law',
+    appearYear: 0,
+    events: ['s-dianjianglu', 's-cui'],
+    track: [
+      { year: 0, status: 'dead', note: '史实：先魏忠贤一日自缢。或曰闻逮牌将至，先自裁' },
+    ],
+    fates: [
+      { event: 's-cui', side: 'left', status: 'dead', seal: '缢', note: '免职交法司问罪，未及鞫治，先自缢于家' },
+      { event: 's-cui', side: 'right', status: 'alive', seal: '去', note: '准其自陈致仕，体面退出；携兵部案卷而去，新任面对空架' },
+    ],
+    relations: [
+      { to: 'wei', type: 'loyal' },
     ],
   },
   {
