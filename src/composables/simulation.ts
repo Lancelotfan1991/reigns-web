@@ -2,17 +2,15 @@ import { FINALE_EVENTS, RANDOM_EVENTS } from '../data/events'
 import { REFORM_FINALES } from '../data/reforms'
 import { STANDALONE_EVENTS, STORY_CHAPTERS } from '../data/chapters'
 import type { AxisKey, Effects, FlagRule, GameEvent, ResourceKey, Side, StoryChapter } from '../types'
+export { CARDS_PER_YEAR, SCRIPT_SLOTS, turnOf, yearOf, slotOfPosition } from './slots'
+import { CARDS_PER_YEAR, SCRIPT_SLOTS, yearOf } from './slots'
 
 /** 四象：归零与满格同样致命 */
 export const AXIS_KEYS: AxisKey[] = ['court', 'law', 'army', 'gold']
 /** 结算与展示的统一顺序：四象在前，国本民心在后 */
 export const RESOURCE_KEYS: ResourceKey[] = ['court', 'law', 'army', 'gold', 'people']
 
-export const CARDS_PER_YEAR = 5
 const YEARLY_TICKS = 3
-const LAST_SCRIPT_YEAR = 16
-/** 锁年剧本与史实卡的槽位总数；此后的第一张即甲申终章 */
-export const SCRIPT_SLOTS = (LAST_SCRIPT_YEAR + 1) * CARDS_PER_YEAR
 
 /** 国本线：民心低于此值即为动乱，军心与法度随岁耗额外失血 */
 export const UNREST_LINE = 30
@@ -26,15 +24,6 @@ export function clamp(value: number): number {
 
 export function initialResources(): Record<ResourceKey, number> {
   return { court: 50, law: 40, army: 45, gold: 35, people: 45 }
-}
-
-/** 0 = 天启七年，N = 崇祯N年，17 = 甲申终章当年 */
-export function turnOf(index: number): number | null {
-  return index < SCRIPT_SLOTS ? (index % CARDS_PER_YEAR) + 1 : null
-}
-
-export function yearOf(index: number): number {
-  return Math.floor(index / CARDS_PER_YEAR)
 }
 
 export function shuffle<T>(list: T[]): T[] {

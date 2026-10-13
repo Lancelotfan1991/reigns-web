@@ -2,6 +2,7 @@ import type { Choice, Effects, GameEvent, StoryChapter } from '../types'
 import { SCRIPT_EVENTS } from './events'
 import { REFORM_EVENTS } from './reforms'
 import { CRISIS_EVENTS } from './crises'
+import { CARDS_PER_YEAR, yearOf } from '../composables/slots'
 
 // 原卡只作素材。所有复制、条件覆盖及排期都发生在新对象上。
 const originals = new Map([...SCRIPT_EVENTS, ...REFORM_EVENTS].map(event => [event.id, event]))
@@ -39,7 +40,7 @@ function card(
 }
 
 function at(slot: number, event: GameEvent): GameEvent {
-  return { ...event, year: Math.floor(slot / 5), order: slot % 5 + 1 }
+  return { ...event, year: yearOf(slot), order: (slot % CARDS_PER_YEAR) + 1 }
 }
 
 function chapter(id: string, name: string, start: number, steps: GameEvent[][]): StoryChapter {
@@ -647,4 +648,4 @@ export const STANDALONE_EVENTS: GameEvent[] = [
 export const STORY_EVENTS: GameEvent[] = [
   ...STORY_CHAPTERS.flatMap(item => item.steps.flat()),
   ...STANDALONE_EVENTS,
-].sort((a, b) => (a.year ?? 0) * 5 + (a.order ?? 1) - ((b.year ?? 0) * 5 + (b.order ?? 1)))
+].sort((a, b) => (a.year ?? 0) * CARDS_PER_YEAR + (a.order ?? 1) - ((b.year ?? 0) * CARDS_PER_YEAR + (b.order ?? 1)))

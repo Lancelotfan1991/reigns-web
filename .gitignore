@@ -4,3 +4,6 @@ dist
 .DS_Store
 .wrangler
 *.png
+.scratch/
+Python/
+vibe_images/

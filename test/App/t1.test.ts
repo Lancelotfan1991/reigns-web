@@ -4,7 +4,8 @@ import { mount } from '@vue/test-utils'
 import { nextTick } from 'vue'
 import App from '../../src/App.vue'
 import * as gameModule from '../../src/composables/useGame'
-import { healthy, progressSide, reach, seedRandom } from '../game/helpers'
+import { healthy, progressSide, reach, seedRandom, slotOf } from '../game/helpers'
+import { CARDS_PER_YEAR, SCRIPT_SLOTS } from '../../src/composables/slots'
 
 type AppWrapper = ReturnType<typeof mount<typeof App>>
 const chapterSelector = '[role="status"][aria-label="连续篇章进度"]'
@@ -76,14 +77,14 @@ it('当点击入宫并裁决五次时，页面显示下一年第一议且出现�
     expect(wrapper.get('[title^="民心 45："]').text()).toContain('45')
     const seen = new Set<string>()
     for (const [index, side] of ([0, 0, 1, 0, 1] as const).entries()) {
-      expect(wrapper.text()).toContain(`第 ${index + 1} / 5 议`)
+      expect(wrapper.text()).toContain(`第 ${index + 1} / ${CARDS_PER_YEAR} 议`)
       seen.add(wrapper.find('h2').text())
       await clickChoice(wrapper, side)
     }
     expect(seen.size).toBe(5)
     expect(seen.has('给器物一个衙门')).toBe(true)
     expect(wrapper.text()).toContain('西元 1628')
-    expect(wrapper.text()).toContain('第 1 / 5 议')
+    expect(wrapper.text()).toContain(`第 1 / ${CARDS_PER_YEAR} 议`)
   } finally {
     wrapper.unmount()
   }
@@ -126,7 +127,7 @@ it('当点击进入器院立局时，会常驻显示连续篇章名称、步数�
     expect(wrapper.findAll('button')).toHaveLength(3)
     expect(wrapper.get('h2').text()).toBe('给器物一个衙门')
     expect(wrapper.get('header').text()).toContain('西元 1627')
-    expect(wrapper.get('header').text()).toContain('第 4 / 5 议')
+    expect(wrapper.get('header').text()).toContain(`第 4 / ${CARDS_PER_YEAR} 议`)
     expect(wrapper.get('[aria-label="塘报正文，可上下滚动"]').text().length).toBeGreaterThan(0)
     expect(wrapper.get('footer').findAll('button')).toHaveLength(2)
     const progress = banner.text()
@@ -155,7 +156,7 @@ it('当连续篇章跨年时，每次点击占一议且篇章步数不会重置'
       expect(wrapper.get(chapterSelector).text()).toContain('器院立局')
       expect(wrapper.get(chapterSelector).text()).toContain(`第 ${step} / 4 步`)
       expect(wrapper.get('header').text()).toContain(`西元 ${year}`)
-      expect(wrapper.get('header').text()).toContain(`第 ${turn} / 5 议`)
+      expect(wrapper.get('header').text()).toContain(`第 ${turn} / ${CARDS_PER_YEAR} 议`)
       expect(wrapper.get('h2').text()).not.toBe(previousTitle)
     }
   } finally {
@@ -174,7 +175,7 @@ it.each([0, 1] as const)('当首步选择第 %s 侧时，四步收束不残留�
       await clickChoice(wrapper, side)
     }
     expect(wrapper.get('header').text()).toContain('西元 1628')
-    expect(wrapper.get('header').text()).toContain('第 3 / 5 议')
+    expect(wrapper.get('header').text()).toContain(`第 3 / ${CARDS_PER_YEAR} 议`)
     expect(game.isOver.value).toBe(false)
     expect(game.chapter.value).toBeNull()
     expect(wrapper.find(chapterSelector).exists()).toBe(false)
@@ -200,7 +201,7 @@ it('当篇章内飞牌期间连续点击或按键时，只提交当前一步', a
     expect(wrapper.get(verdictSelector).text()).toContain('给器物一个衙门')
     await readVerdict(wrapper)
     expect(wrapper.get(chapterSelector).text()).toContain('第 2 / 4 步')
-    expect(wrapper.get('header').text()).toContain('第 5 / 5 议')
+    expect(wrapper.get('header').text()).toContain(`第 5 / ${CARDS_PER_YEAR} 议`)
     expect(wrapper.get('h2').text()).toBe('器院的钱给谁看')
   } finally {
     wrapper.unmount()
@@ -226,7 +227,7 @@ it('当篇章中死亡后点击重开时，会清空篇章且再次进入从第�
     expect(wrapper.get(chapterSelector).text()).toContain('第 1 / 3 步')
     expect(wrapper.get('h2').text()).toBe('捧玺入宫')
     expect(wrapper.get('header').text()).toContain('西元 1627')
-    expect(wrapper.get('header').text()).toContain('第 1 / 5 议')
+    expect(wrapper.get('header').text()).toContain(`第 1 / ${CARDS_PER_YEAR} 议`)
     for (const title of ['君威 50', '法度 40', '军心 45', '国库 35']) {
       expect(wrapper.find(`[title="${title}"]`).exists()).toBe(true)
     }
@@ -234,7 +235,7 @@ it('当篇章中死亡后点击重开时，会清空篇章且再次进入从第�
     for (const side of [0, 0, 1] as const) await clickChoice(wrapper, side)
     expect(wrapper.get(chapterSelector).text()).toContain('器院立局')
     expect(wrapper.get(chapterSelector).text()).toContain('第 1 / 4 步')
-    expect(wrapper.get('header').text()).toContain('第 4 / 5 议')
+    expect(wrapper.get('header').text()).toContain(`第 4 / ${CARDS_PER_YEAR} 议`)
   } finally {
     wrapper.unmount()
   }
@@ -265,7 +266,7 @@ it('当篇章中查看人物并按方向键时，不推进卡片、年度议次�
     expect(wrapper.get('h2').text()).toBe(title)
     await clickChoice(wrapper, 0)
     expect(wrapper.get(chapterSelector).text()).toContain('第 2 / 4 步')
-    expect(wrapper.get('header').text()).toContain('第 5 / 5 议')
+    expect(wrapper.get('header').text()).toContain(`第 5 / ${CARDS_PER_YEAR} 议`)
   } finally {
     wrapper.unmount()
   }
@@ -293,7 +294,7 @@ it.each([
       game.resources.value = healthy()
       await nextTick()
       expect(wrapper.get('h2').text()).toBe(names[step])
-      expect(wrapper.get('header').text()).toContain(`西元 ${1627 + Math.floor(slot / 5)}`)
+      expect(wrapper.get('header').text()).toContain(`西元 ${1627 + Math.floor(slot / CARDS_PER_YEAR)}`)
       expect(wrapper.find(chapterSelector).exists()).toBe(false)
       const card = game.currentCard.value!
       expect(wrapper.get(cardBodySelector).text()).toBe(card.text)
@@ -329,7 +330,7 @@ it('当批红独立成页时，本议批复与国势净变化同页显示，下�
     expect(sheet.text()).toContain(card.name)
     expect(sheet.text()).toContain(card.left.label)
     expect(sheet.text()).toContain(card.left.response)
-    expect(sheet.text()).toContain('天启七年（1627） 第 4 / 5 议')
+    expect(sheet.text()).toContain(`天启七年（1627） 第 4 / ${CARDS_PER_YEAR} 议`)
     expect(sheet.text()).toContain('器院立局 第 1 / 4 步已定')
     expect(sheet.findAll('li')).toHaveLength(view.lines.length)
     for (const line of view.lines) {

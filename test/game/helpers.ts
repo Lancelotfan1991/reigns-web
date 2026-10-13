@@ -1,8 +1,21 @@
 import { vi } from 'vitest'
 import { useGame, type Game } from '../../src/composables/useGame'
-import { STORY_EVENTS } from '../../src/data/chapters'
+import { STORY_EVENTS, STANDALONE_EVENTS } from '../../src/data/chapters'
 import { REFORM_REQUIREMENTS } from '../../src/data/reforms'
-import type { ResourceKey, Side } from '../../src/types'
+import { CARDS_PER_YEAR, SCRIPT_SLOTS, slotOfPosition } from '../../src/composables/slots'
+import type { ResourceKey, Side } from '../../types'
+
+export { CARDS_PER_YEAR, SCRIPT_SLOTS }
+
+const allScriptEvents = [...STORY_EVENTS, ...STANDALONE_EVENTS]
+const eventSlotMap = new Map(allScriptEvents.map((card) => [card.id, slotOfPosition(card.year!, card.order!)]))
+
+/** 按事件 ID 反查当前槽位；找不到时抛错，提醒更新测试 */
+export function slotOf(eventId: string): number {
+  const slot = eventSlotMap.get(eventId)
+  if (slot === undefined) throw new Error(`slotOf: 未找到事件 ${eventId}，请检查 ID 或数据`)
+  return slot
+}
 
 const storyCards = new Map(STORY_EVENTS.map((card) => [card.id, card]))
 const prerequisites = new Set(STORY_EVENTS.flatMap((card) =>
@@ -41,7 +54,7 @@ export function reach(game: Game, index: number, decide: (id: string) => Side = 
 export function atFinale(flags: Record<string, number>, target = healthy()) {
   const game = useGame()
   game.startGame()
-  reach(game, 84)
+  reach(game, SCRIPT_SLOTS - 1)
   const card = game.currentCard.value!
   game.flags.value = { ...flags }
   const before = { ...target }

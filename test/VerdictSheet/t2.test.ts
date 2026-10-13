@@ -2,6 +2,7 @@
 import { describe, expect, it } from 'vitest'
 import { mount } from '@vue/test-utils'
 import VerdictSheet from '../../src/components/VerdictSheet.vue'
+import { CARDS_PER_YEAR } from '../../src/composables/slots'
 import type { LifeVerdict, Verdict } from '../../src/types'
 
 const WEI: LifeVerdict = {
@@ -33,7 +34,7 @@ function sheet(life: LifeVerdict | null) {
     cardName: '谷城安置要查到户',
     choiceLabel: '按原营交粮，先稳住头领',
     response: '官府把粮集中交给旧头领，省了分送各户和逐户查验的费用。',
-    when: '崇祯十二年 第 2 / 5 议',
+    when: `崇祯十二年 第 2 / ${CARDS_PER_YEAR} 议`,
     chapter: null,
     lines: [{ key: 'gold', from: 52, to: 58 }],
     life,

@@ -6,7 +6,8 @@ import { STORY_EVENTS } from '../../src/data/chapters'
 import { CHARACTERS } from '../../src/data/characters'
 import { RANDOM_EVENTS, FINALE_EVENTS } from '../../src/data/events'
 import type { Side } from '../../src/types'
-import { atFinale, healthy, reach, seedRandom } from './helpers'
+import { atFinale, healthy, reach, seedRandom, slotOf } from './helpers'
+import { CARDS_PER_YEAR, SCRIPT_SLOTS } from '../../src/composables/slots'
 
 beforeEach(() => {
   seedRandom(2026)
@@ -52,7 +53,7 @@ describe('T1 改史替换与人物', () => {
     'g-wuqiao', 'g-revenue', 'g-recruit', 'g-gucheng', 'g-jinzhou', 'g-epidemic',
     'g-kaifeng', 'g-capital', 'g-songjin', 'g-guanning', 'g-guanzhong', 'g-peace', 'g-peace-ratify',
   ].includes(card.id))
-  it.each(replacements.map((card) => [card.id, card.year! * 5 + card.order! - 1, card.requires ?? []] as const))(
+  it.each(replacements.map((card) => [card.id, card.year! * CARDS_PER_YEAR + card.order! - 1, card.requires ?? []] as const))(
     '当%s的局部条件成立时，会替换史实卡且不要求整条改革成功', (id, index, requirements) => {
       const game = useGame()
       game.startGame()
@@ -155,7 +156,7 @@ describe('T1 旧终章和重开', () => {
     game.choose('left')
     const ending = game.ending.value
     game.choose('right')
-    expect(game.decisions.value).toHaveLength(86)
+    expect(game.decisions.value).toHaveLength(SCRIPT_SLOTS + 1)
     expect(game.ending.value).toBe(ending)
   })
 })
@@ -173,7 +174,7 @@ describe('T1 批红单页', () => {
     expect(verdict.cardName).toBe(card.name)
     expect(verdict.choiceLabel).toBe(card.left.label)
     expect(verdict.response).toBe(card.left.response)
-    expect(verdict.when).toBe('天启七年（1627） 第 4 / 5 议')
+    expect(verdict.when).toBe(`天启七年（1627） 第 4 / ${CARDS_PER_YEAR} 议`)
     expect(verdict.chapter).toEqual({ name: '器院立局', step: 1, total: 4 })
     expect(verdict.ended).toBe(false)
     expect(verdict.lines).toEqual(RESOURCE_KEYS
@@ -330,17 +331,17 @@ describe('T1 宫门定策四档', () => {
   it('当逮牌未遂但军心未至绝境时，崇祯三年不发再举之请', () => {
     const game = toArrest('right', 'left')
     game.choose('left')
-    reach(game, 18, narrowVerdict)
+    reach(game, slotOf('s-ni-an') - 1, narrowVerdict)
     game.resources.value = { ...healthy(), army: 50 }
     game.choose('right')
-    expect(game.decisions.value).toHaveLength(19)
+    expect(game.decisions.value).toHaveLength(slotOf('s-ni-an'))
     expect(game.currentCard.value?.id).not.toBe('s-wei-coup')
   })
 
   it('当再举之请选夜合宫门时，当年即入宫门之变而不拖到甲申', () => {
     const game = toArrest('right', 'left')
     game.choose('left')
-    reach(game, 18, narrowVerdict)
+    reach(game, slotOf('s-ni-an') - 1, narrowVerdict)
     game.resources.value = { ...healthy(), army: 30 }
     game.choose('right')
     expect(game.currentCard.value?.id).toBe('s-wei-coup')
@@ -351,7 +352,7 @@ describe('T1 宫门定策四档', () => {
     expect(game.ending.value?.title).toBe('宫门之变')
     expect(game.ending.value?.kind).toBe('doom')
     expect(game.ending.value?.survived).toBeUndefined()
-    expect(game.decisions.value).toHaveLength(20)
+    expect(game.decisions.value).toHaveLength(slotOf('s-wei-coup') + 1)
     expect(game.reignedYears.value).toBe(4)
     expect(weiView(game).status).toBe('alive')
     expect(game.chapter.value).toBeNull()
@@ -363,13 +364,13 @@ describe('T1 宫门定策四档', () => {
   it('当再举之请选收手时，欠下的人情在崇祯八年变成监军之请', () => {
     const game = toArrest('right', 'left')
     game.choose('left')
-    reach(game, 18, narrowVerdict)
+    reach(game, slotOf('s-ni-an') - 1, narrowVerdict)
     game.resources.value = { ...healthy(), army: 30 }
     game.choose('right')
     game.choose('right')
     expect(game.flags.value['eunuch-debt']).toBe(1)
     expect(game.currentCard.value?.id).not.toBe('s-ni-an')
-    reach(game, 40, narrowVerdict)
+    reach(game, slotOf('c-eunuch-marshal-owed') - 1, narrowVerdict)
     game.resources.value = healthy()
     game.choose('right')
     expect(game.currentCard.value?.id).toBe('c-eunuch-marshal-owed')
@@ -379,13 +380,13 @@ describe('T1 宫门定策四档', () => {
   it('当魏忠贤已诛而逆案扩大时，监军之请以部院无人任事为由头', () => {
     const game = toArrest('right', 'right')
     game.choose('left')
-    reach(game, 19, narrowVerdict)
+    reach(game, slotOf('s-ni-an'), narrowVerdict)
     expect(game.currentCard.value?.id).toBe('s-ni-an')
     expect(game.flags.value['eunuch-debt']).toBeUndefined()
     game.resources.value = healthy()
     game.choose('right')
     expect(game.flags.value['ni-an-broad']).toBe(1)
-    reach(game, 40, narrowVerdict)
+    reach(game, slotOf('c-eunuch-marshal-empty') - 1, narrowVerdict)
     game.resources.value = healthy()
     game.choose('right')
     expect(game.currentCard.value?.id).toBe('c-eunuch-marshal-empty')
@@ -396,7 +397,7 @@ describe('T1 宫门定策四档', () => {
   it('当两种由头同时存在时，只发欠人情的那一张', () => {
     const game = useGame()
     game.startGame()
-    reach(game, 40, narrowVerdict)
+    reach(game, slotOf('c-eunuch-marshal-owed') - 1, narrowVerdict)
     game.flags.value = { ...game.flags.value, 'eunuch-debt': 1, 'ni-an-broad': 1 }
     game.resources.value = healthy()
     game.choose('right')
@@ -406,11 +407,11 @@ describe('T1 宫门定策四档', () => {
   it('当逆案止坐首恶时，崇祯八年没有中官监军之请', () => {
     const game = toArrest('right', 'right')
     game.choose('left')
-    reach(game, 19, narrowVerdict)
+    reach(game, slotOf('s-ni-an'), narrowVerdict)
     game.resources.value = healthy()
     game.choose('left')
     expect(game.flags.value['ni-an-broad']).toBeUndefined()
-    reach(game, 40, narrowVerdict)
+    reach(game, slotOf('c-eunuch-marshal-owed') - 1, narrowVerdict)
     game.resources.value = healthy()
     game.choose('right')
     expect(game.currentCard.value?.id).not.toMatch(/^c-eunuch-marshal/)

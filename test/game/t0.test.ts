@@ -1,10 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { CARDS_PER_YEAR, RESOURCE_KEYS, useGame } from '../../src/composables/useGame'
+import { CARDS_PER_YEAR, RESOURCE_KEYS, SCRIPT_SLOTS, useGame } from '../../src/composables/useGame'
 import { RANDOM_EVENTS, FINALE_EVENTS } from '../../src/data/events'
 import { REFORM_FINALES, REFORM_REQUIREMENTS } from '../../src/data/reforms'
 import { STANDALONE_EVENTS, STORY_CHAPTERS, STORY_EVENTS } from '../../src/data/chapters'
 import type { ResourceKey } from '../../src/types'
-import { atFinale, healthy, progressSide, reach, seedRandom } from './helpers'
+import { atFinale, healthy, progressSide, reach, seedRandom, slotOf } from './helpers'
 
 beforeEach(() => {
   seedRandom(2026)
@@ -31,23 +31,23 @@ describe('T0 连续篇章', () => {
     for (const story of STORY_CHAPTERS) {
       for (const [step, candidates] of story.steps.entries()) {
         const index = story.start + step
-        expect(index).toBeLessThan(85)
+        expect(index).toBeLessThan(SCRIPT_SLOTS)
         expect(occupied.has(index)).toBe(false)
         occupied.add(index)
         expect(candidates.some((card) => !card.requires?.length && !card.excludes?.length && !card.resourceBounds)).toBe(true)
         for (const card of candidates) {
-          expect(card.year).toBe(Math.floor(index / 5))
-          expect(card.order).toBe(index % 5 + 1)
+          expect(card.year).toBe(Math.floor(index / CARDS_PER_YEAR))
+          expect(card.order).toBe(index % CARDS_PER_YEAR + 1)
           expect(card.left.finale).toBeUndefined()
           expect(card.right.finale).toBeUndefined()
         }
       }
     }
     expect(occupied.size).toBe(52)
-    for (const card of STANDALONE_EVENTS) expect(occupied.has(card.year! * 5 + card.order! - 1)).toBe(false)
+    for (const card of STANDALONE_EVENTS) expect(occupied.has(card.year! * CARDS_PER_YEAR + card.order! - 1)).toBe(false)
     expect(new Set(STANDALONE_EVENTS.map((card) => `${card.year}#${card.order}`)).size).toBe(31)
-    for (const card of STANDALONE_EVENTS) occupied.add(card.year! * 5 + card.order! - 1)
-    expect(Array.from({ length: 85 }, (_, index) => index).filter(index => !occupied.has(index))).toEqual([20, 40])
+    for (const card of STANDALONE_EVENTS) occupied.add(card.year! * CARDS_PER_YEAR + card.order! - 1)
+    expect(Array.from({ length: SCRIPT_SLOTS }, (_, index) => index).filter(index => !occupied.has(index))).toEqual([20, 40])
   })
 
   it.each(STORY_CHAPTERS)('当进入$name时，任意章内选法均连续走到收束，失败也不插随机卡', (story) => {
@@ -60,8 +60,8 @@ describe('T0 连续篇章', () => {
           expect(game.chapter.value).toEqual({ id: story.id, name: story.name, step: step + 1, total: story.steps.length })
           expect(story.steps[step].map((card) => card.id)).toContain(game.currentCard.value?.id)
           expect(game.currentCard.value?.id.startsWith('r-')).toBe(false)
-          expect(game.year.value).toBe(Math.floor((story.start + step) / 5))
-          expect(game.turnInYear.value).toBe((story.start + step) % 5 + 1)
+          expect(game.year.value).toBe(Math.floor((story.start + step) / CARDS_PER_YEAR))
+          expect(game.turnInYear.value).toBe((story.start + step) % CARDS_PER_YEAR + 1)
           game.resources.value = healthy()
           game.choose(mask & (1 << step) ? 'left' : 'right')
         }
@@ -115,14 +115,14 @@ describe('T0 五次抉择和无放回发牌', () => {
     const game = useGame()
     game.startGame()
     const ids = new Set<string>()
-    expect(CARDS_PER_YEAR).toBe(5)
-    for (let index = 0; index < 85; index++) {
+    expect(CARDS_PER_YEAR).toBeGreaterThan(0)
+    for (let index = 0; index < SCRIPT_SLOTS; index++) {
       const card = game.currentCard.value!
       expect(card).toBeTruthy()
       expect(ids.has(card.id)).toBe(false)
       ids.add(card.id)
-      expect(game.year.value).toBe(Math.floor(index / 5))
-      expect(game.turnInYear.value).toBe(index % 5 + 1)
+      expect(game.year.value).toBe(Math.floor(index / CARDS_PER_YEAR))
+      expect(game.turnInYear.value).toBe(index % CARDS_PER_YEAR + 1)
       game.resources.value = healthy()
       game.choose(card.id === 'g-institute' ? (successfulSide(card.id) === 'left' ? 'right' : 'left') : 'right')
     }
@@ -131,17 +131,17 @@ describe('T0 五次抉择和无放回发牌', () => {
     expect(game.turnInYear.value).toBeNull()
     expect(game.reachedFinale.value).toBe(false)
     game.choose('left')
-    expect(game.decisions.value).toHaveLength(86)
+    expect(game.decisions.value).toHaveLength(SCRIPT_SLOTS + 1)
     expect(game.reachedFinale.value).toBe(true)
     expect(game.reignedYears.value).toBe(18)
-    expect(new Set(game.decisions.value.map((decision) => decision.eventId)).size).toBe(86)
+    expect(new Set(game.decisions.value.map((decision) => decision.eventId)).size).toBe(SCRIPT_SLOTS + 1)
   })
 
   it('当卡池最坏情况下缺少改革前置时，随机池仍覆盖每个非篇章空位', () => {
     const unconditional = new Set(STORY_EVENTS
       .filter((card) => !card.requires?.length && !card.excludes?.length && !card.resourceBounds)
       .map((card) => `${card.year}#${card.order}`))
-    expect(RANDOM_EVENTS.length).toBeGreaterThanOrEqual(85 - unconditional.size)
+    expect(RANDOM_EVENTS.length).toBeGreaterThanOrEqual(SCRIPT_SLOTS - unconditional.size)
     const all = [...STORY_EVENTS, ...RANDOM_EVENTS, ...FINALE_EVENTS, ...REFORM_FINALES]
     expect(new Set(all.map((card) => card.id)).size).toBe(all.length)
     for (const card of all) {
@@ -159,7 +159,7 @@ describe('T0 五次抉择和无放回发牌', () => {
       expect(card.year).toBeGreaterThanOrEqual(0)
       expect(card.year).toBeLessThanOrEqual(16)
       expect(card.order).toBeGreaterThanOrEqual(1)
-      expect(card.order).toBeLessThanOrEqual(5)
+      expect(card.order).toBeLessThanOrEqual(CARDS_PER_YEAR)
     }
   })
 
@@ -169,7 +169,7 @@ describe('T0 五次抉择和无放回发牌', () => {
     const game = useGame()
     for (let run = 0; run < 2; run++) {
       game.startGame()
-      for (let index = 0; index < 85; index++) {
+      for (let index = 0; index < SCRIPT_SLOTS; index++) {
         const card = game.currentCard.value!
         expect(card).toBeTruthy()
         expect(game.seenEventIds.value.size).toBe(index + 1)
@@ -177,7 +177,7 @@ describe('T0 五次抉择和无放回发牌', () => {
         game.choose(index % 2 === 0 ? 'right' : 'left')
       }
       game.choose('left')
-      expect(game.decisions.value).toHaveLength(86)
+      expect(game.decisions.value).toHaveLength(SCRIPT_SLOTS + 1)
     }
   })
 })
@@ -188,7 +188,7 @@ describe('T0 国用积弊', () => {
 
   it('当积弊候选接入时，十二张卡只占四议，不增加中兴条件或覆盖原有成果', () => {
     expect(crisisCards).toHaveLength(12)
-    expect([...new Set(crisisCards.map(card => card.year! * 5 + card.order! - 1))]).toEqual(slots)
+    expect([...new Set(crisisCards.map(card => card.year! * CARDS_PER_YEAR + card.order! - 1))]).toEqual(slots)
     expect(REFORM_REQUIREMENTS).toHaveLength(42)
     for (const card of crisisCards) {
       for (const side of ['left', 'right'] as const) {
@@ -220,7 +220,7 @@ describe('T0 国用积弊', () => {
         reach(game, slot, decide)
         expect(game.currentCard.value?.id).toBe(expected[step])
         expect(game.year.value + 1627).toBe([1629, 1630, 1631, 1634][step])
-        expect(game.turnInYear.value).toBe(slot % 5 + 1)
+        expect(game.turnInYear.value).toBe(slot % CARDS_PER_YEAR + 1)
         expect(game.chapter.value).toBeNull()
         game.resources.value = healthy()
         game.choose(path[step] === 'R' ? 'right' : 'left')
@@ -231,9 +231,9 @@ describe('T0 国用积弊', () => {
       expect(game.flags.value[pressure]).toBe(1 + [...path.slice(1)].filter(side => side === 'R').length)
       expect(game.flags.value['crisis-rebalanced'] ?? 0).toBe(outcome === 'rebalanced' ? 1 : 0)
       expect(game.flags.value['crisis-relapse'] ?? 0).toBe(outcome === 'k-fiscal-relapse' ? 1 : 0)
-      reach(game, 85, decide)
+      reach(game, SCRIPT_SLOTS, decide)
       expect(game.decisions.value.filter(decision => decision.eventId.startsWith('k-')).map(decision => decision.eventId)).toEqual(expected)
-      expect(new Set(game.decisions.value.map(decision => decision.eventId)).size).toBe(85)
+      expect(new Set(game.decisions.value.map(decision => decision.eventId)).size).toBe(SCRIPT_SLOTS)
     })
   })
 
@@ -293,7 +293,10 @@ describe('T0 国用积弊', () => {
 
 describe('T0 革新条件链', () => {
   it('当从初始资源逐项裁决时，存在不注入资源与旗标的完整中兴路径', () => {
+    // 此路径与 SCRIPT_SLOTS 强绑定；若 CARDS_PER_YEAR 变化导致长度不匹配，
+    // 需用 DFS/回溯搜索器重新生成（参考 .scratch/path-finder 模板）
     const path = 'RRLLRLLRRRRRLLRRLRLRRLLLLLLLRLLRLLRLRLLRRLLLRRLLLLLRRLRLLRLRLLRRLLLLRLLLRRLLLRLLRLLRRL'
+    expect(path).toHaveLength(SCRIPT_SLOTS + 1)
     const game = useGame()
     game.startGame()
     expect(game.resources.value).toEqual({ court: 50, law: 40, army: 45, gold: 35, people: 45 })
@@ -306,7 +309,7 @@ describe('T0 革新条件链', () => {
     expect(game.flags.value.exec).toBeUndefined()
     game.choose('left')
     expect(game.ending.value?.title).toBe('格物中兴')
-    expect(game.decisions.value).toHaveLength(86)
+    expect(game.decisions.value).toHaveLength(SCRIPT_SLOTS + 1)
     expect(game.resources.value).toEqual({ court: 45, law: 68, army: 47, gold: 47, people: 100 })
   })
 
@@ -317,13 +320,13 @@ describe('T0 革新条件链', () => {
     expect(REFORM_REQUIREMENTS).toHaveLength(42)
     const game = useGame()
     game.startGame()
-    reach(game, 85, successfulSide)
+    reach(game, SCRIPT_SLOTS, successfulSide)
     for (const flag of REFORM_REQUIREMENTS) expect(game.flags.value[flag], flag).toBeGreaterThan(0)
     expect(game.flags.value.exec).toBeUndefined()
     expect(game.currentCard.value?.id).toBe('g-finale-gewu')
   })
 
-  it.each(stages.map((card) => [card.id, card.year! * 5 + card.order! - 1] as const))(
+  it.each(stages.map((card) => [card.id, card.year! * CARDS_PER_YEAR + card.order! - 1] as const))(
     '当%s选错时，该阶段和完美路线不会补考', (id, index) => {
       const game = useGame()
       game.startGame()
@@ -333,10 +336,10 @@ describe('T0 革新条件链', () => {
       const lostFlags = game.currentCard.value![successfulSide(id)].sets!
         .filter((flag) => REFORM_REQUIREMENTS.includes(flag))
       game.choose(successfulSide(id) === 'left' ? 'right' : 'left')
-      reach(game, 85, successfulSide)
+      reach(game, SCRIPT_SLOTS, successfulSide)
       for (const flag of lostFlags) expect(game.flags.value[flag]).toBeUndefined()
       expect(game.currentCard.value?.id).not.toBe('g-finale-gewu')
-      expect(new Set(game.decisions.value.map((decision) => decision.eventId)).size).toBe(85)
+      expect(new Set(game.decisions.value.map((decision) => decision.eventId)).size).toBe(SCRIPT_SLOTS)
     },
   )
 
@@ -370,11 +373,11 @@ describe('T0 革新条件链', () => {
     const card = STORY_EVENTS.find((event) => event.id === id)!
     const game = useGame()
     game.startGame()
-    reach(game, card.year! * 5 + card.order! - 1, successfulSide)
+    reach(game, card.year! * CARDS_PER_YEAR + card.order! - 1, successfulSide)
     expect(game.currentCard.value?.id).toBe(id)
     game.resources.value = healthy()
     game.choose(successfulSide(id) === 'left' ? 'right' : 'left')
-    reach(game, 85, successfulSide)
+    reach(game, SCRIPT_SLOTS, successfulSide)
     expect(game.flags.value[lostFlag]).toBeUndefined()
     expect(game.currentCard.value?.id).not.toBe('g-finale-gewu')
   })
@@ -383,12 +386,12 @@ describe('T0 革新条件链', () => {
     const game = useGame()
     game.startGame()
     const card = STORY_EVENTS.find((event) => event.id === 'g-songjin')!
-    reach(game, card.year! * 5 + card.order! - 1, successfulSide)
+    reach(game, card.year! * CARDS_PER_YEAR + card.order! - 1, successfulSide)
     expect(game.currentCard.value?.id).toBe('g-songjin')
     game.resources.value = healthy()
     game.choose(side)
     expect(game.flags.value['gewu-songjin']).toBe(1)
-    reach(game, 85, successfulSide)
+    reach(game, SCRIPT_SLOTS, successfulSide)
     expect(game.flags.value['gewu-inspection']).toBe(1)
     expect(game.currentCard.value?.id).toBe('g-finale-gewu')
   })
@@ -430,7 +433,7 @@ describe('T0 年度损耗与改革收益', () => {
     game.startGame()
     let army = 0
     let gold = 0
-    for (let index = 0; index < 5; index++) {
+    for (let index = 0; index < CARDS_PER_YEAR; index++) {
       game.resources.value = healthy()
       const effect = game.currentCard.value!.right.effects
       game.choose('right')
@@ -449,7 +452,7 @@ describe('T0 年度损耗与改革收益', () => {
     game.startGame()
     game.flags.value = { ...flags }
     const total = { army: 0, gold: 0 }
-    for (let index = 0; index < 5; index++) {
+    for (let index = 0; index < CARDS_PER_YEAR; index++) {
       game.resources.value = healthy()
       const effects = game.currentCard.value!.right.effects
       game.choose('right')
@@ -463,7 +466,7 @@ describe('T0 年度损耗与改革收益', () => {
     game.startGame()
     game.flags.value = fullFlags()
     const total: Partial<Record<ResourceKey, number>> = { army: 0, law: 0 }
-    for (let index = 0; index < 5; index++) {
+    for (let index = 0; index < CARDS_PER_YEAR; index++) {
       game.resources.value = { ...healthy(), people: 15 }
       const effects = game.currentCard.value!.right.effects
       game.choose('right')
