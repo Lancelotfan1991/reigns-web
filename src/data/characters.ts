@@ -1,6 +1,5 @@
-import { FINALE_EVENTS, RANDOM_EVENTS } from './events'
-import { STORY_EVENTS } from './chapters'
-import { REFORM_FINALES } from './reforms'
+import { RANDOM_EVENTS } from './events'
+import { ALL_EVENTS } from './chapters'
 import type { CharStatus, Character, RelationType } from '../types'
 
 /**
@@ -21,7 +20,7 @@ export const CHARACTERS: Character[] = [
     born: 1611,
     appearYear: 0,
     /** 皇帝亲裁每一张卡：直接从卡池派生，避免手写清单随卡池腐烂 */
-    events: [...STORY_EVENTS, ...RANDOM_EVENTS, ...FINALE_EVENTS, ...REFORM_FINALES].map((e) => e.id),
+    events: [...ALL_EVENTS, ...RANDOM_EVENTS].map((e) => e.id),
     fates: [
       { event: 's-finale', side: 'left', status: 'dead', note: '甲申三月十九，崩于煤山寿皇亭东' },
       { event: 's-finale', side: 'right', status: 'alive', note: '雪夜出正阳门，南都之局自此人手重开' },

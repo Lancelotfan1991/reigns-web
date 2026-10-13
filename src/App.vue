@@ -71,7 +71,6 @@ const adYear = computed(() => 1627 + Math.min(Math.max(game.year.value, 0), 17))
 
 /** 国本民心：四象之外，唯一只看下限的轴 */
 const PEOPLE_META = RESOURCE_META.people
-const peopleValue = computed(() => game.resources.value.people)
 
 function isActive(key: ResourceKey) {
   return key in hoverEffects.value

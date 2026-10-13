@@ -1,3 +1,5 @@
+import type { ChapterTime } from '../types'
+
 /** 每年抉择次数；修改此值即可调整全年节奏，源码与测试均自动适配 */
 export const CARDS_PER_YEAR = 5
 
@@ -19,4 +21,14 @@ export function yearOf(index: number): number {
 /** 年份 + 年内序号 → 槽位 */
 export function slotOfPosition(year: number, order: number): number {
   return year * CARDS_PER_YEAR + (order - 1)
+}
+
+/** 篇章时间 → 最早可落槽位：定点即该议；范围取年期首议 */
+export function chapterStart(time: ChapterTime): number {
+  return 'order' in time ? slotOfPosition(time.year, time.order) : time.year * CARDS_PER_YEAR
+}
+
+/** 篇章时间 → 最晚可落槽位：定点即该议；范围取年期末议 */
+export function chapterEnd(time: ChapterTime): number {
+  return 'order' in time ? slotOfPosition(time.year, time.order) : slotOfPosition(time.yearEnd, CARDS_PER_YEAR)
 }

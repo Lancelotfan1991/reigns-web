@@ -1,10 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { useCharacters } from '../../src/composables/useCharacters'
 import { RESOURCE_KEYS, useGame, type Game } from '../../src/composables/useGame'
-import { REFORM_REQUIREMENTS, REFORM_FINALES } from '../../src/data/reforms'
-import { STORY_EVENTS } from '../../src/data/chapters'
+import { REFORM_REQUIREMENTS } from '../../src/data/reforms'
+import { ALL_EVENTS } from '../../src/data/chapters'
 import { CHARACTERS } from '../../src/data/characters'
-import { RANDOM_EVENTS, FINALE_EVENTS } from '../../src/data/events'
+import { RANDOM_EVENTS } from '../../src/data/events'
 import type { Side } from '../../src/types'
 import { atFinale, healthy, reach, seedRandom, slotOf } from './helpers'
 import { CARDS_PER_YEAR, SCRIPT_SLOTS } from '../../src/composables/slots'
@@ -26,7 +26,7 @@ const fullFlags = () => Object.fromEntries(REFORM_REQUIREMENTS.map((flag) => [fl
 
 describe('T1 玩家文案', () => {
   it('当展示事件与人物近况时，不会混入旗标或发牌实现说明', () => {
-    const cards = [...STORY_EVENTS, ...RANDOM_EVENTS, ...FINALE_EVENTS, ...REFORM_FINALES]
+    const cards = [...ALL_EVENTS, ...RANDOM_EVENTS]
     for (const card of cards) {
       const prose = [card.name, card.text, card.left.label, card.left.response, card.right.label, card.right.response].join(' ')
       expect(prose, card.id).not.toMatch(/旗标|下一张卡|不授予|年度裁决|完整留练成果/)
@@ -49,11 +49,11 @@ describe('T1 玩家文案', () => {
 })
 
 describe('T1 改史替换与人物', () => {
-  const replacements = STORY_EVENTS.filter((card) => [
+  const replacements = ALL_EVENTS.filter((card) => [
     'g-wuqiao', 'g-revenue', 'g-recruit', 'g-gucheng', 'g-jinzhou', 'g-epidemic',
     'g-kaifeng', 'g-capital', 'g-songjin', 'g-guanning', 'g-guanzhong', 'g-peace', 'g-peace-ratify',
   ].includes(card.id))
-  it.each(replacements.map((card) => [card.id, card.year! * CARDS_PER_YEAR + card.order! - 1, card.requires ?? []] as const))(
+  it.each(replacements.map((card) => [card.id, slotOf(card.id), card.requires ?? []] as const))(
     '当%s的局部条件成立时，会替换史实卡且不要求整条改革成功', (id, index, requirements) => {
       const game = useGame()
       game.startGame()
@@ -76,7 +76,7 @@ describe('T1 改史替换与人物', () => {
   })
 
   it('当人物登记事件时，所有引用必须存在且无重复', () => {
-    const ids = new Set([...STORY_EVENTS, ...RANDOM_EVENTS, ...FINALE_EVENTS, ...REFORM_FINALES].map((event) => event.id))
+    const ids = new Set([...ALL_EVENTS, ...RANDOM_EVENTS].map((event) => event.id))
     for (const character of CHARACTERS) {
       expect(new Set(character.events).size).toBe(character.events.length)
       for (const id of character.events) expect(ids.has(id), `${character.name}: ${id}`).toBe(true)
@@ -165,7 +165,7 @@ describe('T1 批红单页', () => {
   it('当裁决一议时，批红记录该议的题签、批语、纪年与净变化', () => {
     const game = useGame()
     game.startGame()
-    reach(game, 3)
+    reach(game, slotOf('g-institute'))
     const card = game.currentCard.value!
     expect(card.id).toBe('g-institute')
     const before = { ...game.resources.value }
@@ -174,11 +174,11 @@ describe('T1 批红单页', () => {
     expect(verdict.cardName).toBe(card.name)
     expect(verdict.choiceLabel).toBe(card.left.label)
     expect(verdict.response).toBe(card.left.response)
-    expect(verdict.when).toBe(`天启七年（1627） 第 4 / ${CARDS_PER_YEAR} 议`)
+    expect(verdict.when).toBe(`崇祯元年（1628） 第 4 / ${CARDS_PER_YEAR} 议`)
     expect(verdict.chapter).toEqual({ name: '器院立局', step: 1, total: 4 })
     expect(verdict.ended).toBe(false)
     expect(verdict.lines).toEqual(RESOURCE_KEYS
-      .filter((key) => before[key] !== game.resources.value[key])
+      .filter((key) => key !== 'people' && before[key] !== game.resources.value[key])
       .map((key) => ({ key, from: before[key], to: game.resources.value[key] })))
     expect(verdict.lines.length).toBeGreaterThan(0)
     expect(verdict.cardName).not.toBe(game.currentCard.value!.name)
@@ -187,7 +187,7 @@ describe('T1 批红单页', () => {
   it('当一议使国库归零时，批红标记国运已定并列出归零项', () => {
     const game = useGame()
     game.startGame()
-    reach(game, 3)
+    reach(game, slotOf('g-institute'))
     game.resources.value = { ...healthy(), gold: 1 }
     game.choose('left')
     const verdict = game.verdict.value!
@@ -199,7 +199,7 @@ describe('T1 批红单页', () => {
   it('当读完批红时，只翻回决策页而不改写国势', () => {
     const game = useGame()
     game.startGame()
-    reach(game, 3)
+    reach(game, slotOf('g-institute'))
     game.choose('left')
     const settled = { ...game.resources.value }
     game.dismissVerdict()
@@ -232,7 +232,7 @@ describe('T1 批红单页', () => {
   it('当重开新一局时，未读的批红被清除', () => {
     const game = useGame()
     game.startGame()
-    reach(game, 3)
+    reach(game, slotOf('g-institute'))
     game.choose('left')
     expect(game.verdict.value).not.toBeNull()
     game.startGame()
@@ -241,17 +241,13 @@ describe('T1 批红单页', () => {
 })
 
 describe('T1 宫门定策四档', () => {
-  /** 走完魏忠贤篇章前七步，第八步即「发落司礼监」 */
-  const toArrest = (first: Side, second: Side) => {
+  /** 走完魏忠贤篇章前七步（中段默认 RLLRL），第八步即「发落司礼监」 */
+  const toArrest = (first: Side, second: Side, mid = 'RLLRL') => {
     const game = useGame()
     game.startGame()
-    game.choose(first)   // Step 0: s-tuogu
-    game.choose(second)  // Step 1: s-dianjianglu
-    game.choose('right') // Step 2: s-gongnv
-    game.choose('left')  // Step 3: s-kesi
-    game.choose('left')  // Step 4: s-cui
-    game.choose('right') // Step 5: s-wangtiqian
-    game.choose('left')  // Step 6: s-impeach-wei
+    game.choose(first)  // Step 0: s-tuogu
+    game.choose(second) // Step 1: s-dianjianglu
+    for (const side of mid) game.choose(side === 'L' ? 'left' : 'right') // Step 2-6
     return game
   }
   const weiView = (game: Game) => {
@@ -262,12 +258,12 @@ describe('T1 宫门定策四档', () => {
   const narrowVerdict = (id: string): Side => id === 's-ni-an' ? 'left' : 'right'
 
   it.each([
-    ['right', 'right', 's-wei', '换过九门钥匙再焚册警省：门内有人、名分已定，逮牌照章程出宫'],
-    ['left', 'right', 's-wei-rash', '受玺即位仍让他掌厂卫：只能靠京营当值硬办，成算打折'],
-    ['left', 'left', 's-wei-rash', '连辞爵都未慰留，军心尚在，仍可连夜逼他出京'],
-    ['right', 'left', 's-wei-failed', '焚册折了京营当值：军心已溃，缇骑出不了城门'],
-  ] as const)('当开局依次选%s、%s时，第八步发出%s（%s）', (first, second, id, why) => {
-    const game = toArrest(first, second)
+    ['right', 'right', 'RLLRL', 's-wei', '换过九门钥匙又慰留名分：门内有人、法度军心俱足四十，逮牌照章程出宫'],
+    ['left', 'right', 'LRRLL', 's-wei-rash', '玉玺照接、钥匙未换：法度耗到四十以下送不进衙门，只靠京营连夜硬办'],
+    ['left', 'left', 'RLLRL', 's-wei-failed', '受玺即放权、当众焚册也救不回军心：牌票没人肯领，京营当值称病'],
+    ['right', 'left', 'RLLRL', 's-wei-failed', '钥匙虽换，焚册折了京营当值：军心只剩三十余，缇骑出不了城门'],
+  ] as const)('当开局依次选%s、%s、中段%s 时，第八步发出%s（%s）', (first, second, mid, id, why) => {
+    const game = toArrest(first, second, mid)
     expect(why.length).toBeGreaterThan(0)
     expect(game.chapter.value).toEqual({ id: 'wei', name: '宫门定策', step: 8, total: 8 })
     expect(game.currentCard.value?.id).toBe(id)
@@ -289,31 +285,32 @@ describe('T1 宫门定策四档', () => {
     })
     expect(steady.resources.value.gold - goldBefore).toBe(12)
 
-    const rash = toArrest('left', 'right')
+    const rash = toArrest('left', 'right', 'LRRLL')
+    expect(rash.currentCard.value?.id).toBe('s-wei-rash')
     rash.choose('left')
     expect(rash.flags.value['wei-down']).toBe(2)
     expect(rash.flags.value['eunuch-debt']).toBe(1)
   })
 
-  it('当法度与军心都不足四十又未曾焚册时，第八步落到中止且仍以未遂收束', () => {
+  it('当九门钥匙未换、焚册未行而军心不足四十时，第八步落到中止且仍以未遂收束', () => {
     const game = useGame()
     game.startGame()
     game.choose('left')  // Step 0: s-tuogu left - no wei-watched
     game.choose('right') // Step 1: s-dianjianglu right - sets wei-soothed, wei-watched
-    // 清除 wei-watched 以模拟未曾焚册但名分已定的情形
+    // 清除 wei-watched 以模拟九门钥匙未曾换过、名分却已定的情形
     game.flags.value = { ...game.flags.value, 'wei-watched': undefined }
     game.resources.value = { ...healthy(), law: 41, army: 37 }
     game.choose('right') // Step 2: s-gongnv
     game.choose('left')  // Step 3: s-kesi
     game.choose('left')  // Step 4: s-cui
     game.choose('right') // Step 5: s-wangtiqian
-    game.choose('left')  // Step 6: s-impeach-wei
+    game.choose('right') // Step 6: s-impeach-wei 留中不发，不落逮牌
     expect(game.flags.value.warned).toBeUndefined()
     expect(game.currentCard.value?.id).toBe('s-wei-stalled')
     const stalled = game.currentCard.value!
     for (const side of ['left', 'right'] as const) expect(stalled[side].sets).toContain('wei-failed')
     game.choose('left')
-    expect(game.flags.value['wei-failed']).toBe(1)
+    expect(game.flags.value['wei-failed']).toBe(2)
     expect(game.flags.value['wei-down']).toBeUndefined()
   })
 
@@ -432,7 +429,7 @@ describe('T1 宫门定策四档', () => {
   })
 
   it('当第三步发落司礼监时，崔呈秀与逮牌都已在前面交代过', () => {
-    const byId = new Map(STORY_EVENTS.map((event) => [event.id, event]))
+    const byId = new Map(ALL_EVENTS.map((event) => [event.id, event]))
     expect(byId.get('s-dianjianglu')!.text).toContain('崔呈秀')
     for (const id of ['s-wei', 's-wei-rash', 's-wei-failed', 's-wei-stalled']) {
       expect(byId.get(id)!.text, id).toContain('逮牌')
@@ -444,7 +441,7 @@ describe('T1 宫门定策四档', () => {
   })
 
   it('当档名改为发落司礼监时，凤阳只作本朝成例而不冒充选项', () => {
-    const byId = new Map(STORY_EVENTS.map((event) => [event.id, event]))
+    const byId = new Map(ALL_EVENTS.map((event) => [event.id, event]))
     for (const id of ['s-wei', 's-wei-rash']) expect(byId.get(id)!.name, id).toBe('发落司礼监')
     const steady = byId.get('s-wei')!
     expect(steady.text).toContain('凤阳')
@@ -453,7 +450,7 @@ describe('T1 宫门定策四档', () => {
 })
 
 describe('T1 人物前情', () => {
-  const byId = new Map(STORY_EVENTS.map((event) => [event.id, event]))
+  const byId = new Map(ALL_EVENTS.map((event) => [event.id, event]))
   const charById = new Map(CHARACTERS.map((char) => [char.id, char]))
 
   it('当孙传庭第一次出场时点名其人，并在入狱前交代与中枢的用兵之争', () => {

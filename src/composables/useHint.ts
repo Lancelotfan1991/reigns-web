@@ -1,7 +1,7 @@
 import { computed, ref, watch } from 'vue'
-import { REFORM_EVENTS, REFORM_FINALES, REFORM_REQUIREMENTS } from '../data/reforms'
-import { FINALE_EVENTS, RANDOM_EVENTS } from '../data/events'
-import { STANDALONE_EVENTS, STORY_CHAPTERS, STORY_EVENTS } from '../data/chapters'
+import { REFORM_REQUIREMENTS } from '../data/reforms'
+import { RANDOM_EVENTS } from '../data/events'
+import { ALL_EVENTS } from '../data/chapters'
 import { AXIS_KEYS, SCRIPT_SLOTS, advanceSim, resolveChoice, type SimState } from './simulation'
 import type { Game } from './useGame'
 import type { FlagRule, GameEvent, ResourceKey, Side } from '../types'
@@ -21,15 +21,7 @@ const LOST = -1e12
 
 const SIDES: Side[] = ['left', 'right']
 
-const ALL_CARDS: GameEvent[] = [
-  ...STORY_EVENTS,
-  ...STANDALONE_EVENTS,
-  ...STORY_CHAPTERS.flatMap((story) => story.steps.flat()),
-  ...REFORM_EVENTS,
-  ...RANDOM_EVENTS,
-  ...REFORM_FINALES,
-  ...FINALE_EVENTS,
-]
+const ALL_CARDS: GameEvent[] = [...ALL_EVENTS, ...RANDOM_EVENTS]
 
 function ruleFlag(rule: FlagRule): string {
   return typeof rule === 'string' ? rule : rule.flag

@@ -1,24 +1,21 @@
 import { vi } from 'vitest'
 import { useGame, type Game } from '../../src/composables/useGame'
-import { STORY_EVENTS, STANDALONE_EVENTS } from '../../src/data/chapters'
+import { ALL_EVENTS, EVENT_SLOT } from '../../src/data/chapters'
 import { REFORM_REQUIREMENTS } from '../../src/data/reforms'
-import { CARDS_PER_YEAR, SCRIPT_SLOTS, slotOfPosition } from '../../src/composables/slots'
+import { CARDS_PER_YEAR, SCRIPT_SLOTS } from '../../src/composables/slots'
 import type { ResourceKey, Side } from '../../types'
 
 export { CARDS_PER_YEAR, SCRIPT_SLOTS }
 
-const allScriptEvents = [...STORY_EVENTS, ...STANDALONE_EVENTS]
-const eventSlotMap = new Map(allScriptEvents.map((card) => [card.id, slotOfPosition(card.year!, card.order!)]))
-
 /** 按事件 ID 反查当前槽位；找不到时抛错，提醒更新测试 */
 export function slotOf(eventId: string): number {
-  const slot = eventSlotMap.get(eventId)
+  const slot = EVENT_SLOT[eventId]
   if (slot === undefined) throw new Error(`slotOf: 未找到事件 ${eventId}，请检查 ID 或数据`)
   return slot
 }
 
-const storyCards = new Map(STORY_EVENTS.map((card) => [card.id, card]))
-const prerequisites = new Set(STORY_EVENTS.flatMap((card) =>
+const storyCards = new Map(ALL_EVENTS.map((card) => [card.id, card]))
+const prerequisites = new Set(ALL_EVENTS.flatMap((card) =>
   (card.requires ?? []).map((rule) => typeof rule === 'string' ? rule : rule.flag)))
 
 export function progressSide(id: string): Side {

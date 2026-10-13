@@ -50,20 +50,21 @@ export interface GameEvent {
   text: string
   left: Choice
   right: Choice
-  /** 锁年剧本：崇祯纪年（0=天启七年，1..16=崇祯N年），随机卡无此字段 */
-  year?: number
-  /** 同一年内的剧本顺序：同一 year+order 即同一槽位，条件卡优先于史实卡 */
-  order?: number
   /** 全部满足才登场（改史分叉卡）；同槽位中条件优先于无条件的史实卡 */
   requires?: FlagRule[]
   excludes?: string[]
   resourceBounds?: Partial<Record<ResourceKey, { min?: number; max?: number }>>
+  /** 牵涉的人物 id（单人或多人）；御卡的主人是皇帝本人，不入此表 */
+  people?: string[]
 }
+
+/** 篇章时间：定点=某年某议；范围=某年期区间内择空闲槽位落下 */
+export type ChapterTime = { year: number; order: number } | { year: number; yearEnd: number }
 
 export interface StoryChapter {
   id: string
   name: string
-  start: number
+  time: ChapterTime
   steps: GameEvent[][]
 }
 

@@ -1,651 +1,3390 @@
-import type { Choice, Effects, GameEvent, StoryChapter } from '../types'
-import { SCRIPT_EVENTS } from './events'
-import { REFORM_EVENTS } from './reforms'
-import { CRISIS_EVENTS } from './crises'
-import { CARDS_PER_YEAR, yearOf } from '../composables/slots'
+import type { GameEvent, StoryChapter } from '../types'
+import { chapterStart } from '../composables/slots'
 
-// 原卡只作素材。所有复制、条件覆盖及排期都发生在新对象上。
-const originals = new Map([...SCRIPT_EVENTS, ...REFORM_EVENTS].map(event => [event.id, event]))
+/**
+ * 全部篇章。time 含 order 的定点篇章占定该槽位；含 yearEnd 的范围篇章在年期区间内、
+ * 定点篇章让出的第一个空闲槽位落下（甲申终章在 17 年首槽）。
+ * 步骤内候选按数组顺序取首张符合条件者；单步分组的 id/name 取自该组首张候选。
+ * 2026-10 由旧 chapters/reforms/events 工厂数据一次性生成（含 F1-F5 修复），此后手工维护。
+ */
+export const CHAPTERS: StoryChapter[] = [
 
-function option(label: string, effects: Effects, response: string, sets?: string[]): Choice {
-  return { label, effects, response, ...(sets ? { sets } : {}) }
-}
+  // ── 天启七年 ──
+  {
+    id: "wei",
+    name: "宫门定策",
+    time: { year: 0, order: 1 },
+    steps: [
+      [
+        {
+          id: "s-tuogu",
+          name: "捧玺入宫",
+          avatar: "🐉",
+          text: "天启帝半夜崩于乾清宫，没有儿子。夜里进宫来请你的不是内阁，是司礼监。宫门外魏忠贤领着党羽跪成一片，双手把玉玺捧上来：请王爷即位，奴婢们仍守着内廷。你今夜就得定一件事：宫禁的门，照旧归他管，还是换个信得过的人。",
+          left: {
+            label: "受玺即位数，仍任他掌司礼监",
+            effects: { court: 6, law: -6, army: 2, gold: -2 },
+            response: "你连夜入宫即位，玉玺从他手里接过，司礼监与东西厂照旧归他掌管。头一道旨是慰抚：九门将士与内值房各有所赐，这笔银子从太仓和内库支出。名分定得最快，宫门内外也都安分了；只是往后哪一道旨意出得了这道门，你自己心里清楚。他谢恩最勤，往后半个月递上来的本子比先前还厚——头一道，就是请辞自己上公的爵位。",
+          },
+          right: {
+            label: "留宿外班，先换九门的钥匙",
+            effects: { court: -4, law: 6, gold: -6, people: 4 },
+            response: "你在宫门外停了半夜，只说要辞让；天亮才入宫即位。司礼监的牌子仍旧挂着，九门的锁钥和当夜的值守却换成了藩邸旧人，多出的赏银从内库支给。魏忠贤说不出哪里变了，只从这一夜起睡不安稳——睡不安稳的人先递了三道辞疏，又呈上一册名单：他要抢在你动他之前，先探一探你到底敢动谁。",
+            sets: ["wei-watched"],
+          },
+          people: ["tiangqi", "wei"],
+        },
+      ],
+      [
+        {
+          id: "s-dianjianglu",
+          name: "东林点将录",
+          avatar: "📜",
+          text: "你即位半个月，内廷静得很：文书照章程出入，掌司礼监的还是魏忠贤。他呈上一册《东林点将录》，把三百多名朝臣圈成同党，请你御笔批了拿去挨个问罪。呈册是把刀递到你手里，要你替他杀东林。名单上头一个要遮的，是他的头号党羽崔呈秀——兵部与都察院都在此人手里，弹劾魏党的章疏，头一本点的都是他。",
+          left: {
+            label: "当众焚册，责以名器",
+            effects: { court: 8, law: 6, army: -6, people: 6 },
+            response: "你当着他的面把那册子烧了，说名器岂是他可以私相授受的。三百多个名字从此没人再敢追究，言官的弹章一日三上，锋芒先转到崔呈秀身上，说他兵部、都察院两手都脏。京营里被魏忠贤提拔起来的几个将官心里有鬼，当夜的巡警少了一半人。魏忠贤在丹墀下跪了很久——他知道朝廷下一步要办的，是他自己。",
+            sets: ["warned"],
+          },
+          right: {
+            label: "褒慰忠贤，册留中不发",
+            effects: { court: -6, law: -2, army: 2, gold: -2, people: -2 },
+            response: "你下旨褒奖魏忠贤「倚任方重」，那册子既不批也不烧，留在御前。东林的人以为朝廷要与宦官共事，人心先散了一半。你用这三个月办了一件事：宫门与九门的值夜悄悄换成自己的心腹，京里几处升除也走了几步人事。他见你连名单都不肯批，越发放心，索性把崔呈秀推去掌都察院——弹劾人的权仍旧一手在握。本钱有了，只是先替他撑了三个月的脸面。",
+            sets: ["wei-soothed", "wei-watched"],
+          },
+          people: ["wei", "cui"],
+        },
+      ],
+      [
+        {
+          id: "s-gongnv",
+          name: "献宫女试探",
+          avatar: "🌸",
+          text: "即位未满一月，魏忠贤从司礼监挑了八名宫女送进乾清宫，说是先帝遗留的宫人，请新帝收用。你心里清楚：这八个人里至少有两个是他安来听动静的。先帝尸骨未寒，他就急着试你到底贪不贪色、听不听他的话。",
+          left: {
+            label: "收下，赏赐如常",
+            effects: { court: -4, law: -2, gold: -2, people: 2 },
+            response: "你收下八名宫女，赏赐照例从内库支出。魏忠贤当晚就从她们嘴里知道了你睡前翻的是哪一本奏疏。他觉得你还是个可以摆布的人——言官的弹章往后还要再加几分分量才递得进来。",
+            sets: ["gongnv-accepted"],
+          },
+          right: {
+            label: "以先帝大行辞谢，遣还司礼监",
+            effects: { court: 4, law: 4, gold: -2, people: 2 },
+            response: "你以先帝大行、哀恸未辞为由，将八人原封遣回。魏忠贤在司礼监里愣了半晌——他没料到一个刚即位的人，第一刀先切在他安插的眼线上。宫里的内侍从此传开：新帝不好糊弄。",
+            sets: ["gongnv-refused"],
+          },
+          people: ["wei"],
+        },
+      ],
+      [
+        {
+          id: "s-kesi",
+          name: "客氏出宫",
+          avatar: "👩",
+          text: "天启帝的乳母客氏，自先帝大行后仍留在宫中，出入魏忠贤的值房。她是魏忠贤在宫里的根——没有她，内廷的消息传不出乾清宫。言官已经有人弹劾她「留连禁闼，迹涉交结」。是立刻打发她出去，还是留着这条线暂且不动。",
+          left: {
+            label: "即下旨意，遣客氏出宫",
+            effects: { court: 4, law: 4, gold: -2, people: 4 },
+            response: "你下旨遣客氏出宫，不许再入侍。她在宫门口哭了一场，坐上出城的骡车。魏忠贤从此在宫里没了传话的人——他递上来的请罪疏比先前厚了一倍，但你从内值房的缝隙里，开始听到他以前不想让你听到的事。",
+            sets: ["kesi-out"],
+          },
+          right: {
+            label: "准其定期出入，不加约束",
+            effects: { court: -4, law: -4, gold: 2, people: -2 },
+            response: "你准客氏仍照旧例出入，只说体恤先帝旧人。魏忠贤松了口气——宫里的眼线还在，消息照传。言官的弹章被你压了一道，他们开始怀疑朝廷是不是还打算动魏忠贤。",
+            sets: ["kesi-stayed"],
+          },
+          people: ["wei", "kesi"],
+        },
+      ],
+      [
+        {
+          id: "s-cui",
+          name: "处置崔呈秀",
+          avatar: "⚔️",
+          text: "兵部尚书兼都察院左都御史崔呈秀，是魏忠贤的头号党羽。兵部与都察院都在他手里，弹劾魏党的章疏，头一本点的就是他。是先拿他开刀，还是连他一起留着，等魏忠贤本人再一起处置。",
+          left: {
+            label: "即免其职，交法司问罪",
+            effects: { court: 4, law: 6, army: -2, gold: 4, people: 4 },
+            response: "你免了崔呈秀的职，法司随即拿问。兵部和都察院一时缺了主官，题补的章奏堆在案头。只是魏忠贤最得力的臂助先断了——往后弹章再进来，他少了挡在前面的人。",
+            sets: ["cui-removed"],
+          },
+          right: {
+            label: "准其自陈致仕，不追旧账",
+            effects: { court: -2, law: -2, army: 2, gold: 2, people: -2 },
+            response: "你准崔呈秀自陈致仕，体面退出，旧账不追。他走的时候带走了兵部一半的案卷——那些案卷里记着边镇将官的名字和欠饷的数目。兵部新任翻着空荡荡的架子，才知道这个人走得不干净。",
+            sets: ["cui-retired"],
+          },
+          people: ["wei", "cui"],
+        },
+      ],
+      [
+        {
+          id: "s-wangtiqian",
+          name: "王体乾去留",
+          avatar: "🔑",
+          text: "王体乾掌司礼监文书出入，是内外朝的关键枢纽。前面几步走下来，他看在眼里：你是要留用他做内线，还是连他一起换掉。",
+          left: {
+            label: "密召王体乾，留用为内线",
+            effects: { court: 2, law: 2, gold: -4, people: 2 },
+            response: "你密召王体乾，许他照旧管文书，但每三日密奏魏忠贤的动向。他磕头领命，从此你多了一双在司礼监里的眼睛。魏忠贤还不知道，他递上来的每一道疏，你先看一遍。",
+            sets: ["wang-retained"],
+          },
+          right: {
+            label: "准其自陈致仕，另委他人",
+            effects: { court: 4, law: 4, gold: 2, people: -2 },
+            response: "你准王体乾自陈致仕，司礼监文书另委秉笔太监接管。他走的时候把案卷整理得齐齐整整——这个人虽然走了，但文书的流转没有断。只是从此你在司礼监里少了一个传话的人。",
+            sets: ["wang-replaced"],
+          },
+          people: ["wei"],
+        },
+      ],
+      [
+        {
+          id: "s-impeach-wei",
+          name: "文官连章弹魏",
+          avatar: "📜",
+          text: "客氏已经出宫，崔呈秀或去或退，东厂也换了掌事的人。魏忠贤孤零零坐在司礼监里，手里的牌一张一张被抽走。给事中、御史连章弹劾，从东厂的缇骑之暴，一路数到各地的生祠违建，每一条都请你「即行拿问」。收网的时候到了——你有没有耐心把前几步走对，决定了这一步有没有快刀斩乱麻的资格。",
+          left: {
+            label: "即下逮牌，乘势收网",
+            effects: { court: 8, law: 8, gold: 12, people: 8 },
+            response: "你下旨：着即拿问。逮牌在案上搁了三个月，今日终于出宫。前面的准备功夫有没有做到家，这一步便见分晓。",
+            sets: ["wei-down"],
+          },
+          right: {
+            label: "留中不发，压住弹章",
+            effects: { court: -8, law: -8, gold: 4, people: -4 },
+            response: "你把弹章压在御前不发。魏忠贤在司礼监里越坐越稳，东厂的访单又添了几个名字。首倡弹劾的几个人先后调了外任——从此朝廷每有举动，内值房先看过名字才敢行。",
+            sets: ["wei-failed"],
+          },
+          people: ["wei"],
+        },
+      ],
+      [
+        {
+          id: "s-wei",
+          name: "发落司礼监",
+          avatar: "🏮",
+          text: "九门的钥匙已经换过，文书也还照章程走；那册名单你压了三个月没批。给事中、御史连章弹劾魏党，头一本点的是崔呈秀，第二本才点到魏忠贤本人。照本朝成例，内官最轻的一档发落是谪去凤阳守祖陵——人出宫，命保住；再往上，就是给事中所请的逮牌：拿人的牌票，锦衣卫凭它拿人，牌一日不出宫，他就还在司礼监坐着。今夜就得定：是把人拿问，还是连成例都不必用、只把东厂换个掌事的。",
+          left: {
+            label: "即下逮牌，正其罪",
+            effects: { court: 8, law: 8, gold: 12, people: 8 },
+            response: "你先免崔呈秀，逮牌随后出宫。魏忠贤行至阜城，夜里自缢于旅邸，追赃之令接着及于逆党。抄没所得十余万金，抵不上半年边饷，太仓却因此多喘了一口气。九门无变，京营未动，自始至终没有一兵为他在街上走过。东林诸臣以为天下太平了；只是往后每有争议，你都得想起这三个月里替你开门的那几个人。",
+            sets: ["wei-down"],
+          },
+          right: {
+            label: "只革东厂，司礼监如故",
+            effects: { court: -6, law: -6, gold: 4, people: -4 },
+            response: "你有了下手的地方，却怕宫门一夜之间牵连太多人，只把东厂另委一人，司礼监照旧。魏忠贤知道朝廷几乎已经办了他，从此奏疏出入都要先看他的颜色；首倡弹劾的几个人反倒接连调外任。你保住了一口气，也把这件事留到往后年年放在心上。",
+            sets: ["wei-failed"],
+          },
+          requires: ["wei-watched"],
+          resourceBounds: { law: { min: 40 }, army: { min: 40 } },
+          people: ["wei"],
+        },
+        {
+          id: "s-wei-rash",
+          name: "发落司礼监",
+          avatar: "🏮",
+          text: "玉玺是从他手里接过的，九门的钥匙始终没动；京营的兵却还肯听你的话。给事中、御史连章弹劾魏党，头一本先点崔呈秀。照章程，逮牌是拿人的牌票，出手要有内阁的票、部里的覆——两样都得走文书。牌拟好了，却送不进任何一个衙门：锦衣卫说须有阁票，内阁说须有部覆，牌还在案上，他仍在司礼监坐着。军中肯听你的话，只是这一步跨出去，成的是兵，不是例。是照原议下牌、先把人送出城，还是把这道成命收回来。",
+          left: {
+            label: "连夜逼他出京，追还缉骑",
+            effects: { court: 4, law: -6, army: -6, gold: 6, people: 6 },
+            response: "你赶出的那道逮牌，是靠京营当值的几个人和落闸的内侍办成的：宫门当夜落了闸，东厂的缉骑被追了回来，魏忠贤出城三日缢于阜城。事是成了，成在兵上，不在例上——该管的衙门互相推托，没有一个肯在籍没文书上列名，抄来的银子凑不满一年边饷。内侍从此知道：禁门之夜，是谁替皇帝开的门。",
+            sets: ["wei-down", "eunuch-debt"],
+          },
+          right: {
+            label: "收还成命，只调开崔呈秀",
+            effects: { court: -6, law: -4, army: 4, gold: 2 },
+            response: "你怕宫门一夜之变牵连京营，把逮牌压住不发，只把崔呈秀调开、东厂换人。魏忠贤照旧掌司礼监，见朝廷到底不敢动手，从此凡有升除，必先在内值房看过名字。你在军前落得一句「能持重」，内廷却记下了你一夜之间改了三回主意。",
+            sets: ["wei-failed"],
+          },
+          resourceBounds: { army: { min: 40 } },
+          people: ["wei"],
+        },
+        {
+          id: "s-wei-failed",
+          name: "逮牌不出宫门",
+          avatar: "🏮",
+          text: "拿人的牌票拟好了，没有人肯领：照章程，逮牌要内阁的票、部里的覆，两样一样都凑不齐。京营当值的将官称病，锦衣卫的堂官把文书退了回来。册子烧过之后，魏忠贤早已递牌子求退，如今反说皇上病中，传话的是谁拿谁——首倡弹章的几个人，名字已经列在东厂的访单上。",
+          left: {
+            label: "收兵隐忍，逮牌留中不发",
+            effects: { court: -8, law: -8, army: -2, gold: 4, people: -4 },
+            response: "你把逮牌留在御前不发，反倒把首倡弹章的两个人拿去问罪，罪名是「挑动内廷」。魏忠贤仍掌司礼监，东厂的访单从此只写别人的名字；京营里那几个当夜替你开门的人，一个个被调去守陵、守边。你说的话，往后得出这道门之前要先想一想。",
+            sets: ["wei-failed"],
+          },
+          right: {
+            label: "再遣缇骑，亲责厂卫拿人",
+            effects: { court: -12, law: -10, army: -6, people: -6 },
+            response: "你连夜再遣缇骑，指望厂卫替你办成。厂卫的堂上官正在候着他的分付：城门一夜不开，逮牌反被追还，京师连夜传出「帝疾」两个字。事未成而形迹全露，你手边能用的，只剩宫门外那几个还肯动的人——京营因此又少了一分肯听调用的兵。",
+            sets: ["wei-failed"],
+          },
+          requires: ["warned"],
+          resourceBounds: { army: { max: 39 } },
+          people: ["wei"],
+        },
+        {
+          id: "s-wei-stalled",
+          name: "拿人的文书停在廊下",
+          avatar: "🏮",
+          text: "弹章连上三日，宫门外却静得很。拿人的牌票——逮牌——下到司礼监，该领旨的人在内值房坐了一夜，谁也不肯先起身；京营的名册点不齐，锦衣卫的文书停在廊下。魏忠贤称病不出，也不递牌子求退。这件事今日是办不动，还是办得动？",
+          left: {
+            label: "缓办，先靠内侍换门上的人",
+            effects: { court: -4, law: -4, army: 2, gold: -4 },
+            response: "你把逮牌压下，只说凤阳守陵的缺另行推补，转头靠内值房里素来与他不合的那几个人，把九门的钥匙换了人，赏银又出一笔。事没有办成；只是从今日起，宫门里也有你自己的人了。魏忠贤仍掌司礼监，还不知道门口的班次已经换过——这些替你夜里办事的人，往后也要有一桩事来谢。",
+            sets: ["wei-failed", "eunuch-debt"],
+          },
+          right: {
+            label: "即日下牌，责成锦衣卫",
+            effects: { court: -8, law: -6, army: -4, gold: 2, people: -2 },
+            response: "你当日下牌，指望锦衣卫替你办成。文书到了卫堂被退回，京营点不到人数，逮牌在案上搁了三日，谁也不再提一句。魏忠贤不曾受一字之辱，只从此认定：这朝廷没有一个人敢办他。",
+            sets: ["wei-failed"],
+          },
+          people: ["wei"],
+        },
+      ],
+    ],
+  },
 
-function copyChoice(choice: Choice): Choice {
-  return { ...choice, effects: { ...choice.effects }, ...(choice.sets ? { sets: [...choice.sets] } : {}) }
-}
+  // ── 崇祯元年 ──
+  {
+    id: "institute",
+    name: "器院立局",
+    time: { year: 1, order: 4 },
+    steps: [
+      [
+        {
+          id: "g-institute",
+          name: "给器物一个衙门",
+          avatar: "工",
+          text: "徐光启递来一份小册，请拨旧房设立器院，让工匠和算学先生一同改良农具、水车，每次试验都记下做法与花费。他不敢保证多久能见成效，只请朝廷给工师一个能安心试做的地方。",
+          left: {
+            label: "拨款设院，准许试错",
+            effects: { court: -2, law: -2, gold: -6, people: 2 },
+            response: "你拨款设立器院，准许工师反复试做，不催他们立刻交出成果。国库先付了一笔钱，原来负责修造的衙门也不大服气；工师总算有了试验的地方。",
+            sets: ["gewu-institute"],
+          },
+          right: {
+            label: "仍由旧作坊承办",
+            effects: { court: 2, law: 2, gold: 4, people: -2 },
+            response: "旧作坊照常修造，省下了新院经费。只是无人专管试验，工匠的心得仍锁在各家的工具箱里。",
+          },
+          people: ["xuguangqi"],
+        },
+      ],
+      [
+        {
+          id: "g-budget",
+          name: "器院的钱给谁看",
+          avatar: "账",
+          text: "器院已有房舍，却还没有稳定的钱粮。户部愿把零散采办并为一项年度公账，内廷则愿直接包下用度。前者到账慢、处处要说明，后者办事快，却只向皇帝一人交代。",
+          left: {
+            label: "交内廷包办用度",
+            effects: { court: 2, law: -4, gold: 8 },
+            response: "内库先垫付器院的开销，户部暂不必另拨经费，工师也能按时开工领钱。但收支只记在内廷账上，外朝无从核对，各地想照办也找不到统一章程。",
+          },
+          right: {
+            label: "合并采买账，公开收支",
+            effects: { court: 4, law: 2, army: -2, gold: 4 },
+            response: "器院收支入公册，重复采办得以裁并。朝臣愿意担责，催要军器的营官却嫌领料慢了。",
+            sets: ["gewu-budget"],
+          },
+          requires: ["gewu-institute"],
+        },
+        {
+          id: "c-institute-budget-old",
+          name: "历年拖欠的匠人工钱，怎么付清",
+          avatar: "议",
+          text: "器院没能设立，各省历年拖欠工匠的工价银却堆在工部的册子上。匠户垫钱办事多年领不到一钱，地方官便以此推托，不肯应募做工。户部请求按册用商税银两清付积欠；工部则自请节省本部的料银，不再摊派民匠。这个例一开，往后招募工匠就有了凭据。",
+          left: {
+            label: "准以商税银按册清付积欠",
+            effects: { law: 2, gold: -4, people: 2 },
+            response: "你把商税银两认作匠价，历年积欠按册发给，户部与工部一同核销。国库多支出这一笔，但每一册都查得清；工匠领到现银，才肯应官府招募，各省也不再拿「工钱未曾发放」作推托的由头。",
+          },
+          right: {
+            label: "只准工部自行节省",
+            effects: { army: 2, gold: 3, people: -3 },
+            response: "你只准工部在本部料银内挪借节省，旧欠仍挂在册上不销。国库不另支银，工部为完额照数催造军器，边营按期得器；垫钱多年的匠户反被官府催逼，逃出匠籍的人在路上接连不断。",
+          },
+        },
+      ],
+      [
+        {
+          id: "g-artisans",
+          name: "工匠要一纸契约",
+          avatar: "匠",
+          text: "器院想从民间雇来熟手，匠人先问：工钱何时给，家眷能否同住，学成后可否离开？照匠役旧例征调最省钱；另订契约则要现银，还会惹恼靠差役办事的官员。",
+          left: {
+            label: "订雇约，按期给工钱",
+            effects: { court: -2, law: -2, army: 2, gold: -4, people: 4 },
+            response: "雇期、工价、伤病抚恤俱写入契。人不再只为逃役而藏手艺，军器修理也渐有了熟练队伍。",
+            sets: ["gewu-artisans"],
+          },
+          right: {
+            label: "照旧轮役，先赶军需",
+            effects: { law: 2, army: 4, gold: 4, people: -4 },
+            response: "军需按时交足，现银少花了。器院与原有工师仍留任，只是新来的匠户轮班应役，不肯带全家与秘技来此。",
+          },
+          requires: ["gewu-institute", "gewu-budget"],
+        },
+        {
+          id: "c-institute-artisans-repairs",
+          name: "班匠折银的通例",
+          avatar: "议",
+          text: "器院没有常年经费，工部手上只有旧日班匠名册。轮班应役者多不愿北上，愿来者又要举家移徙。工部请以官价募匠代轮班，匠籍且存其旧，工食银两并入部议确项；另有主照祖制轮役、将省下之银解赴边库者。",
+          left: {
+            label: "准折银雇募，存其匠籍",
+            effects: { army: 2, gold: -3, people: 2 },
+            response: "你准各省以官价募匠代轮班，工食著为部议确项，匠籍仍旧不除。户部岁添此数，然军器得匠而修，边营按期获器；应募者按月领值，其家听移京师，不复以役期为累。",
+          },
+          right: {
+            label: "仍照班匠轮役解银",
+            effects: { army: 3, gold: 2, people: -4 },
+            response: "你止令依旧例轮班应役，折银解部，匠价遂并入边饷之数。军需先足，营中得器最快，库藏亦省；轮误者照例赔日，逃亡相踵，匠户终不肯携家与秘技赴官坊。",
+          },
+        },
+      ],
+      [
+        {
+          id: "g-measure",
+          name: "天下尺秤以何为准",
+          avatar: "尺",
+          text: "器院铸成官样的尺和秤各一副，徐光启奏请发到各省与九边：今后量田亩、造军器、收发钱粮，都照这一副官样来算。要朝廷定三件事——官样归哪个衙门掌管、隔几年校验一次；验收不合的，退换和赔累算在哪个衙门头上；私造尺秤的人由谁拿问、按什么罪办。边营正催取火器，嫌这些步骤太慢。",
+          left: {
+            label: "颁行官样，以新尺秤验收",
+            effects: { court: 2, law: 2, army: -2, gold: -4 },
+            response: "你准这一副官样尺秤发到各省和九边：今后田亩、军器、钱粮都照官样验收，没有凭据的不给报销。官样由工部掌管，三年校验一次；校验不合还拿去用的、以及私造尺秤的人，一律拿问，管事的官罚俸。铸造和颁发的钱都由官库出，国库多这一笔开支。有一批火器因为要追验尺寸迟发了，边军有怨言。但号令从京师一直行到各省，验收不再凭本厂师傅一句口头。",
+            sets: ["gewu-measure"],
+          },
+          right: {
+            label: "军需先发，验收仍凭自报",
+            effects: { law: -2, army: 4, gold: 2 },
+            response: "你照旧章办事：急用的火器、农具先发边营，官样的尺秤只留在器院里自己校。省下一笔铸颁的开支，边军按期拿到器械。只是各省的尺和秤仍旧长短不一、轻重不一，验收还是凭本厂自己报数。户部、工部两边没法比较，想查也查不出个头绪。",
+          },
+          requires: ["gewu-institute", "gewu-budget", "gewu-artisans"],
+          people: ["xuguangqi"],
+        },
+        {
+          id: "c-institute-measure-samples",
+          name: "军器验收不合，退换与赔累算谁的",
+          avatar: "议",
+          text: "官样的尺和秤还没有颁到各省，工部也找不到常年负责校验的人。军营催着领车轴和火器，工部请定一条明白的例：未经官样验过的不许发营，退换的费用与追赔的责任落在哪个衙门。营官说边务正急，这个例一行，军器必定误期。",
+          left: {
+            label: "定退换之例，验明才发营",
+            effects: { law: 2, army: -2, gold: -2 },
+            response: "你准未经官样验过的一律退换，赔累由承办官员担当，不许摊到州县头上。工部添设校验之人，花不了多少钱，军中器械从此有可复验的数目；只是这一批火器迟发，边营怨恨朝廷拿规矩误他们的装备。",
+          },
+          right: {
+            label: "急用的先发营，验过再补单",
+            effects: { law: -2, army: 3, gold: 2 },
+            response: "你准急用的车轴火器先发边营，验过之后补单，退换之例且缓。省下校验一番开销，军营按期得器；只是没有凭据的数目一拖多年，日后真要追赔，没有一个衙门肯认，户部、工部都拿不出对得上账的本子。",
+          },
+        },
+      ],
+    ],
+  },
 
-function source(id: string, requires: string[] = [], patch: Partial<GameEvent> = {}): GameEvent {
-  const original = originals.get(id)
-  if (!original) throw new Error(`缺少篇章素材：${id}`)
-  const event = { ...original, requires: requires.length ? [...requires] : undefined, excludes: undefined, ...patch }
-  return {
-    ...event,
-    left: copyChoice(event.left),
-    right: copyChoice(event.right),
-    requires: event.requires?.map(rule => typeof rule === 'string' ? rule : { ...rule }),
-    excludes: event.excludes ? [...event.excludes] : undefined,
+  // ── 崇祯二年 ──
+  {
+    id: "k-fiscal-gap",
+    name: "国用积弊·旧欠与新饷",
+    time: { year: 2, order: 3 },
+    steps: [
+      [
+        {
+          id: "k-fiscal-gap",
+          name: "国用积弊·旧欠与新饷",
+          avatar: "账",
+          text: "户部奏报：尚未清理的边镇积欠，与当年守边所需的钱粮同时到期，库中现银不够周转。照原定支出两头都付，已办不到。加派可以先解眼前军需，却会压到受灾州县；先保当年供给、缓发旧欠，则要让久候的将士继续等。",
+          left: {
+            label: "加派解饷，暂保边防",
+            effects: { law: -2, army: 2, gold: 8, people: -4 },
+            response: "你准户部加派解饷，急征所得添了可用周转，边防暂得接济，并非旧欠凭空变成收入。受灾州县也要限期交银，已有百姓借债应付；此后若有人逃户，留下的欠额仍会追到朝廷案前。",
+            sets: ["crisis-levy"],
+          },
+          right: {
+            label: "先保当年军需，旧欠缓发",
+            effects: { court: -1, army: -4, gold: 6 },
+            response: "你准先付当年军需，暂缓旧欠所省的支出留作周转，账上的欠款并未减少。尚未清理的边镇将士再失一次盼头，朝臣也质疑兑现承诺的期限；旧欠会留到今后，不能当作已经付清。",
+            sets: ["crisis-arrears"],
+          },
+        },
+      ],
+    ],
+  },
+  {
+    id: "yuan",
+    name: "袁崇焕之狱",
+    time: { year: 2, order: 4 },
+    steps: [
+      [
+        {
+          id: "s-jisi",
+          name: "建虏兵临城下",
+          avatar: "🐎",
+          text: "皇太极绕道入塞，兵锋逼近北京。袁崇焕率关宁军赶来勤王，请给营地和口粮。城里担心客兵扰民，城外将士却已连日奔走；先怎样安置这支援军？",
+          left: {
+            label: "划营给粮，准其休整",
+            effects: { court: -4, army: 8, gold: -6, people: 2 },
+            response: "关宁军领粮整队，随后在城外迎敌。京城官民仍担心客兵滋扰，要求营官严加约束。",
+            sets: ["jisi-muster"],
+          },
+          right: {
+            label: "不许入城，城外接战",
+            effects: { court: 4, army: -6, people: -2 },
+            response: "关宁军疲惫接战，怨城内不肯接济；守城官员又怕援军生乱，双方来往愈发紧张。",
+            sets: ["jisi-outside"],
+          },
+          people: ["yuanchonghuan", "huangtaiji"],
+        },
+      ],
+      [
+        {
+          id: "s-jisi2",
+          name: "崇焕通敌流言",
+          avatar: "🗯️",
+          text: "勤王军已经得到休整，城下交战仍让京师惊恐。流言说袁崇焕故意引敌来京，密报又指后金军在放反间消息。是先关押主将，还是保留其职、把调兵记录交法司查验？",
+          left: {
+            label: "收押候审，另派人接军",
+            effects: { court: 6, law: -6, army: -8 },
+            response: "袁崇焕入狱候审，新将仓促接军，部将心生疑惧。法司开始调取文书，核查通敌指控。",
+            sets: ["yuan-imprisoned", "exec"],
+          },
+          right: {
+            label: "留职核查，不凭流言定罪",
+            effects: { court: -4, law: 4, army: 6, gold: -2 },
+            response: "袁崇焕继续领军，来往文书送交法司。要求拿人的奏疏仍不断送来，朝中争论更烈。",
+            sets: ["yuan-free"],
+          },
+          requires: ["jisi-muster"],
+          people: ["yuanchonghuan", "huangtaiji"],
+        },
+        {
+          id: "c-yuan-rumour-outside",
+          name: "城外援军也卷入流言",
+          avatar: "议",
+          text: "关宁军在城外苦战，未得充分休整，京城仍有人把敌军到来归罪袁崇焕。要求拿人的奏疏与催粮的军报一同送到，是将他收押换将，还是补查军报、先把欠下的口粮发给将士？",
+          left: {
+            label: "收押换将，再查文书",
+            effects: { court: 6, law: -6, army: -8 },
+            response: "袁崇焕入狱候审，换将又耗数日。部将忙于交接，法司尚在核对各营进退的军报。",
+            sets: ["yuan-imprisoned", "exec"],
+          },
+          right: {
+            label: "补粮留任，交法司核查",
+            effects: { court: -4, law: 4, army: 6, gold: -4 },
+            response: "城外将士得到补粮，袁崇焕继续领军。连日苦战的疲惫尚未缓过，营中仍有怨言。",
+            sets: ["yuan-free"],
+          },
+          people: ["yuanchonghuan", "huangtaiji"],
+        },
+      ],
+      [
+        {
+          id: "s-yuan-liaodong",
+          name: "袁崇焕请修大凌河",
+          avatar: "🧱",
+          text: "法司核查军报，未能证实袁崇焕通敌，他仍在辽东任事。如今他请修筑大凌河城，以屯田接济驻军；户部却说现有饷银难兼顾筑城与守边。是准他向前经营，还是把兵粮集中到宁远、锦州一线？",
+          left: {
+            label: "准他筑城屯田",
+            effects: { court: -4, law: -4, army: 10, gold: -12 },
+            response: "大凌河开始筑城，军户随后开垦屯田。前线多了据点，可敌骑连年侵扰，朝廷每年都得拨出大笔银粮守住这些城。",
+            sets: ["yuan-alive"],
+          },
+          right: {
+            label: "不增军饷，收缩防线",
+            effects: { court: 2, law: 2, army: -6, gold: 6 },
+            response: "你没有拨出增修城池的经费，袁崇焕只能守住宁远、锦州一线。国库暂时省下银钱，向外推进的计划也搁置了。",
+            sets: ["yuan-alive"],
+          },
+          requires: ["yuan-free"],
+          people: ["yuanchonghuan"],
+        },
+        {
+          id: "s-yuanshi",
+          name: "杀不杀袁崇焕",
+          avatar: "⚖️",
+          text: "袁崇焕案到了最后裁决。先前收押造成的军心动摇尚未平息，法司却仍拿不出谋款引敌的实证。是迎合京城众议处死他，还是撤去无实证的罪名、让他回辽任事？",
+          left: {
+            label: "处死以谢众",
+            effects: { court: 8, law: -8, army: -16, gold: 4, people: 4 },
+            response: "寸磔之日，京城万民争取其肉。日后松山、锦州战殁的忠魂，地下当念今日。",
+            sets: ["exec"],
+          },
+          right: {
+            label: "戴罪回辽东",
+            effects: { court: -10, law: 4, army: 12, gold: -6 },
+            response: "通敌之罪没有实证，你准袁崇焕回辽东任职。言官仍在争辩，边将却松了口气：朝廷终于没有只凭众怒杀将。",
+            sets: ["yuan-alive"],
+          },
+          people: ["yuanchonghuan"],
+        },
+      ],
+    ],
+  },
+
+  // ── 崇祯三年 ──
+  {
+    id: "s-hanzai",
+    name: "陕西大旱",
+    time: { year: 3, yearEnd: 4 },
+    steps: [
+      [
+        {
+          id: "s-hanzai",
+          name: "陕西大旱",
+          avatar: "🌾",
+          text: "陕西巡按的急递到了：一百七十多个县连着旱灾、蝗灾，华州已经出现易子而食。赈与不赈，全在你一念之间。",
+          left: {
+            label: "开仓放粮",
+            effects: { law: -2, army: 2, gold: -14, people: 16 },
+            response: "赈粮经三道官吏之手，到民人口中只剩一半——他们仍然给陛下立了生祠。",
+          },
+          right: {
+            label: "平价卖粮",
+            effects: { law: 4, army: 4, gold: 4, people: -14 },
+            response: "粮价压住了。只是赈场外饿殍枕藉，驿卒造反的消息，比赈单先到京师。",
+          },
+          people: ["licheng"],
+        },
+      ],
+    ],
+  },
+  {
+    id: "g-waterworks",
+    name: "水功工坊可常年办否",
+    time: { year: 3, order: 2 },
+    steps: [
+      [
+        {
+          id: "g-waterworks",
+          name: "水功工坊可常年办否",
+          avatar: "水",
+          text: "器院勘过两处河段，欲建水轮坊，借水力鼓风、锻铁、碾料，枯水时仍用人畜出力。工部请定为常年之局，十年相继，岁费由国库一项支给。地方官所虑在田：工坊用水与民田灌溉相夺时，依何项底册定其先后？由哪个衙门执法？河道总督亦来争此水。",
+          left: {
+            label: "拨款设局，田灌不许见夺",
+            effects: { court: -2, law: -2, army: 2, gold: -6, people: 4 },
+            response: "你准水功工坊常年开设，岁费于国库工部料价内确项支给，不许那移。仍立水册为凭：民田灌溉在先，工坊用水在次；夺民水者，该管官以盗决河渠论罪。军器得水利，边备少充；百姓以水有官断而安。惟添一局须铸印设官，立于河渠旧例之外，河道总督与地方各有不肯奉行处。",
+            sets: ["gewu-waterworks"],
+          },
+          right: {
+            label: "止于现办，军坊先尽用水",
+            effects: { law: 2, army: 4, gold: 2, people: -2 },
+            response: "你只令两处河段照现行试，不添官局、不拨常费。军坊用水先尽紧要，锻件按期起解边营，国库省一笔岁修之银。民田旱年仍照旧例自行分引，有司不立册、不执断，告到官也只是和稀泥，田主因此怨上。",
+          },
+          requires: ["gewu-measure"],
+        },
+      ],
+    ],
+  },
+  {
+    id: "g-review",
+    name: "试造败绩如何考成",
+    time: { year: 3, order: 3 },
+    steps: [
+      [
+        {
+          id: "g-review",
+          name: "试造败绩如何考成",
+          avatar: "核",
+          text: "水轮折轴，焦炉崩裂，伤匠数人，一年试验之费化为乌有。吏部与都察院会问考成之例：凡案卷可据而力未至者，算不算该管官的负案？伤匠养赡出于哪项钱粮？偷料、瞒报固当问罪，然试而未中者是否一体提问？台谏则请并器院诸局而尽罢之。",
+          left: {
+            label: "不中即罪，诸局只修旧器",
+            effects: { court: 2, law: -2, army: 2, gold: 4 },
+            response: "你定例：试造不中者以糜饷失误论，该管官降调提问，诸局自今只修旧器，不许另试。省下试造与养赡之费，台谏亦称上意不回；火器农具照额起解，边军不怨。只是据实报败者反遭重谴，此后上下相蒙，以未成之事报成，章程遂同虚设。",
+          },
+          right: {
+            label: "定容错之例，据实者勿罪",
+            effects: { court: 2, law: 2, army: -2, gold: -2, people: 2 },
+            response: "你考成三事：侵料、瞒报与试而无案者问罪；案卷明备而力未至者不坐；伤匠养赡著为永例，于各局匠价与公余银内给发，不许摊派里甲。查例须逐案卷，故多费银；军器因此迟发。然试造诸局自此以据实为功，各衙门不敢塞责。",
+            sets: ["gewu-review"],
+          },
+          requires: ["gewu-waterworks"],
+        },
+        {
+          id: "s-ych-huajian",
+          name: "袁崇焕夸口",
+          avatar: "🎓",
+          text: "袁崇焕破格在文华殿应对，当着你的面夸口：辽东的仗，五年可以打完。退朝时阁臣们互相看了看，谁也没说话。",
+          left: {
+            label: "全权交给他",
+            effects: { court: -4, law: -8, army: 8, gold: -8 },
+            response: "「五年平辽」四个字写进了起居注。你知道史书里它如何收场，却还是点了头。",
+          },
+          right: {
+            label: "先听他说再看他做",
+            effects: { court: 4, law: 4, army: 2, gold: -2 },
+            response: "你没有答应全权委任，先要袁崇焕列出用兵和筹饷的办法。朝臣也开始提议，请孙承宗一同商议辽东防务。",
+          },
+          people: ["yuanchonghuan", "sunchengzong"],
+        },
+      ],
+    ],
+  },
+  {
+    id: "k-tax-shift",
+    name: "国用积弊·逃户的税给谁",
+    time: { year: 3, order: 4 },
+    steps: [
+      [
+        {
+          id: "k-tax-shift",
+          name: "国用积弊·逃户的税给谁",
+          avatar: "账",
+          text: "前次御准加派后，受灾州县有交不起钱粮的人家逃走。县额却没有随之核减，官府便把逃户欠额摊给留下的人家。户部请你裁定：是核实荒田逃户、停止连累摊派，还是仍以原额考成，催各县足数解银？",
+          left: {
+            label: "核减灾区税额，停摊逃户欠税",
+            effects: { law: 2, gold: -5, people: 4 },
+            response: "你令户部会同地方修补税册，核实后减免灾区欠额，不许把逃户的税再摊给留户。国库少了一笔原指望的解银，留下的人家得以喘息；逃走的人还未尽回，税源也不能随一道诏令恢复。",
+            sets: ["crisis-tax-relief"],
+          },
+          right: {
+            label: "仍按原额考成，限期足数征解",
+            effects: { law: -2, gold: 5, people: -7 },
+            response: "你仍以足额征解考核州县。催征换来一笔现银，却比上次更难收；留户替逃户补税，有人卖掉耕畜，有人也开始离乡。眼前周转增加，下一轮能够纳税的人家反而更少。",
+            sets: ["crisis-levy"],
+          },
+          requires: ["crisis-levy"],
+        },
+        {
+          id: "k-pay-arrears",
+          name: "国用积弊·欠饷滚进新年",
+          avatar: "饷",
+          text: "此前你准许缓发旧欠，如今尚未清理的边镇把旧账并入新账，将士已靠借债维持家口。即便核清名册，偿欠的钱粮仍须另筹。户部请另拨偿欠银，将领则请求获准垫借，并向营外筹粮。",
+          left: {
+            label: "列支偿欠银，按册补发边饷",
+            effects: { law: 1, army: 4, gold: -5 },
+            response: "你令户部把偿付旧欠列为实支，按册拨银，不再只给将士一纸兑付日期。尚未清理的边镇有一部分旧欠得到偿付，军心稍定；库银随之支出，借债期间的损失并未一并消失。",
+            sets: ["crisis-arrears-paid"],
+          },
+          right: {
+            label: "准将领垫借，营外筹粮抵急",
+            effects: { law: -2, army: -4, gold: 5, people: -4 },
+            response: "你准有关边镇将领垫借、营外筹粮，户部因暂不付这笔旧欠而多留了周转银。债还要还，缺粮又被转向附近州县；将士怨饷不至，百姓怨军中取给，垫借并没有清掉欠账。",
+            sets: ["crisis-arrears"],
+          },
+          requires: ["crisis-arrears"],
+        },
+      ],
+    ],
+  },
+  {
+    id: "s-wei-coup",
+    name: "再举之请",
+    time: { year: 3, order: 5 },
+    steps: [
+      [
+        {
+          id: "s-wei-coup",
+          name: "再举之请",
+          avatar: "🏮",
+          text: "三年过去，魏忠贤仍掌司礼监，东厂的访单比上一年更长。兵部催饷、登莱造炮，几处都缺一个能直达御前的人；京营的名册你点到今日，能应调的不足一营。有一路人劝你趁夜动手：只带几个亲信内侍开一面门，先把司礼监围了。事若成，逆党束手；若不成，宫墙之内就没有你的活路。",
+          left: {
+            label: "夜合宫门，亲率内侍围司礼监",
+            effects: { court: -20, law: -10, army: -10 },
+            response: "你选了夜半动手。三更时分，宫门却换了锁；内值房先绑住传旨的太监，京营的兵天明才进京城，围住的不是司礼监，是你自己的殿。",
+            finale: "coup",
+          },
+          right: {
+            label: "收手，只革东厂、夺其呈身之党",
+            effects: { court: -4, law: 4, gold: -4, people: 2 },
+            response: "你一夜没有敢动，天明只下一道措辞含糊的旨：东厂事务另委，崔呈秀以下数人各回原籍。魏忠贤仍掌司礼监，从此内外升除都要先在内值房看过名字。你靠替你在夜里办事的那几个人保住了这门，事后也得给他们一处安身之地。",
+            sets: ["eunuch-debt"],
+          },
+          requires: ["wei-failed"],
+          resourceBounds: { army: { max: 35 } },
+          people: ["wei"],
+        },
+        {
+          id: "s-ni-an",
+          name: "钦定逆案",
+          avatar: "案",
+          text: "魏忠贤已死，逆党名单要你在两条路里挑一条。刑部与都察院合拟的草分六等：首逆当斩者数人，其次有流、有免官、有永不叙用；名字从各处生祠的首事，一直排到只在呈文上联过署的司官。内阁请定规模，厂卫催着要人，六部的堂官却都等着看朝廷一下子空出多少位置。",
+          left: {
+            label: "止坐首恶，余皆不问",
+            effects: { court: 6, law: 2, gold: 4, people: -2 },
+            response: "你只坐首恶数人，其余联署的一概不问，名字不列入榜。部院堂上官照常署事，边镇督抚不缺人，追赃也止于寥寥几家。言官说朝廷留下一半逆党在位——你知道那批人照旧在案上办事，只是彼此不再提一个魏字。",
+          },
+          right: {
+            label: "尽列二百五十余人",
+            effects: { court: 8, law: -6, army: -4, gold: 8, people: 6 },
+            response: "你把名单定到二百五十余人，刻期议罪，榜示天下。追赃之令一下，抄没的银子陆续解进太仓；只是六部、督抚同时缺额，题补的章奏留在中途，边镇有无人署事之处。自后朝廷每有一议，朝士先互相看脸色，肯署名的越来越少。",
+            sets: ["ni-an-broad"],
+          },
+          requires: ["wei-down"],
+          people: ["wei"],
+        },
+      ],
+    ],
+  },
+
+  // ── 崇祯四年 ──
+  {
+    id: "g-seeds",
+    name: "一亩田不能代表天下",
+    time: { year: 4, order: 1 },
+    steps: [
+      [
+        {
+          id: "g-seeds",
+          name: "一亩田不能代表天下",
+          avatar: "禾",
+          text: "陕西灾情还在，徐光启建议把已有的甘薯、旱稻分送不同土壤试种，记下收成、用水与留种损耗。有人只想把钱集中到京畿样田，先救眼前能顾到的人。",
+          left: {
+            label: "只保京畿样田收成",
+            effects: { court: 2, gold: 2, people: 2 },
+            response: "官府把经费集中在京畿，样田有了收成，近郊添了口粮。可没有外地试种的记录，工师还不知道同样的种法换一处土壤是否管用。",
+          },
+          right: {
+            label: "分地试种，歉收也记",
+            effects: { court: 2, law: -2, gold: -4, people: 4 },
+            response: "不以报丰为功，以据实为功。几处试田失收，另几处找到了合用的种法；饥荒并未因此立刻消失。",
+            sets: ["gewu-seeds"],
+          },
+          requires: ["gewu-institute"],
+          people: ["xuguangqi"],
+        },
+      ],
+    ],
+  },
+  {
+    id: "k-tax-flight",
+    name: "国用积弊·旧额压在荒田上",
+    time: { year: 4, order: 2 },
+    steps: [
+      [
+        {
+          id: "k-tax-flight",
+          name: "国用积弊·旧额压在荒田上",
+          avatar: "账",
+          text: "你已两度准许催补原额，受灾县份的留户又有人逃走，荒田随之增多。税册仍记着旧额，真正出银的人却更少，继续催征所得也越来越薄。户部请核减这些县的征额、招回逃户，并明定缺额不得转嫁邻县；代价是眼前军费也须收缩。",
+          left: {
+            label: "减额招回逃户，不转嫁邻县",
+            effects: { law: 1, army: -2, gold: -9, people: 5 },
+            response: "你准减额招回逃户，禁止邻县代补，另压缩部分军用以承认收入缺口。库银与军费都须让步，留户总算不再替不断扩大的空额纳税；荒田复垦尚需时日，此前卖掉的家产不会自行回来。",
+            sets: ["crisis-rebalanced"],
+          },
+          right: {
+            label: "不减旧额，再令州县催补",
+            effects: { law: -2, army: -4, gold: 3, people: -11 },
+            response: "你第三次坚持旧额，急征只挤出比前两次更少的银子，留户承受的负担却更重。逃户与荒田继续增加，粮运和军需也受牵连；这点周转是从更薄的税源中挤来的，并不是财用已经好转。",
+            sets: ["crisis-levy"],
+          },
+          requires: [{ flag: "crisis-levy", min: 2 }],
+        },
+        {
+          id: "k-army-foraging",
+          name: "国用积弊·军粮压到州县",
+          avatar: "饷",
+          text: "先准延期，再准垫借，你把同一批边镇旧欠两度留待日后。如今这些边镇债务增加，部分兵丁离营，军粮又被压给附近州县。是由户部接回供粮与偿欠责任，还是准其临时征取地方钱粮抵饷？",
+          left: {
+            label: "户部接回军粮，拨款偿付旧欠",
+            effects: { law: 1, army: 5, gold: -9, people: 3 },
+            response: "你令户部接回有关边镇军粮供给，实拨旧欠，不许将领再把缺口推给州县。国库当下支出很重，领到钱粮的军伍稍定，百姓也少了一层追索；已经离营的人与累下的债务仍须另行处置。",
+            sets: ["crisis-rebalanced"],
+          },
+          right: {
+            label: "准边镇临征地方钱粮抵饷",
+            effects: { law: -3, army: -6, gold: 3, people: -8 },
+            response: "你准有关边镇临征抵饷，户部因再缓一笔拨付而留下少量周转银。地方钱粮同样有限，军中取给挤掉百姓生计，未领足饷的兵丁仍有离营者；朝廷省下的支出，正变成兵民两头的新亏欠。",
+            sets: ["crisis-arrears"],
+          },
+          requires: [{ flag: "crisis-arrears", min: 2 }],
+        },
+        {
+          id: "k-tax-recovery",
+          name: "国用积弊·停派之后仍有缺口",
+          avatar: "账",
+          text: "先前你准停摊逃户欠额，受灾县份的留户得以继续耕种，但逃户还未尽回，荒田也没有马上复熟。户部实收少于旧册，军需却仍照旧数开列。停派保住了人，不等于国库已经补足；是削减非急用兵开支，还是恢复县额，再令灾区加紧征解？",
+          left: {
+            label: "裁非急用兵支出，承认收入缺口",
+            effects: { court: -2, army: -2, gold: 2, people: 2 },
+            response: "你压缩非急用兵支出，把少花的银子留作周转，不再向受灾县份追补虚额。军中少了可调用的余力，主张进取的朝臣也不满；百姓得到继续复耕的时间，旧税源仍只能慢慢修复。",
+            sets: ["crisis-rebalanced"],
+          },
+          right: {
+            label: "恢复原定县额，加紧征解",
+            effects: { law: -2, gold: 6, people: -5 },
+            response: "你恢复原额催解，急征来的钱银暂补了库中缺口。只是先前的减免尚未等到复耕见效，留户又要承担旧册上的负担；刚得到的喘息被打断，朝廷的停派承诺也难再取信。",
+            sets: ["crisis-relapse", "crisis-levy"],
+          },
+          requires: ["crisis-tax-relief"],
+        },
+        {
+          id: "k-pay-recovery",
+          name: "国用积弊·补欠不等于足饷",
+          avatar: "饷",
+          text: "先前你实拨旧欠，部分边军因此稳住，但补过一次欠账，并未补齐此后每年的常饷。兵部又请扩募出征，户部称若照准，只能缓付已经允给的军需，并催地方再筹。是限制新的调征、先守现有防线，还是先准扩募，把筹饷留到后面？",
+          left: {
+            label: "限制新调征，先守现有防线",
+            effects: { court: -2, army: -2, gold: 2, people: 2 },
+            response: "你限制新的调征，把减少支出的银子留给现有防线周转。军队可供进取的余力下降，主战朝臣也有怨言；地方不必再为新募军伍加紧筹饷，已经偿付的旧欠也没有被重新挂回账上。",
+            sets: ["crisis-rebalanced"],
+          },
+          right: {
+            label: "先准扩募出征，再筹所需军饷",
+            effects: { law: -2, army: 2, gold: 6, people: -5 },
+            response: "你先准扩募出征，缓付已经允给的军需，将这笔暂未支出的银子留作周转，并催地方筹饷；不是扩军本身生出了钱。眼前可用兵力增加，百姓负担加重，尚未清理的边镇又添新欠，先前补欠的成果开始受到拖累。",
+            sets: ["crisis-relapse", "crisis-arrears"],
+          },
+          requires: ["crisis-arrears-paid"],
+        },
+      ],
+    ],
+  },
+  {
+    id: "s-yizhan",
+    name: "裁撤驿站",
+    time: { year: 4, order: 3 },
+    steps: [
+      [
+        {
+          id: "s-yizhan",
+          name: "裁撤驿站",
+          avatar: "🐫",
+          text: "户部穷得没法。给事中刘懋上疏：裁掉三成驿站，一年可省银几十万两。陕西的驿站被裁得最重。",
+          left: {
+            label: "照准裁撤",
+            effects: { law: 2, army: 2, gold: 12, people: -10 },
+            response: "驿站清净了。只是银川驿一个叫李鸿基的驿卒领了遣散银——你读过这个名字的后续。",
+          },
+          right: {
+            label: "裁官俸保驿站",
+            effects: { court: 2, law: -4, army: -2, gold: 4, people: 6 },
+            response: "官俸削薄，部分驿路和驿卒生计得保。饥荒仍会逼人流亡，但朝廷留下了传信、核籍和招抚的通路。",
+            sets: ["post-kept"],
+          },
+          people: ["licheng", "liumao"],
+        },
+      ],
+    ],
+  },
+  {
+    id: "wuqiao",
+    name: "吴桥兵变",
+    time: { year: 4, order: 4 },
+    steps: [
+      [
+        {
+          id: "s-wuqiao",
+          name: "吴桥兵变的平叛方略",
+          avatar: "💣",
+          text: "孔有德部过吴桥起事，登州未失。孙元化请定剿抚之方：一是明发讨逆之令，以登莱道将以下俱听督师节制，兵部但司饷银，不得中制；先以兵封要路，护住炮局与军报，进剿次第由督师自定。二是先遣使赍诏入营招抚，分辨首从，统属之权且未议定。",
+          left: {
+            label: "明发讨逆，节制尽属督师",
+            effects: { army: 2, gold: -4, people: -2 },
+            response: "你明发讨逆之令，命登莱道将以下俱听孙元化节制，兵部但司饷银，不得中制。分兵封锁要路，炮局与军报得及转移，叛军进退皆有所碍；行旅为之中绝，沿边百姓颇苦催调。",
+            sets: ["wuqiao-cordon"],
+          },
+          right: {
+            label: "主抚不烦大兵，分辨首从",
+            effects: { court: -2, gold: -2, people: 2 },
+            response: "你从主抚之议，遣使赍诏入营，只许分辨首从，不烦大兵进剿。乱军得粮即散，未受刀兵；然朝廷威令不出宫门，孙元化以招抚自任。要路未曾封锁，救人与炮局须别觅通路。",
+            sets: ["wuqiao-envoys"],
+          },
+          people: ["kongyoude", "sunyuanhua", "gongsha"],
+        },
+      ],
+      [
+        {
+          id: "g-wuqiao-protect",
+          name: "炮可再铸，工师图册难再得",
+          avatar: "议",
+          text: "登莱匠人已有雇约，孙元化能按名册点出工师与家眷。乱军逼近，官船车马的运力只够一头：请定专载之令——专载工师、炮料与图册，饷银另雇民车递运，失陷之责着落登莱道；或以军饷成炮为先，工师图册听其自便。",
+          left: {
+            label: "定为专载之令，任失陷之责",
+            effects: { army: -2, gold: -4, people: 4 },
+            response: "你准官船车马专载工师、炮料与图册，饷银另雇民车递运，所费于登莱饷内支给；未能载去之炮，着登莱道任其失陷。国库多此一费，营中少一批现炮，工师与其家口则尽数撤出。",
+            sets: ["wuqiao-protected", "wuqiao-artisans-safe"],
+          },
+          right: {
+            label: "饷炮先走，图册听其自便",
+            effects: { army: 4, gold: 2, people: -4 },
+            response: "你以军饷成炮为急，船车尽数先运入守营，不另雇民车。库银得省，守军速得有炮之实；工师家口各自避乱，图册量具随之散失，日后修铸只靠少数熟手口述。",
+          },
+          requires: ["gewu-artisans"],
+          people: ["sunyuanhua", "gongsha"],
+        },
+        {
+          id: "c-wuqiao-protect-scattered",
+          name: "逃散的匠户如何安插",
+          avatar: "议",
+          text: "乱军走过的地方，工匠散在民间，名册已经点不齐。孙元化请定一条通行令：遭难匠户的家眷由所在州县安置，口粮从器院的匠价银里按季发给，逃散的工匠一概不许追拿。另有一议：只按登莱旧册点收入营，不在册的官府一概不管，省下这笔口粮钱，把车船运力留给军需。",
+          left: {
+            label: "准安置给粮，不许追拿工匠",
+            effects: { army: -2, gold: -4, people: 4 },
+            response: "你准遭难匠户的家眷由所在州县安置，口粮从匠价银里按季发给，逃散的工匠一概不许捕拿。官库多出这一项开销，车船也被占去几分，营中少一分运力。匠户知道有依靠，陆续到官府投回名籍。",
+            sets: ["wuqiao-artisans-safe"],
+          },
+          right: {
+            label: "只按旧册点收，其余一概不管",
+            effects: { army: 2, gold: 2, people: -4 },
+            response: "你只准按登莱旧册点收入营，不在册的官府一概不管，口粮也无从再发。匠价银留下备作军需，车船得专运炮械。渡口上的家眷没有依倚，散落的工匠一旦被追拿比对，当天就远远藏走。",
+          },
+          people: ["sunyuanhua", "gongsha"],
+        },
+      ],
+      [
+        {
+          id: "g-wuqiao-rations",
+          name: "乱兵的头目与跟随者如何定罪",
+          avatar: "议",
+          text: "要道已有守兵，各营的人名与欠饷数目也能照册查点。孙元化请定一个定罪通则：首恶几人依律处决，其余一概赦免，愿意回军的编入指定营伍、听督抚统率，口粮从登莱饷银内按名发放。另一派则说：不必分首恶与跟随，把赏银交给旧头领，由他约束部众，几天就能安定。",
+          left: {
+            label: "只杀首恶，其余赦免归队",
+            effects: { court: -2, law: 2, army: 2, gold: -4, people: 2 },
+            response: "你准首恶若干人依律处决，其余一概不问，愿回军的听督抚收籍编营，口粮按名发放。登莱饷银多这一项开销，另案追查也烦累地方官；宽严之份交与章程和督抚执掌，御前一时不便随时更改，朝中还有人说你太宽。好处是当过乱兵的人有了出路，裹挟入伙的手法就此失灵。",
+            sets: ["wuqiao-disciplined"],
+          },
+          right: {
+            label: "赏银交给旧头领，不分首从",
+            effects: { court: 2, law: -4, army: 2, gold: -2 },
+            response: "你把赏银交给旧头领自行分发，不区分首恶与跟随，也不再另设查案的衙门。乱事几天就平，朝廷省下一半开销，众将觉得陛下信得过他们，营里暂时安稳；只是银到了谁手里没有册子可查，日后这支兵成了头领的私产，官府再也没法过问。",
+          },
+          requires: ["wuqiao-cordon"],
+          people: ["kongyoude", "sunyuanhua"],
+        },
+        {
+          id: "c-wuqiao-rations-emergency",
+          name: "仓粮可否不俟报径支",
+          avatar: "议",
+          text: "各营人数与道路情形尚未查清，缺粮军士与趁乱抢掠者已不可分。督抚请定仓折径支之例：不俟户部复准，即于地方仓粮折色内先行给发，事后造册核销，侵欺之责坐该镇道；另有主必先收入城，非复准不得擅支。",
+          left: {
+            label: "准径动仓折，事后核销",
+            effects: { army: -2, gold: -4, people: 4 },
+            response: "你准督抚不俟报而径动地方仓粮，折色给发，其银先行那移、事后造册送部核销，侵欺者坐该镇道。国库为此多垫一笔，守城之粮亦分去一分；然愿归者得食而出乱营，胁随之党渐散。",
+            sets: ["wuqiao-rations-emergency"],
+          },
+          right: {
+            label: "粮必俟复准，先收入城",
+            effects: { army: 2, gold: 2, people: -3 },
+            response: "你令仓粮非户部复准不得擅支，一体先收入城以备门户。库项不致无着，守城有粮而心稍定；城外饥军无所待命，出乱营归队者由此日少，抢掠者仍杂其间。",
+          },
+          people: ["kongyoude", "sunyuanhua"],
+        },
+      ],
+      [
+        {
+          id: "g-wuqiao",
+          name: "登莱炮局的去留",
+          avatar: "营",
+          text: "工师家眷和图册已安置，补粮与查案分开办理，乱军的联系渐被切断。孙元化请拨款恢复炮局、修船整军，并逐项复查开支；户部担心钱粮难继，主张带工匠撤走，放弃当地厂坊。",
+          left: {
+            label: "保住炮厂，分开补粮与查案",
+            effects: { court: -2, law: 2, army: 2, gold: -6, people: 4 },
+            response: "官军先护住工师，再把参与抢掠的人与普通士兵分开。涉案者按证据问罪，其余军士补粮归队；孙元化留下主持交接，炮厂和水师终于稳住了局面。",
+            sets: ["gewu-denglai"],
+          },
+          right: {
+            label: "护送匠人撤离，暂弃整军",
+            effects: { court: 2, army: -4, gold: 2, people: 2 },
+            response: "匠人、家眷与图册先安全离开，旧雇约照付。孙元化候查而不因失地定死罪；省下了整军开支，却失了把登莱军工与水师合成体系的机会。",
+          },
+          requires: ["gewu-artisans", "gewu-review", "wuqiao-protected", "wuqiao-disciplined"],
+          people: ["kongyoude", "sunyuanhua", "gongsha"],
+        },
+        {
+          id: "c-wuqiao-artisans",
+          name: "工师去留与匠籍世守",
+          avatar: "议",
+          text: "救出的工师已在登莱以外，炮局图册船料多失，原处难再开工。孙元化请在异地拨料开局，准工师给廪留任，并除匠籍世守之令，其家听别籍自便；户部另议但给路费遣归，匠籍仍照旧世守，以省常年廪给之费。",
+          left: {
+            label: "准开局给廪，除其世籍",
+            effects: { army: 2, gold: -4, people: 2 },
+            response: "你准异地开局，工师给廪留任，匠役不必世守其籍，愿去者听，其家别籍自便。廪给与料价并出官库，岁费不赀；然军器自此有可修之人，营中得器渐易，孙元化亦以籍册待查。",
+            sets: ["wuqiao-workshop-saved"],
+          },
+          right: {
+            label: "但给路费遣归，匠籍仍旧",
+            effects: { army: -2, gold: -2, people: 3 },
+            response: "你止给路费遣令还乡，更不开局，匠籍仍照世守之例。廪给之费顿省，失所家口得归故土；只是军器一遇损坏，仍须到处访求熟手，登莱以来之炮竟无可修之所。",
+          },
+          requires: ["wuqiao-artisans-safe"],
+          people: ["kongyoude", "sunyuanhua", "gongsha"],
+        },
+        {
+          id: "c-wuqiao-losses",
+          name: "登莱的损失清单",
+          avatar: "议",
+          text: "工师家口没能成批护出，营伍也未恢复秩序，叛军抢去部分炮械船只。孙元化因失守被问罪：是先接济逃散人员、查明责任再判，还是处死巡抚、撤并据点，把余粮留给后方？",
+          left: {
+            label: "接济逃散者，查损追责",
+            effects: { law: 2, army: -2, gold: -4, people: 2 },
+            response: "逃散者得到接济，炮械与船只的损失逐项登记。孙元化交接候审，法司将查明各处失守的责任。",
+          },
+          right: {
+            label: "处死孙元化，撤并据点",
+            effects: { army: -4, gold: 3, people: -2 },
+            response: "孙元化以失守罪被处死，据点撤并后省下一段守费。叛军仍占有炮船，失散匠户也尚未寻回。",
+          },
+          people: ["kongyoude", "sunyuanhua", "gongsha"],
+        },
+      ],
+    ],
+  },
+
+  // ── 崇祯五年 ──
+  {
+    id: "shipping",
+    name: "海贸立约",
+    time: { year: 5, order: 3 },
+    steps: [
+      [
+        {
+          id: "g-shipping",
+          name: "郑芝龙来谈运价",
+          avatar: "舟",
+          text: "郑芝龙愿用熟悉的海船承运粮食、铁料与工坊货物，却想包下整条航路。户部提出分批试运、按到货结算，并留下别家船商的份额。海运能减脚价，但风浪、海盗都不会听圣旨。",
+          left: {
+            label: "分批承运，不给独占",
+            effects: { court: -2, law: -2, army: 2, gold: 6 },
+            response: "郑氏得其运利，不得尽断海路。船损按约分担，首批到货节省了陆运费；漕运旧官却失了好处。",
+            sets: ["gewu-shipping"],
+          },
+          right: {
+            label: "换他垫款，许包整条路",
+            effects: { court: 2, law: -4, gold: 10, people: -2 },
+            response: "急用的钱与船都有了，器院货物也能出海。只是运价与承运人渐由郑家决定，公开竞争的制度止在此处。",
+          },
+          requires: ["gewu-review"],
+          people: ["zhengzhilong"],
+        },
+        {
+          id: "c-shipping-charterless",
+          name: "官货许否借民船",
+          avatar: "议",
+          text: "郑芝龙不肯签下长年承运之契，海上一事遂无通行之令。军营催拨铁料，兵部请暂借民船装载，由海防同知填给船引，失风者按船均赔；或以民船必不可信，改从陆路趱运，脚价派之驿递。",
+          left: {
+            label: "准借民船，给引责赔",
+            effects: { law: -2, army: 2, gold: -3 },
+            response: "你暂准借民船载运官货，海防同知填给船引，失风之人按船均赔，脚价于军需银内支给。军营早得铁料；只是无长契而临时借载，赔案纷纷，沿边有司缘此开任意派船之例。",
+          },
+          right: {
+            label: "不许借载，改由陆运",
+            effects: { army: -2, gold: -5, people: 2 },
+            response: "你以民船不可倚为常令，不许借载，官货改从陆路趱运，脚价开销银内支给。沿海商民不遭摊派之累；只是驿递大耗，陆路迂远，铁料后时方至营中。",
+          },
+          people: ["zhengzhilong"],
+        },
+      ],
+      [
+        {
+          id: "g-customs",
+          name: "海税该进哪本账",
+          avatar: "税",
+          text: "试运带动了港口生意，现有关口却各收各的杂费。港官请把税银留下养巡船；户部要列明税率，合并关口杂征，扣除核定巡防费后汇入公库。商人肯缴税，怕的是缴完还要再缴。",
+          left: {
+            label: "留港包干，先养巡船",
+            effects: { court: -2, law: -2, army: 4, gold: 4 },
+            response: "海面巡防先添了船，商路继续通行。公账与承运契约未废，只是关税仍困在港口，朝廷难以核定可用财源。",
+          },
+          right: {
+            label: "明定税率，余款入公库",
+            effects: { court: 2, law: 2, army: -2, gold: 6, people: 2 },
+            response: "一货一税，关收有据。公库有了海税进项，巡船却须按预算添置，不能再随手截留商税。",
+            sets: ["gewu-customs"],
+          },
+          requires: ["gewu-shipping"],
+          people: ["zhengzhilong"],
+        },
+        {
+          id: "c-shipping-customs-port",
+          name: "海关税银留本还是解京",
+          avatar: "议",
+          text: "海运长契未成，各港仍自设杂费之关。户部请定关卡非经部议不得增设，税银除留巡防经费外尽数解京；港官则请留本充饷，任其自行裁并，以速巡船。此议不决，则一货数征，商皆辞去。",
+          left: {
+            label: "关卡归部议，余税解京",
+            effects: { law: 2, army: -2, gold: -3, people: 2 },
+            response: "你准增设关卡必由户部题覆，税银除留巡防外尽数解京。朝廷遂得稽其总目，商船不遭重复之征；惟巡船须按季请领部拨，款未到时，出海巡查顿减。",
+          },
+          right: {
+            label: "准留本充饷，听港自并",
+            effects: { army: 3, gold: 2, people: -3 },
+            response: "你准各港留税充饷，重叠之关任其自行裁并。户部不另发帑而巡船得足，海面稍靖；只是税银不复上计，商船逐港输钱，一批货几于纳再三之费。",
+          },
+          people: ["zhengzhilong"],
+        },
+      ],
+      [
+        {
+          id: "g-audit",
+          name: "买货的人不能独自验货",
+          avatar: "验",
+          text: "同样一船铁料，港口、器院、军营报的价差出三成。采购官说熟人总包最快；审计官请让采购、验货、拨款分属不同人，并抽取商人账本互证。查账能堵漏，也会拖慢交割。",
+          left: {
+            label: "分人验账，交叉抽查",
+            effects: { court: 2, law: 2, army: -2, gold: 4 },
+            response: "不以一纸收条了事。重复报销被追回，国库得补；军营也确实多等了几日，须另定急件限期。",
+            sets: ["gewu-audit"],
+          },
+          right: {
+            label: "按总价包办，快些交货",
+            effects: { law: -4, army: 2, gold: 6 },
+            response: "总包商压价赶工，眼前省钱省时。海关仍按定额入公库，但采购内部的虚价无人能够独立核实。",
+          },
+          requires: ["gewu-customs", "gewu-budget"],
+        },
+        {
+          id: "c-shipping-audit-receipts",
+          name: "番舶抽分必凭收单",
+          avatar: "议",
+          text: "一船铁料到港，商家称尾款未清，港口与军营所执收单多寡不合。户部请定通则：番舶抽分必凭官给收单，无单者其货入官，稽核专属户部主事，验货另委他人；营官以军需方急，请止按现货结放。",
+          left: {
+            label: "立收单为凭，稽核归户部",
+            effects: { law: 3, army: -2, gold: -3 },
+            response: "你准抽分必凭官给收单，无单者入官，稽核专属户部，验货别委其人。办货之费稍增，船候单不行，军器迟收；然价差自此有案可追，港口不得自为多寡。",
+          },
+          right: {
+            label: "止按现货结放，稽核委地方",
+            effects: { law: -3, army: 2, gold: 2 },
+            response: "你令先按现货给价放行，稽核且委之地方。库银无所别支，军营速得铁料；只是收单存废无人主张，无单之货亦竟不行入官之科，价差遂成不了之案。",
+          },
+          people: ["zhengzhilong"],
+        },
+      ],
+      [
+        {
+          id: "g-shipping-dispute",
+          name: "一帮之众非有司所能制",
+          avatar: "议",
+          text: "有船商首告郑氏亲信虚报风损，海防同知以其徒党半在船上、非本衙门所能制，直请敕旨。所当断者：郑氏一帮是否尽隶有司，违令者许何衙门径行提问，船引与航路之权归官给还是任其自相授受。税册与验货之单俱在。",
+          left: {
+            label: "准隶有司，船引官给",
+            effects: { court: -2, law: 3, army: -2, gold: 2 },
+            response: "你定海商一律隶于有司之例：违令者海防同知得径提问，船引航路皆由官给，争议之段别行召商。追出虚报之赔与引银并入关税，郑氏及其在朝之党怏怏，军粮因此后时；然海上始知有官法。",
+            sets: ["shipping-arbitrated"],
+          },
+          right: {
+            label: "且仍其旧，赔补以货",
+            effects: { law: -3, army: 2, gold: 4 },
+            response: "你以海事非文法所能绳，止令郑氏按数赔货，不立官给船引之名，有司亦不复擅问。赔货折银入库，军粮依期而至；只是他日虚报风损者，更无衙门得与计较，诸商遂各归其党。",
+          },
+          requires: ["gewu-shipping", "gewu-customs", "gewu-audit"],
+          people: ["zhengzhilong"],
+        },
+        {
+          id: "c-shipping-dispute-private",
+          name: "官课民债先后之序",
+          avatar: "议",
+          text: "一船货到港短数，郑氏归咎港吏漏记，港吏称船上少装，验单不足凭以定责，小货主嗷然待偿。请定清偿之序：官课与民债何者先给，短少之数何衙门得而断定；或先提承运押金对单，官课即刻抵清。",
+          left: {
+            label: "先偿民债，海关道断之",
+            effects: { law: 1, gold: -4, people: 3 },
+            response: "你准先偿小民之债，官课候后清，短数之案专归海关道断结。官库先行垫付，所费不赀，须俟得实之家追赔；然贷本者得还，商情少慰，海关亦有所禀承而不敢自为轻重。",
+          },
+          right: {
+            label: "先抵官课，扣押金候对",
+            effects: { law: 2, army: -3, gold: 2, people: -2 },
+            response: "你以国课先于民债，准将承运押金抵课，非对单明白不许给发。库课不致虚悬，断数亦归有衙门；只是停运候对，数船军料后时，小货主终岁不得偿。",
+          },
+          people: ["zhengzhilong"],
+        },
+      ],
+    ],
+  },
+
+  // ── 崇祯六年 ──
+  {
+    id: "g-apprentices",
+    name: "学会手艺，不该世代服役",
+    time: { year: 6, order: 2 },
+    steps: [
+      [
+        {
+          id: "g-apprentices",
+          name: "学会手艺，不该世代服役",
+          avatar: "徒",
+          text: "雇来的工师愿收徒，匠户子弟却怕一入册就永远脱不了差役。器院请准学徒考成后脱离世袭匠籍，凭契约受雇。军坊担心熟手外流，户部也得补一笔学徒口粮。",
+          left: {
+            label: "只给院内学徒减役",
+            effects: { court: 2, law: 2, army: 2, gold: 2 },
+            response: "院内学徒日子宽了些，军坊也留得住人。原有雇约照行，但匠籍未改，民间作坊仍难自由招收这些熟手。",
+          },
+          right: {
+            label: "考成脱籍，去留依约",
+            effects: { court: -2, law: -2, army: -2, gold: -4, people: 4 },
+            response: "役籍可脱，契约须守。军坊暂少了可强留的人，民间却多了肯拜师、肯授艺的家庭。",
+            sets: ["gewu-apprentices"],
+          },
+          requires: ["gewu-artisans", "gewu-audit"],
+        },
+      ],
+    ],
+  },
+  {
+    id: "s-dadian",
+    name: "武英殿灾",
+    time: { year: 6, order: 3 },
+    steps: [
+      [
+        {
+          id: "s-dadian",
+          name: "武英殿灾",
+          avatar: "🔥",
+          text: "禁中大火烧到武英殿。给事中说：这是上天示警，太监太多、恩泽太滥，请清理内侍。",
+          left: {
+            label: "裁减太监，回应天灾警示",
+            effects: { court: -6, law: 6, gold: 10, people: 8 },
+            response: "你裁去一批闲散太监，宫中省下供养费用。留下的人却担心自己也被赶走，怨言在内廷暗暗传开。",
+          },
+          right: {
+            label: "不认天谴，照旧修殿",
+            effects: { court: 6, law: -8, gold: -4, people: -4 },
+            response: "宫中照旧重修大殿，又向陕西、湖广征调木料。运木的民夫还在路上，流寇渡过汉水的急报已经到了京师。",
+          },
+        },
+      ],
+    ],
+  },
+  {
+    id: "g-manuals",
+    name: "把手艺留在纸上",
+    time: { year: 6, order: 4 },
+    steps: [
+      [
+        {
+          id: "g-manuals",
+          name: "把手艺留在纸上",
+          avatar: "书",
+          text: "徐光启这一年病逝，器院不能再等他亲自裁定。门生与工师整理历年的测量记录、试种结果和水工作坊的做法，想刊成图册，注明失败案例。公开基础工艺会削弱独门优势，也能让老师不在时仍有人接着做。",
+          left: {
+            label: "刊印基础工艺，留存试错",
+            effects: { court: 2, law: -2, army: -2, gold: -4, people: 4 },
+            response: "先生已逝，门生与工师把验证过的做法和未解的疑问一同编入图册。军器专用图另行保管，基础工艺送到民间作坊，让外地工匠也能照图试做。",
+            sets: ["gewu-manuals"],
+          },
+          right: {
+            label: "只在院内传抄，暂不外发",
+            effects: { law: 2, army: 4, gold: 2 },
+            response: "师承与底稿仍在，器院没有因先生辞世而停摆。独门优势保住了，但外地作坊难以按同一图册复做。",
+          },
+          requires: ["gewu-apprentices", "gewu-measure"],
+          people: ["xuguangqi"],
+        },
+      ],
+    ],
+  },
+  {
+    id: "g-exams",
+    name: "会算账的人能不能做官",
+    time: { year: 6, order: 5 },
+    steps: [
+      [
+        {
+          id: "g-exams",
+          name: "会算账的人能不能做官",
+          avatar: "试",
+          text: "各地已有工艺图册，却缺能看懂的官员。吏部建议先增一小批实学名额，考算学、农政、账务，再下工坊实作；科举原额不骤废。旧考官担心手艺人绕过多年经书训练，与士人同列。",
+          left: {
+            label: "仍按旧科取士，另雇幕友",
+            effects: { court: 4, law: 4, gold: 2, people: -2 },
+            response: "士林安定，懂实务的人仍可做幕友。刊本与学徒制度继续，却没有可凭实学进入公职的通道。",
+          },
+          right: {
+            label: "增实学名额，也考实作",
+            effects: { court: 4, law: -2, gold: -2, people: 2 },
+            response: "不尽废旧科，别开任事之门。首批考生还很少，各部却终于有了能独立核验工坊与田册的候补官。",
+            sets: ["gewu-exams"],
+          },
+          requires: ["gewu-manuals"],
+        },
+      ],
+    ],
+  },
+
+  // ── 崇祯七年 ──
+  {
+    id: "g-tenure",
+    name: "别等懂事了就换人",
+    time: { year: 7, order: 1 },
+    steps: [
+      [
+        {
+          id: "g-tenure",
+          name: "别等懂事了就换人",
+          avatar: "任",
+          text: "实学官到任刚摸清账目，就被一封弹章调走，接任者又从头学。吏部请定三年考成：侵贪、失职有证据照样撤换，单凭风声不能随意调任。边镇担心临急要人时调不动。",
+          left: {
+            label: "定任期，凭实据升降官职",
+            effects: { court: 2, law: 2, army: -2, gold: 4 },
+            response: "任期不是免罪牌，弹劾也不能只凭结党之名。交接损耗少了，临时抽调则须说明理由、另找接手人。",
+            sets: ["gewu-tenure"],
+          },
+          right: {
+            label: "留随时调换的权力",
+            effects: { court: 6, law: -2, army: 2, gold: -2 },
+            response: "急处调人仍便利，皇帝也握得更紧。实学科没有停办，但新官只求任内无过，不敢承担多年才能见效的事。",
+          },
+          requires: ["gewu-exams"],
+        },
+      ],
+    ],
+  },
+  {
+    id: "g-council",
+    name: "预算不能只在御前点头",
+    time: { year: 7, order: 2 },
+    steps: [
+      [
+        {
+          id: "g-council",
+          name: "预算不能只在御前点头",
+          avatar: "议",
+          text: "工部、户部、兵部各报了一份要钱的清单。有人建议，让各部官员和试办地区推举的士绅、商人、里甲代表，逐项询问钱花在哪里；公布收支后再由朝廷定案。交钱和办事的人能当面指出假账，各部却得多花时间答复。",
+          left: {
+            label: "只由内阁密议总数",
+            effects: { court: 4, law: -2, army: 2, gold: 4 },
+            response: "决议快了，边营也先领到钱。公账、审计与任期仍在，只是地方承担多少，仍由上面替他们说定。",
+          },
+          right: {
+            label: "分项公开，听取地方质询",
+            effects: { court: -2, law: 2, army: -2, gold: 6, people: 2 },
+            response: "议而后定，不许只报一个总数。重复工程被删掉，御前与军前都得多等几日，省下的钱却真在公库。",
+            sets: ["gewu-council"],
+          },
+          requires: ["gewu-budget", "gewu-audit", "gewu-tenure"],
+        },
+      ],
+    ],
+  },
+  {
+    id: "g-revenue",
+    name: "海税入库，仍有缺口",
+    time: { year: 7, order: 3 },
+    steps: [
+      [
+        {
+          id: "g-revenue",
+          name: "海税入库，仍有缺口",
+          avatar: "税",
+          text: "海税已经按章入公库，采购虚账也查了一轮，边饷仍差一截。高应登又呈密疏，劝搜富户财产；户部拿现成关册反驳，建议先公开缺口、裁重复采办，余数分季筹措，而不是假装再设一道关就能生钱。",
+          left: {
+            label: "临时加征货税，先足边饷",
+            effects: { law: -2, army: 2, gold: 10, people: -4 },
+            response: "加征仍走已有公账，不派缇骑抄家，也不杀进言者。急饷筹到了，商人却要为朝廷一时的缺口改运价、减订单。",
+          },
+          right: {
+            label: "公开缺款，削减重复采买",
+            effects: { court: 2, law: 2, army: -2, gold: 6, people: 2 },
+            response: "户部公开缺款数目，追回虚报款项，取消重复采买；仍缺的钱分季筹集。商人不必再交一笔临时货税，边军却要等各季税款到账才能领齐军饷。",
+            sets: ["gewu-revenue"],
+          },
+          requires: ["gewu-customs", "gewu-audit"],
+          people: ["gaoyingdeng"],
+        },
+        {
+          id: "s-yingdi",
+          name: "太监的密疏",
+          avatar: "🫖",
+          text: "太监高应登密报：可以搜查富民和盐商的财产，拿来给九边发饷。言官群起弹劾，说这道门一开就等于与宦官共天下，还用集体辞官要挟你。",
+          left: {
+            label: "杀太监谢百官",
+            effects: { court: 6, law: 10, army: -4, gold: -8, people: 10 },
+            response: "应登人头落地，宦官再不敢言及富户之财。辽饷仍只从田亩里搜刮——你清高了，也困住了。",
+          },
+          right: {
+            label: "用他的办法筹饷",
+            effects: { court: -8, law: -14, army: 6, gold: 16, people: -12 },
+            response: "抄来的富户、盐商家产补进军饷，边军终于领到钱。士人却骂你「与宦官共财」，多名言官上疏抗议后辞职离京。",
+          },
+          people: ["gaoyingdeng"],
+        },
+      ],
+    ],
+  },
+  {
+    id: "k-fiscal-customs",
+    name: "国用积弊·公账接续，才有余地",
+    time: { year: 7, order: 4 },
+    steps: [
+      [
+        {
+          id: "k-fiscal-customs",
+          name: "国用积弊·公账接续，才有余地",
+          avatar: "账",
+          text: "先前你已收住追加负担；海税入公账并按期核查，接续数年后，急借与转解耗费逐渐减少。扣除征管开销，公税收入与节省的银子仍添了周转。户部请先偿旧欠，兵部则想多留库银应急；受损的旧税源还在恢复，两头不能同时满足。",
+          left: {
+            label: "依公账先偿旧欠，再留周转",
+            effects: { law: 2, army: 3, gold: 6, people: 2 },
+            response: "你按公账先拨偿欠银，边军与曾被垫派的地方得到部分补偿。公税收入与节省的急借耗费，扣除征管和此次偿欠后仍留有余银；旧税源与百姓家计却还需慢慢恢复。",
+          },
+          right: {
+            label: "缓偿部分旧欠，多留库银应急",
+            effects: { army: -2, gold: 8, people: -2 },
+            response: "你将公税收入与节省的银子更多留在库中，缓付部分旧欠。官库应急余地增大，尚在候饷的将士和承受垫派的百姓却仍须等待。",
+          },
+          requires: ["crisis-rebalanced", "gewu-customs", "gewu-audit"],
+        },
+        {
+          id: "k-tax-spiral",
+          name: "国用积弊·饷逼税，税逼民",
+          avatar: "账",
+          text: "几年来，你三次维持受灾县份的旧额，逃户与荒田削薄了税源，催征和驻防的开销却反而增加。部分地方出现流营与盗乱，又来请饷清剿：缺饷便催税，催税再逼人离乡，动乱又添军费。事情尚非处处如此，但这条因果已经不能靠多催一轮解开。",
+          left: {
+            label: "停连累摊派，补赈并缩减额外军用",
+            effects: { law: 2, army: 3, gold: -12, people: 5 },
+            response: "你停掉逃户欠额的连累摊派，拨银补赈，并缩减额外军用，把钱粮先保到现有军伍。国库须付出很大代价，兵民冲突才稍有缓和；这是止损，已经荒掉的田、流散的人与此前损失都不能就此复原。",
+          },
+          right: {
+            label: "再加派军费，维持清剿",
+            effects: { court: -2, law: -3, army: -8, gold: 1, people: -12 },
+            response: "你再准加派以维持清剿，催征只带来极少的可用现银。部分州县逃户更多，军伍疲于征防，朝中也质疑催征成效；这并非止损，更不能恢复旧税源，只把先前损失继续转成新的军费缺口。",
+          },
+          requires: [{ flag: "crisis-levy", min: 3 }],
+        },
+        {
+          id: "k-pay-spiral",
+          name: "国用积弊·省下旧饷，添出新患",
+          avatar: "饷",
+          text: "你反复缓付旧欠，又准有关边镇临征抵饷，几年下来，这些边镇有部分军伍离营，附近地方的税源也受兵扰。欠饷引出营外取给，兵扰挤掉税收，流散兵丁与地方盗乱又使征防开销增加。户部请撤回临征之准，出银补欠补赈；兵部仍催加派维持征防。",
+          left: {
+            label: "禁临征扰民，补欠补赈并裁额外军用",
+            effects: { law: 2, army: 3, gold: -12, people: 5 },
+            response: "你撤回临征之准，禁止州县连累摊派，由户部拨款补欠补赈，并裁减额外军用，先稳现有军伍。现银支出沉重，兵民才稍得喘息；这是止损而非复原，逃散兵丁不会自动归营，受损税源与民生仍待修复。",
+          },
+          right: {
+            label: "加派维持征防，旧欠仍待后偿",
+            effects: { court: -2, law: -3, army: -8, gold: 1, people: -12 },
+            response: "你催地方加派维持征防，旧欠仍留待以后。急征所得扣去新增耗费，只剩极少周转，受扰州县更难供粮，有关军伍的离营与欠债也未止住；这并非止损，更谈不上复原，先前省下的旧饷仍在变成新的征防支出。",
+          },
+          requires: [{ flag: "crisis-arrears", min: 3 }],
+        },
+        {
+          id: "k-fiscal-relapse",
+          name: "国用积弊·缓过一时，又欠一年",
+          avatar: "账",
+          text: "先前停摊派或实拨旧欠，曾让有关州县、军伍缓过一口气。但随后你又恢复旧额催征，或准扩募并缓付已允军需，收支再次超过承受之数。几年接续，减免与补欠的成果没有全被抹掉，却不断被新负担侵蚀；户部请重定常年收支，不再只补眼前缺口。",
+          left: {
+            label: "重定常年收支，停止额外摊征",
+            effects: { law: 2, army: 2, gold: -8, people: 4 },
+            response: "你令户部按实收重定常年支出，停止额外摊征，并拨库银承接已经许下的军需。眼前要付出一笔银子，才不必反复拿减免与军饷作周转；兵民稍安，此前耗掉的家计与税源仍不能一笔勾回。",
+          },
+          right: {
+            label: "先催征渡难，收支改定再议",
+            effects: { law: -2, army: -4, gold: 3, people: -7 },
+            response: "你先催州县征解，又添了一点现银周转。常年缺口没有缩小，地方再背新负担，军中也难相信下次拨付能如期；先前的修补未能接续，积弊于是再次加深。",
+          },
+          requires: ["crisis-relapse"],
+        },
+        {
+          id: "k-fiscal-contained",
+          name: "国用积弊·止住扩张，旧账仍在",
+          avatar: "账",
+          text: "先前你不再把缺口不断追加给州县和军伍，积欠扩张由此缓住。但海税入公账与接续核账尚未一同形成稳定接济，受损的旧税源恢复又慢，官库仍难兼顾清欠和应急。户部请裁定：继续动用现银偿还旧欠，还是改作分期、先留备用银？",
+          left: {
+            label: "从官库继续清欠，不再加派",
+            effects: { law: 2, army: 3, gold: -4, people: 3 },
+            response: "你继续动用官库现银，按册清偿军饷与地方垫欠，不再另加摊派。库存减少，部分将士和百姓终于拿到等候的钱粮；这只是逐步偿还，荒田、流散与此前耗掉的家计仍待恢复。",
+          },
+          right: {
+            label: "分期偿付旧欠，留银应急",
+            effects: { army: -3, gold: 2, people: -2 },
+            response: "你把旧欠改作分期偿付，暂缓支出所留下的银子添了应急周转，并非欠账变成收入。积欠没有再任意扩张，但候饷的将士和曾被垫派的百姓还得继续等，止住扩张不等于此前损失已经补回。",
+          },
+          requires: ["crisis-rebalanced"],
+        },
+      ],
+    ],
+  },
+  {
+    id: "g-charter",
+    name: "皇帝也不能绕过章程",
+    time: { year: 7, order: 5 },
+    steps: [
+      [
+        {
+          id: "g-charter",
+          name: "皇帝也不能绕过章程",
+          avatar: "章",
+          text: "公账、任期、议事已有成例，内廷却仍能用一张中旨破例拨款换人。议事者请求立下章程：皇命也要经过复查、由负责官员共同签署，并公布执行事项。谈判细节可以保密，征税、用款、撤防却仍须审议。真有急事也须按预定应急条款留账。",
+          left: {
+            label: "照常议事，保留御批例外",
+            effects: { court: 8, law: -4, army: 2, gold: -2 },
+            response: "皇命仍可一纸行之，急事办得便利。旧机构没有撤，约束却到御前为止，下面也学会了等一张特旨。",
+          },
+          right: {
+            label: "连朕的命令也照章复核",
+            effects: { court: -4, law: 2, army: -2, gold: 6, people: 2 },
+            response: "有章不得以中旨破之。内廷少了随手支钱调兵的方便，公库少了临时窟窿；此约能否长存，还要看你往后是否守得住。",
+            sets: ["gewu-charter"],
+          },
+          requires: ["gewu-budget", "gewu-audit", "gewu-tenure", "gewu-council"],
+        },
+      ],
+    ],
+  },
+
+  // ── 崇祯八年 ──
+  {
+    id: "s-suncheng",
+    name: "孙承宗辞职",
+    time: { year: 8, order: 1 },
+    steps: [
+      [
+        {
+          id: "s-suncheng",
+          name: "孙承宗辞职",
+          avatar: "🏯",
+          text: "孙承宗被内臣高起潜处处牵制，三次上疏请求退休。辽东千里的防务，就看他这一根拐杖还在不在。",
+          left: {
+            label: "再三挽留不许走",
+            effects: { court: 4, law: 2, army: 8, gold: -6 },
+            response: "孙承宗继续坐镇，辽东各城的守将总算有了主心骨。你明令支持督师，高起潜也不敢再公然掣肘。",
+          },
+          right: {
+            label: "准他回乡",
+            effects: { court: 6, law: -6, army: -12, gold: 4 },
+            response: "孙承宗回乡后，原定的筑城挖壕逐渐停办，防线日益收缩。「承宗去，而辽左日蹙」——这句话你也读过。",
+          },
+          people: ["sunchengzong", "gaoqiqian"],
+        },
+      ],
+    ],
+  },
+  {
+    id: "g-payroll",
+    name: "饷银发到点名的人",
+    time: { year: 8, order: 2 },
+    steps: [
+      [
+        {
+          id: "g-payroll",
+          name: "饷银发到点名的人",
+          avatar: "饷",
+          text: "有了统一账式，试办营可以拿名册、领饷凭据和仓单相互核对。虚额被查出，就能把省下的银子补给实兵；但逐人核验费时，也会动到将领养家丁的旧办法。",
+          left: {
+            label: "仍由主将代领全营军饷",
+            effects: { court: 4, law: -2, army: -4, gold: 4 },
+            response: "主将领走整营军饷，各营很快报称已经发齐，兵部也省了逐人查验的费用。器院公账照旧，但军饷进营以后到了谁手里，仍查不清楚。",
+          },
+          right: {
+            label: "三册核对，实兵实领",
+            effects: { court: 2, law: 2, army: 2, gold: 4, people: 2 },
+            response: "裁虚额而不裁实饷，试办营欠薪渐清。制度尚未遍及九边，却给日后的扩办留下了可信底册。",
+            sets: ["gewu-payroll"],
+          },
+          requires: ["gewu-budget", "gewu-measure"],
+        },
+        {
+          id: "c-eunuch-marshal-owed",
+          name: "中官出京监军之请",
+          avatar: "议",
+          text: "宫门里头那几个替你换过钥匙、落过闸、传过话的内侍，如今都在各衙门当差，等着你还这一份人情。兵部催饷、登莱造炮、宣府守边，几处都缺一个能直达御前的人。内侍因此有请出京监督军饷：他们不要兵权，只要能在军前宣读诏旨、按月密疏奏闻。",
+          left: {
+            label: "准其监督军饷，许密疏奏事",
+            effects: { court: 4, law: -6, army: 4, gold: 2, people: -2 },
+            response: "你准内侍出京监督军饷，许他不时密疏奏闻。军报自此直入宫门，饷银也不至层层被部里克扣，登莱、宣府按月都有密折送到御前，催来的银子比往年快。只是督抚自此多了一条不必经内阁的路；后来被密疏说了一句话的人，连回辨的本子也递不上去。",
+          },
+          right: {
+            label: "只令部院督饷，勿遣内臣",
+            effects: { court: -4, law: 4, army: -4, gold: -2 },
+            response: "你把来旨退了，说监军之权重开弊窦，军饷仍令户部与督抚自行核算。内侍在宫门里失望，密疏之请也止于这一疏。军报慢了一程，饷银仍凭部文周转，边镇与户部的文书往来照旧对不出一份一致的数目。",
+          },
+          requires: ["eunuch-debt"],
+        },
+        {
+          id: "c-eunuch-marshal-empty",
+          name: "中官出京监军之请",
+          avatar: "议",
+          text: "逆案一次定了二百五十多人，六部与督抚同时缺额，题补的章奏常在中途。凡有军情，朝臣先要避嫌，边镇也懒得再等部覆。内侍因此有请出京监督军饷：他们不要兵权，只要能在军前宣读诏旨、按月密疏奏闻。",
+          left: {
+            label: "准其监督军饷，许密疏奏事",
+            effects: { court: 4, law: -6, army: 4, gold: 2, people: -2 },
+            response: "你准内侍出京监督军饷，许他不时密疏奏闻。军报自此直入宫门，饷银也不至层层被部里克扣，登莱、宣府按月都有密折送到御前，催来的银子比往年快。只是督抚自此多了一条不必经内阁的路；后来被密疏说了一句话的人，连回辨的本子也递不上去。",
+          },
+          right: {
+            label: "只令部院督饷，勿遣内臣",
+            effects: { court: -4, law: 4, army: -4, gold: -2 },
+            response: "你把来旨退了，说监军之权重开弊窦，军饷仍令户部与督抚自行核算。内侍在宫门里失望，密疏之请也止于这一疏。军报慢了一程，饷银仍凭部文周转，边镇与户部的文书往来照旧对不出一份一致的数目。",
+          },
+          requires: ["ni-an-broad"],
+        },
+      ],
+    ],
+  },
+  {
+    id: "g-market",
+    name: "民坊不只给军营做东西",
+    time: { year: 8, order: 3 },
+    steps: [
+      [
+        {
+          id: "g-market",
+          name: "民坊不只给军营做东西",
+          avatar: "市",
+          text: "学徒已能凭契约受雇，基础图册也送进民坊。作坊依靠人力和水力生产，海商愿承接布匹、农具与船具外销；军营却想包下熟手与材料。地方请照公开税约保留民用订单，让百姓有活做，官府有税收。",
+          left: {
+            label: "留民用份额，按公开税约外销",
+            effects: { court: 2, law: -2, army: -2, gold: 10, people: 4 },
+            response: "不尽以百工奉兵。军需优先之例收窄，民坊有了不靠军饷的买主，商税与工钱一道增长。",
+            sets: ["gewu-market"],
+          },
+          right: {
+            label: "军营统一订货，包下全部产量",
+            effects: { law: 4, army: 4, gold: 12, people: -4 },
+            response: "军营合并订单，按公定价格统一采买，国库省下了各营分头采购的价差，军器也更充足。民用外销却被挤到一边，作坊的收入又全靠军费，百姓所需的农具与布料更难买到。",
+          },
+          requires: ["gewu-shipping", "gewu-customs", "gewu-audit", "gewu-apprentices", "gewu-manuals", "gewu-charter", "shipping-arbitrated"],
+        },
+      ],
+    ],
+  },
+  {
+    id: "relief",
+    name: "工赈与收编",
+    time: { year: 8, order: 4 },
+    steps: [
+      [
+        {
+          id: "g-relief",
+          name: "以工代赈能否定为常年之政",
+          avatar: "赈",
+          text: "陕西、河南饥民塞路，公账与筹议之局此时已经立起。户部请定通例：用修渠筑路的官银雇丁壮做工、按日给粮，老幼病弱另设养济院给粥。要断的是三件事：这算常年之政通行各省，还是只行一季；银子从国库正项出，还是从州县罚银、火耗里出；工程限定在哪几项。",
+          left: {
+            label: "定为常年之政，各省通行",
+            effects: { court: 2, law: -2, army: -2, gold: -6, people: 6 },
+            response: "你准工赈与养济一并定为通令，各省通行：丁壮按做工给粮，老幼病弱给粥与药。银出国库正项，不足则由州县罚银、火耗内抵补，工程仍以渠道与城工为限。地方官不能再推诿，朝廷的号令第一次真正落到村墟。代价有两处：通省摊派办工既成风气，日后借垫挪移都有了名目；按工领粮的人不再应募当兵，营中少了一批壮丁。",
+            sets: ["gewu-relief"],
+          },
+          right: {
+            label: "只照旧例设厂散粮，工程缓办",
+            effects: { court: 2, army: 2, gold: -2, people: 2 },
+            response: "你只令地方官照荒政旧例设厂散粮，工程缓议。眼前之饥得救，不必另立规条，地方奉行也容易，御前的话反倒执行得动；壮年人待食之余尚可应募入营。国库仍须按月发粮，只是工未成、赈毕而散，来年缺工少田之家仍旧聚在城下。",
+          },
+          requires: ["gewu-budget", "gewu-council"],
+        },
+        {
+          id: "c-relief-temporary-grain",
+          name: "灾伤先开仓还是候勘",
+          avatar: "议",
+          text: "饥民已到城外，常年工赈的工程尚未议定。荒政旧例必俟勘报方许动支，巡抚请改立通例：灾伤之地，有司不俟报便行粜借，先济老弱，事后以实数核销；户部则谓不俟报而擅支，自此仓库无可稽。",
+          left: {
+            label: "准不俟报，便行粜借",
+            effects: { army: -2, gold: -4, people: 4 },
+            response: "你准有司不俟勘报即行粜借，先给老弱口粮，事后造册送部核销，折色银两仍于库项动支。仓粮耗得甚速，营食亦分去一分；然活者众而流者止，荒政自此有径行之例。",
+          },
+          right: {
+            label: "仍候勘报，平价出粜",
+            effects: { court: 2, gold: 2, people: -3 },
+            response: "你令仍照荒政旧例，俟勘报到日方许动支，官仓平价出粜、留仓底以待后患。余粮与银都在，户部以稽核为得；只是文移往返，贫无所赍者无从得食，四出求粮者愈众。",
+          },
+        },
+      ],
+      [
+        {
+          id: "g-taxroll",
+          name: "绅田也要量到边",
+          avatar: "田",
+          text: "赈工修好了水渠，邻近荒田却被大户报作祖产，不肯入税册。清丈队要按统一亩尺量田，连绅户、寺产也核实，允许佃户申诉，并对灾田缓征。乡绅说这是与地方体面为敌。",
+          left: {
+            label: "让大户自报，先收一笔",
+            effects: { court: 4, law: -2, gold: 10, people: -4 },
+            response: "大户解来一笔钱，地方也肯配合。赈工仍可办，隐田与佃户争议却未清，明年的缺口还会落回小民头上。",
+          },
+          right: {
+            label: "一体丈量，留申诉与缓征",
+            effects: { court: -4, law: 2, gold: 8, people: 4 },
+            response: "田有其界，税有其主。公库添了稳定税源，灾户得缓；有些体面人却从此在朝中处处找新政的错。",
+            sets: ["gewu-taxroll"],
+          },
+          requires: ["gewu-relief", "gewu-measure"],
+        },
+        {
+          id: "c-relief-taxroll-disputes",
+          name: "垦熟的荒田：免税几年、由谁丈量",
+          avatar: "议",
+          text: "回乡的农人已经把荒地垦熟，大户却拿着旧契来争这块田，县里既没有准确的册，也派不出人丈量。户部说国家赋额有定，请照旧册催征，并且准大户代为缴赋；巡按请求定一条通例：报垦的荒地几年之内不征赋、丈量归哪个衙门专管、隐瞒强占的人按什么罪办。春耕就在眼前，两议都要御前定夺。",
+          left: {
+            label: "报垦三年内不催征，庄田一体丈量",
+            effects: { court: -2, gold: -3, people: 3 },
+            response: "你准报垦之地三年内不许催征，丈量专归府厅，大户的庄田一体入丈。豁掉的赋额须由别项补足，朝廷岁入顿少；乡绅凡有门路者群起反对，御前顶住这层压力才办得下去。开荒的人安心种地，流亡的渐渐回到册籍之内。",
+          },
+          right: {
+            label: "照旧额催征，丈量缓一步",
+            effects: { law: 2, gold: 4, people: -4 },
+            response: "你以额赋不可轻改，只令照旧册催征，准大户代缴，丈量且缓。国用先济，旧册有凭据，胥吏也无从多报少报；只是垦荒的人收成要分一半给人，从没田的人终究没有认荒的机会。",
+          },
+        },
+      ],
+      [
+        {
+          id: "s-chuangjiang",
+          name: "擒住高迎祥",
+          avatar: "🪢",
+          text: "陕西巡抚孙传庭在子午谷设伏，生擒闯王高迎祥。捷报进京，他奏上来的却不是报功的册子：秦兵是他一手练的，兵部却要调这支兵出关、听别处调度，他连章不肯。此刻献俘案送到御前，请一并裁定是否给降众归籍期限。招抚名单中的李鸿基另涉早年的杀督队官案，法司要求继续查证；各地则催问，愿降者该如何接纳？",
+          left: {
+            label: "处决高迎祥，降众照捕令办",
+            effects: { court: 6, army: 4, gold: 4, people: -6 },
+            response: "高迎祥伏法，各地继续依捕令追缉，愿降者更怕入营。法司仍在追查李鸿基所涉旧案。",
+            sets: ["gao-executed"],
+          },
+          right: {
+            label: "收押高迎祥，限期接纳归籍",
+            effects: { court: -2, law: -2, army: 4, gold: -4, people: 4 },
+            response: "高迎祥收押候审，归降条件明示各营，普通降众与旧案当事人分开核查。",
+            sets: ["gao-amnesty"],
+          },
+          people: ["licheng", "gaoyingsiang", "sunchuanting"],
+        },
+      ],
+      [
+        {
+          id: "g-recruit",
+          name: "招抚流亡，旧案免与不免",
+          avatar: "募",
+          text: "裁驿以来，被裁驿卒与流亡逃丁成批投入军门求食。陕西三边总督请定招抚通例：旧案未结者一体宽免否，核籍编伍听督抚还是缴有司明正其罪，口粮行饷于何项给发，地方治安之责归于谁。户部以饷无可加，兵部以伍无可补，两疏俱到御前。",
+          left: {
+            label: "一体宽免，听督抚核籍收编",
+            effects: { court: -2, law: -2, army: 2, gold: -4, people: 4 },
+            response: "你准招抚之例：凡来投者，未经审结的杂项旧罪一并宽免，由督抚核籍入册，编伍给饷，口粮于九边饷银内支给；地方治匪之责并归督抚。流亡得食，行伍得壮。法司与巡按交章论其以召募侵夺谳狱，杀伤重案亦有未经鞫问开释者，朝廷号令自此两出。",
+            sets: ["lz-absorbed"],
+          },
+          right: {
+            label: "必俟审结方许收伍，余仍按捕",
+            effects: { court: 4, law: 2, army: -2, gold: 2, people: -2 },
+            response: "你准必俟法司审结、罪状明白者方许收伍，其余仍照原捕之令缉访，督抚不得擅收。谳狱不夺于军门，捕行之信未改，库藏亦省一笔按名给饷之费。只是来投者畏罪裹足，散入山中的愈众；行伍缺额无补，流亡仍无所归。",
+          },
+          requires: ["post-kept", "gewu-payroll", "gewu-relief", "gewu-taxroll", "gao-amnesty"],
+          people: ["licheng"],
+        },
+        {
+          id: "s-licheng-officer",
+          name: "驿站送来了求归名册",
+          avatar: "🐫",
+          text: "驿站解来一批求归降众的名册，也解来他们名下未结的旧案文书。督抚请求开一个受降的例：愿归的一体收进营伍，不必取乡邻的保结，先发给口粮再核案；法司却说未结之案一概收伍，等于军门夺了法司的权，仍应缴回地方官府查问。两议所争的是谁有宽免之权、名册归谁掌管。",
+          left: {
+            label: "开受降之例，免取乡邻保结",
+            effects: { law: 2, army: -2, gold: -4, people: 3 },
+            response: "你准开受降之例：愿归的一体收营，不取乡邻保结，口粮就从抚按的招募银里发给，未结的旧案仍交法司一并核查。营伍自此鱼龙混杂，战守之兵因此稍分；好处是求归的人不致半途失所，旧案也不至于全然作废。",
+          },
+          right: {
+            label: "仍缴回地方，照案查问",
+            effects: { court: 3, army: -2, gold: 2, people: -2 },
+            response: "你从法司之议：未结之案仍缴地方官府查问，不轻易开收伍之例，法司的权不被军门夺去。招募银得存，朝廷于体统稍伸；求归的人疑惧不前，流亡满路，营伍也补不到新丁。",
+          },
+          requires: ["post-kept"],
+          people: ["licheng"],
+        },
+        {
+          id: "c-recruit-no-post",
+          name: "流亡资送之费认支于谁",
+          avatar: "议",
+          text: "驿路既裁，流亡归籍者处处有之而无门可投。兵部请定资送之例：听经过州县递为资送，口粮工食即于该州县站银、工食内认支，稽迟不送者提问该管官；守将则请止令到营自便，其费留充本营粮饷。",
+          left: {
+            label: "准州县递送，认支其费",
+            effects: { army: -2, gold: -4, people: 3 },
+            response: "你准流亡归籍者听经过州县递为资送，口粮工食于站银工食内认支，稽迟者提问该管官。州县苦其无艺，见在行伍亦分粮于路人；然归籍者有资，散卒渐知投营之所。",
+          },
+          right: {
+            label: "止令到营自便，费留本营",
+            effects: { army: 2, gold: 3, people: -3 },
+            response: "你不立资送之例，止令愿投者到营自便，站银工食留充本营粮饷。见在军食稍充，有司免一分赔累；只是无资者中道而毙，远处流亡终不知当投何处。",
+          },
+          people: ["licheng"],
+        },
+      ],
+    ],
+  },
+
+  // ── 崇祯九年 ──
+  {
+    id: "s-daiching",
+    name: "皇太极称帝",
+    time: { year: 9, order: 3 },
+    steps: [
+      [
+        {
+          id: "s-daiching",
+          name: "皇太极称帝",
+          avatar: "🐺",
+          text: "皇太极即皇帝位，国号大清，改元崇德。派使者送来国书求和，话说得很傲慢，说什么「可以会猎」。",
+          left: {
+            label: "烧国书杀来使",
+            effects: { court: 8, law: -6, army: 8, gold: -4, people: 6 },
+            response: "国体振矣。只是虏骑自此岁岁犯塞，你每焚一书，边报便厚一尺。",
+          },
+          right: {
+            label: "回书遣使议和",
+            effects: { court: -14, law: 2, army: -6, gold: -12, people: -10 },
+            response: "议和使者回京，带回清方一再加码的索求。主战官员把「与敌议和」骂成通敌，连奉你命出使的人也遭到弹劾。",
+          },
+          people: ["huangtaiji"],
+        },
+      ],
+    ],
+  },
+  {
+    id: "s-fuwang",
+    name: "福王的银钱",
+    time: { year: 9, order: 4 },
+    steps: [
+      [
+        {
+          id: "s-fuwang",
+          name: "福王的银钱",
+          avatar: "🎭",
+          text: "洛阳福王府富冠天下，喝酒听戏的声音传出几里。户部请福王出银补辽东军饷，王铎却带头反对，认为不能动宗室的家产。",
+          left: {
+            label: "下诏要福王出钱",
+            effects: { court: -6, law: -4, army: 4, gold: 14, people: 12 },
+            response: "福王割银二十万，茹痛如剥肤。边军得饷，欢声如雷——只是宗室自此怨上。",
+          },
+          right: {
+            label: "不动宗藩产业",
+            effects: { court: 8, law: 4, army: -6, gold: -4, people: -8 },
+            response: "福王闭阁谢客，一钱不出。京师私议渐起：「朱家只有穷官人，没有穷王爷。」",
+          },
+          people: ["fuwang", "wangduo"],
+        },
+      ],
+    ],
+  },
+  {
+    id: "s-chaoxian",
+    name: "东征朝鲜之约",
+    time: { year: 9, order: 5 },
+    steps: [
+      [
+        {
+          id: "s-chaoxian",
+          name: "东征朝鲜之约",
+          avatar: "⛩️",
+          text: "皇太极称帝后，清方准备进攻朝鲜。登莱此前保住的船队与工师可供接应，但远航仍要另备粮饷。朝廷是派船牵制、接难民，还是先留运力守住自己的海路？",
+          left: {
+            label: "派水师出海牵制",
+            effects: { court: 6, law: 2, army: 4, gold: -10, people: -2 },
+            response: "登莱水师几次出海，迫使建州分兵防备海岸。东江镇却又送来一摞要饷的清单，粮、船、兵都得花钱维持。",
+          },
+          right: {
+            label: "闭门不管朝鲜",
+            effects: { court: -6, law: -4, army: -8, gold: 4 },
+            response: "朝鲜不久屈服，向建州提供粮食、兵员和造船工匠。朝廷省下一次出海的军费，辽东的敌人却更难对付了。",
+          },
+          requires: ["gewu-denglai"],
+          people: ["huangtaiji", "lindenhan"],
+        },
+        {
+          id: "c-chaoxian-limited-fleet",
+          name: "登莱船少，朝鲜仍来求援",
+          avatar: "议",
+          text: "清方准备进攻朝鲜，明廷接到求援，登莱却凑不出足够的船只、人手和军器。兵部请租民船送一批粮药，尽力接应；沿海守将担心近海失去运力，要求把现有船只留给本地防务。",
+          left: {
+            label: "租船送粮药，量力接应",
+            effects: { court: 2, army: -2, gold: -5, people: 3 },
+            response: "租来的民船载粮药出海，送出少量接济。本地运力因而减少，远援所需的护航与后续粮饷仍难筹足。",
+          },
+          right: {
+            label: "留船守近海，说明无力远援",
+            effects: { court: -3, army: 2, gold: 3 },
+            response: "现有船只留在近海，守军保住运输接应。朝鲜使者带着无力远援的答复离去，求援未获满足。",
+          },
+          people: ["huangtaiji", "lindenhan"],
+        },
+      ],
+    ],
+  },
+
+  // ── 崇祯十年 ──
+  {
+    id: "g-grain-tax",
+    name: "税单上的银与粮",
+    time: { year: 10, order: 1 },
+    steps: [
+      [
+        {
+          id: "g-grain-tax",
+          name: "税单上的银与粮",
+          avatar: "粮",
+          text: "田亩量清了，缺银的农户却还得低价卖粮，换银交税。户部建议公开粮银兑换价，让农户自行选交粮还是交银，并拨钱安排储粮、运粮。这样虽方便农户，却要防官吏故意压低粮食的抵税价。",
+          left: {
+            label: "准粮银两便，公开折价",
+            effects: { court: 2, law: -2, gold: 6, people: 4 },
+            response: "农户能直接交粮，不必先低价卖粮再换银子，欠税也少了。官府多收到了实在的税粮，却得安排人手验粮、入仓和转运。",
+            sets: ["gewu-grain-tax"],
+          },
+          right: {
+            label: "统一折银，减少经手",
+            effects: { law: 4, army: 2, gold: 8, people: -4 },
+            response: "国库现银好调度，仓吏也少一道经手。清丈与赈工仍在，产粮多而银少的地方却还得承担兑换亏损。",
+          },
+          requires: ["gewu-taxroll", "gewu-budget"],
+        },
+      ],
+    ],
+  },
+  {
+    id: "g-credit",
+    name: "借来的银子要还",
+    time: { year: 10, order: 2 },
+    steps: [
+      [
+        {
+          id: "g-credit",
+          name: "借来的银子要还",
+          avatar: "券",
+          text: "海税与田赋已有可查收入，商人愿借钱修仓、修水工，前提是写明利息、还款日期和总额上限。户部须先圈出偿债钱，不能把明年的全部收入拿来做担保，更不能逼人认借。",
+          left: {
+            label: "催大户认借，先填缺口",
+            effects: { court: 2, law: -4, gold: 12, people: -4 },
+            response: "现银一时充足，工程不必停。公库与粮银两便并未废除，但借与征混在一起，下次没人肯自愿拿出钱。",
+          },
+          right: {
+            label: "限额自愿借，留足兑付钱",
+            effects: { court: 2, law: 2, army: -2, gold: 6, people: 2 },
+            response: "借券有期，不许空许。首笔偿款如约兑付，可用的钱没有想象中多，朝廷却终于积下一点能借还的信用。",
+            sets: ["gewu-credit"],
+          },
+          requires: ["gewu-grain-tax", "gewu-customs", "gewu-audit", "gewu-charter"],
+        },
+      ],
+    ],
+  },
+  {
+    id: "s-liangyu",
+    name: "围剿方略与左良玉的军粮",
+    time: { year: 10, order: 3 },
+    steps: [
+      [
+        {
+          id: "s-liangyu",
+          name: "围剿方略与左良玉的军粮",
+          avatar: "🦁",
+          text: "各地流营仍多，兵部提出分区围剿、增饷练兵，左良玉又要求楚军就地筹粮。两道奏疏争的是同一笔钱：户部请连地方能负担多少一起核算，前线却催准主将先向民间取粮，战后再报开支。",
+          left: {
+            label: "核实兵粮，再定分区进退",
+            effects: { court: -2, law: 3, army: 2, gold: -4, people: 3 },
+            response: "左良玉须交出实际兵粮数目，朝廷据此安排分区进退。军费由官库筹拨，地方少受临时征取。",
+          },
+          right: {
+            label: "准就地筹粮，战后再追报",
+            effects: { law: -4, army: 3, gold: 4, people: -5 },
+            response: "国库暂缓支出，楚军直接向地方征粮。农户负担加重，征了多少、送到哪营，朝廷只能等事后追问。",
+          },
+          people: ["zuolangyu"],
+        },
+      ],
+    ],
+  },
+  {
+    id: "workshop",
+    name: "精密工坊攻关",
+    time: { year: 10, order: 4 },
+    steps: [
+      [
+        {
+          id: "g-fuel",
+          name: "炼焦的长年专款与赔累",
+          avatar: "炭",
+          text: "木炭价钱涨了，军器和冶铁都缺燃料。工师献上小炉炼焦之法：把煤封闭在炉内隔绝空气烘烤，烧成焦炭，但这法子要连着几年试验才能稳定可用。他要朝廷先答三件事：长期试验的专款从哪一笔官银出；窑烟和污水弄坏邻村田屋，赔账算在哪一项；若真试成，各省官炉是不是一律照办。",
+          left: {
+            label: "拨专款连年试，赔项出自商税",
+            effects: { court: 2, law: -2, army: 2, gold: -6, people: -2 },
+            response: "你准炼焦连试数年，每年从军器经费与工部料银里开支。窑烟污水坏了人家田屋的，赔款就近从附近的商税里出，不摊派里甲。焦炼成了，炉子烧得续，铳炮因此更精，各省官炉照这个式子试办，朝廷定的法子行得开。两处不快活：窑烟到底还在村中，赔的钱抵不上所受的损；户部厌恶另自动用商税，说这个例一开就收不住。",
+            sets: ["gewu-fuel"],
+          },
+          right: {
+            label: "仍旧烧炭，不立专款与赔项",
+            effects: { army: -2, gold: 4, people: 2 },
+            response: "你只令工师且住，不另立专款与赔项名目。省下试炉与赔修的银子，村人不近窑烟污水，田庐无恙，旧日用木炭处仍照数应付。只是烧炭的限制仍卡着铳炮大件，外省也没人知道炼焦的法子。",
+          },
+          requires: ["gewu-credit"],
+        },
+        {
+          id: "c-fuel-waterworks",
+          name: "炼焦的长年专款与赔累",
+          avatar: "炭",
+          text: "多年的水力作坊试验留下了炉温与耗料记录，长期借款却没有谈成。工师请求就从水坊每年的岁修银里挪出一笔，连着几年试焦。户部说岁修有定额，挪动要由御前裁定。要断的是三件事：这笔挪借准不准通行各处？年终核销归哪个衙门？窑烟污水损人田屋的赔账又着落在何处？",
+          left: {
+            label: "拨专款连年试，赔项出自商税",
+            effects: { court: 2, law: -2, army: 2, gold: -6, people: -2 },
+            response: "你准炼焦连试数年，每年从军器经费与工部料银里开支。窑烟污水坏了人家田屋的，赔款就近从附近的商税里出，不摊派里甲。焦炼成了，炉子烧得续，铳炮因此更精，各省官炉照这个式子试办，朝廷定的法子行得开。两处不快活：窑烟到底还在村中，赔的钱抵不上所受的损；户部厌恶另自动用商税，说这个例一开就收不住。",
+            sets: ["gewu-fuel"],
+          },
+          right: {
+            label: "仍旧烧炭，不立专款与赔项",
+            effects: { army: -2, gold: 4, people: 2 },
+            response: "你只令工师且住，不另立专款与赔项名目。省下试炉与赔修的银子，村人不近窑烟污水，田庐无恙，旧日用木炭处仍照数应付。只是烧炭的限制仍卡着铳炮大件，外省也没人知道炼焦的法子。",
+          },
+          requires: ["gewu-waterworks"],
+          excludes: ["gewu-credit"],
+        },
+        {
+          id: "c-workshop-fuel-unfunded",
+          name: "试焦续费与禁炭之令",
+          avatar: "议",
+          text: "长期借款未成，试焦之费遂无可指。工部请另拨国库一项以续其试，并申山场禁炭之令，收薪山之利以给官炉；户部则谓禁炭一行，民苦贵薪，不如且罢新炉、留此一项之费与民休息。",
+          left: {
+            label: "不另拨库项，禁炭且缓",
+            effects: { army: -3, gold: 2, people: 2 },
+            response: "你以民炊为先，不许另拨库项续试，禁炭之令亦缓行。库藏不耗，村人犹得贱炭，旧炉照数应付；只是新炉竟罢，铳炮大件仍苦于无薪，边营久不得坚利之器。",
+          },
+          right: {
+            label: "准另拨库项，并行禁炭",
+            effects: { army: 3, gold: -4, people: -2 },
+            response: "你准于太仆寺马价银内另拨一项续办试焦，并申禁炭之令，山场之利尽隶官征。焦成而炉可继，军器日以精；民间薪价顿贵，贫户至拾薪于郊，水坊附近之田并受窑烟之损。",
+          },
+        },
+      ],
+      [
+        {
+          id: "g-tools",
+          name: "常年造军器的局，归哪个衙门领",
+          avatar: "机",
+          text: "焦炭已经可用。工师请求造镗床与量规，说这种手艺必须常年做才练得精，有水力作坊的地方仍准兼用水力。工部愿意领这个局，但要按官价定额核销；内库也想领，只向御前报数。要断的是四件事：这个局归哪个衙门，每年经费从哪一项开支，验收拿什么为准，进局的工匠照旧匠籍签派，还是官府招募、按月给工钱。",
+          left: {
+            label: "不必设局，加雇熟手赶造旧器",
+            effects: { law: -2, army: 4, gold: 4, people: 2 },
+            response: "你只准军器局照现有的额数添雇熟手赶造火器，不设常年的局，也不添工钱这一项新开支。省下一笔局费，旧式枪炮多造出来，城里的匠户也多得一份工钱。造镗床的事就此放缓，炮膛孔径仍凭老师傅手摸。工匠照旧按匠籍签派，用短工抵数；工部的章程之外又开了一个口子。",
+          },
+          right: {
+            label: "设局归工部，按量规验收",
+            effects: { court: 2, law: 2, army: 2, gold: -8 },
+            response: "你准设常年制造的局，每年经费并入工部料价，定为一项确数。验收拿量规和官方的标准尺寸为准，不许凭师傅口头报数。入局的工匠除去旧匠籍，按月发工钱，愿走的不留；内库也不许另外开支。这笔经费最重，户部为难。但炮管、泵筒从此有可反复验证的数目，各省请造也报不了虚数。",
+            sets: ["gewu-tools"],
+          },
+          requires: ["gewu-fuel", "gewu-measure"],
+        },
+        {
+          id: "c-workshop-tools-handfit",
+          name: "军器折抵成数之例",
+          avatar: "议",
+          text: "镗床初成，出品未精，工师犹在考较量规。营中催索修件，兵部请准不合者折抵成数、照数通完其额；工部请定驳换之例：必以官样量规为凭，不合者不许折抵，废件赔累坐承办之官，不许那抵别项。",
+          left: {
+            label: "不许折抵，赔累任官",
+            effects: { army: 3, gold: -4, people: 2 },
+            response: "你定例：军器必以官样量规验数，不合者不许折抵成数，补造之费与废件赔累俱坐承办之官，不许派及州县。工部多此一项赔支，营中却按期得合格之器，匠役亦不复自匿其短。",
+          },
+          right: {
+            label: "准其折抵，通完额数",
+            effects: { law: 2, army: -3, gold: 2 },
+            response: "你准不合者折抵成数，止据所造多寡通完其额，不许另行请费。省下补造之银，部册亦有一本可稽；只是器械以不及格者充数，临阵可用之器顿少，边镇屡以为言。",
+          },
+        },
+      ],
+      [
+        {
+          id: "g-tool-seals",
+          name: "试造伤人的恤典与停作之章",
+          avatar: "议",
+          text: "试筒接缝于热试时泄漏，伤匠数人。工部请先给恤典、定为永章，并准其停作待验；营官以军期方急，请不停作、恤典临时施给，章程且缓。所当断者：伤匠养赡于何项给发，其责谁任，试造可否即行停作。",
+          left: {
+            label: "准其停作，恤典著为永例",
+            effects: { law: 2, army: -2, gold: -4, people: 2 },
+            response: "你准试器伤者一体停作待验，养赡之费著为永例，于各局匠价与公余银内给发，不许摊派里甲，章程归工部订定。库藏多此一项，军器迟发；然承办之司自此不敢以人试器。",
+            sets: ["gewu-seals"],
+          },
+          right: {
+            label: "不许停作，恤典从简",
+            effects: { law: -2, army: 2, gold: 2 },
+            response: "你以军需方棘，不许停作，伤匠量给赏银，其费即于本局料银内那移，章程未及订定。器械不致后时，部库亦无所添支；只是何人应恤、几何当停，一凭当局口头，后此无从援据。",
+          },
+          requires: ["gewu-tools", "gewu-review"],
+        },
+        {
+          id: "c-workshop-seals-stop",
+          name: "试造未成的考成与经费",
+          avatar: "议",
+          text: "试筒漏水之由未得，一说孔径未合，一说用料过劣。承办官恐干考成，请拨款继试；工部署官请以未成者并入考成、经费停给，料银移修现用之器。所当断者：试造未成而无欺冒者，还坐承办官否。",
+          left: {
+            label: "案卷明者不坐，经费照拨",
+            effects: { army: -2, gold: -3, people: 3 },
+            response: "你定例：试造未成而案卷明备者不与考成之罚，经费照数续拨，伤匠并给其恤。户部岁多此无着之支，军营且缓新器；然承办之司自此敢试，不饰败为成以倖考成。",
+          },
+          right: {
+            label: "并入考成，经费停给",
+            effects: { law: -2, army: 2, gold: 2 },
+            response: "你把未成之试并入考成，经费停给，见在料银移修旧器，军营先得可用之件。库藏节此一支；只是无名之罚既行，自后匿败讳损、不以实报者，法司无从诘之。",
+          },
+        },
+      ],
+      [
+        {
+          id: "g-pump",
+          name: "蒸汽抽水机，试验的钱算在哪一项",
+          avatar: "泵",
+          text: "多年炼焦、镗孔之后，工师请求在浅煤井试制蒸汽抽水器，说接缝与每天耗煤量要连年试验，未必能成，旧式水车还得留着备用。矿主嫌它费料。要断的是四件事：连年试验的钱从矿税、内库还是工部出；试成之后各省官矿是不是一律推行；没试成而花的钱算谁的罪；原先靠蹬水车吃饭的人怎么安置。",
+          left: {
+            label: "认下连年试验的钱，安顿旧役户",
+            effects: { court: 2, law: -2, army: -2, gold: -6, people: 2 },
+            response: "你把这笔钱定为常年试验的开支，从矿税的赢余里出，不足时取内库补助，工部协助料银。试成之后各省官矿照式推行。即便连年未成而花了钱，只按虚报冒领问罪，不按失误处分。原先蹬水车的役户一律收进矿上做工，照旧给工钱。国库每年少这一笔，户部也管不到它的出入，本可解去边饷的矿税从此不再计入年报。",
+            sets: ["gewu-pump"],
+          },
+          right: {
+            label: "只留已成的一具，添置旧式水车",
+            effects: { army: 2, gold: 4, people: 2 },
+            response: "你准把已造成的一具留在井上备用，不再准他报领新料试验。另拨一笔有定额的官银添置旧式水车。井底不淹，煤铁照出，军器的物料接得上；役户照旧当差，不愁失业，也省下一笔连年试验的钱。只是蒸汽抽水从此无人肯担这个责任，先前留下的记录成了废纸。",
+          },
+          requires: ["gewu-measure", "gewu-waterworks", "gewu-review", "gewu-fuel", "gewu-tools", "gewu-seals"],
+        },
+        {
+          id: "c-workshop-pump-waterwheel",
+          name: "官矿排水责成何司",
+          avatar: "议",
+          text: "浅井积水日长，试泵之验未足为凭，矿主请以见在矿税偿其费而罢官采。工部请定排水之责专归提举司，仍照额采办，不许以水废井；户部则以矿税日亏，请量豁其额，止令有司自护窑井。",
+          left: {
+            label: "责成提举司，不许请豁",
+            effects: { army: 2, gold: -4, people: 2 },
+            response: "你定官矿排水之责专归提举司，置备水车，其费于矿税赢余内支给，不足则为拨补，不许概行请豁。国库岁少此数，营中所用煤铁不致缺乏，矿役亦得雇值以存。",
+          },
+          right: {
+            label: "准豁矿税，闭井恤役",
+            effects: { army: -2, gold: -2, people: 3 },
+            response: "你准矿税不足者照数量豁，积水之井概行封闭，排水之责止委有司。省一番营办之费，役户得免于下井，仍给口粮以恤之；只是煤铁俱减，军器之料仰给他省。",
+          },
+        },
+      ],
+      [
+        {
+          id: "g-schools",
+          name: "地方工学班向京师要师傅",
+          avatar: "学",
+          text: "多年来，工坊带出了一批学徒，工艺刊本与实学取士也积累了师资。地方请派人开班，教看图、量田、修器，并讲明试验中的失误；京师军营却急缺熟手，希望留下师傅，只向各地寄送刊本。",
+          left: {
+            label: "熟手集中京师，地方先用刊本",
+            effects: { court: 4, army: 2, gold: 4, people: -2 },
+            response: "师傅留京赶修军器，省下外派的开支。地方虽收到刊本，遇到难处仍无人示范，只能再请京师答疑。",
+          },
+          right: {
+            label: "分办工学，教修理与测量",
+            effects: { court: 2, law: -2, army: -2, gold: -4, people: 4 },
+            response: "不许只教背图，不许包称神技。军坊少了几个老师傅，县里却开始有能自己量田、修轮、核仓的人。",
+            sets: ["gewu-schools"],
+          },
+          requires: ["gewu-apprentices", "gewu-manuals", "gewu-exams"],
+        },
+        {
+          id: "c-workshop-schools-visits",
+          name: "地方工学设官之议",
+          avatar: "议",
+          text: "各省请以书院隙地设工学班，教算学、测绘与修器。所当断者：是否设官给俸，经费出学田还是耗羡，教习考课之权在京师还是各省。工部请先派员走数省示范；京师营官以急修方殷，请止颁刊本而留其人于京。",
+          left: {
+            label: "设官给俸，教习分省",
+            effects: { army: -2, gold: -3, people: 3 },
+            response: "你准各省设工学教习一员，量给俸廪，经费于学田及耗羡内支给，考课之权分属有司。士大夫耻言匠技，京师急修少此数人；然县里始有能自量田、修轮、核仓之人员。",
+          },
+          right: {
+            label: "不设官，止颁刊本",
+            effects: { army: 3, gold: 2, people: -2 },
+            response: "你不设工学之官，止令京师刊本书册颁发各府，师傅尽留京营赶办急修。省设官廪给之费，军器早成；地方遇册外之误，仍须函询京师，动经月余。",
+          },
+        },
+      ],
+    ],
+  },
+
+  // ── 崇祯十一年 ──
+  {
+    id: "s-annei",
+    name: "安内与攘外",
+    time: { year: 11, order: 4 },
+    steps: [
+      [
+        {
+          id: "s-annei",
+          name: "安内与攘外",
+          avatar: "📚",
+          text: "杨嗣昌主张先平内地兵患，再顾边防，要求加征钱粮、扩兵围剿。他数着中原的几支流营：张献忠往来楚、豫之间，其余各部各拥众数万，降了又叛、散了又聚。各地流营与饥民尚多，安置也要花钱，边将又不断催饷。是准他加征扩剿，还是限制扩兵，把财力留给边防与现有安置？",
+          left: {
+            label: "加饷进剿流寇",
+            effects: { court: 2, law: 4, army: 8, gold: 14, people: -14 },
+            response: "新增税银收进官库，围剿官军领到了粮饷。可灾民原已无粮，加征又逼走一批农户，其中不少人转投了流寇。",
+          },
+          right: {
+            label: "先顾辽东防务",
+            effects: { court: 2, law: -2, army: -8, gold: -4, people: 6 },
+            response: "不增饷则兵不足，兵不足则贼坐大。「流」字营中，渐有边兵投奔。",
+          },
+          people: ["licheng", "zhangxianzhong", "yangsichang"],
+        },
+      ],
+    ],
+  },
+  {
+    id: "g-depots",
+    name: "粮不能只堆在一座城",
+    time: { year: 11, order: 5 },
+    steps: [
+      [
+        {
+          id: "g-depots",
+          name: "粮不能只堆在一座城",
+          avatar: "仓",
+          text: "饷册可查，粮仓仍集中在少数大城，一遇围困或疫病就断路。户部请沿水陆支线分设小粮站，轮换陈粮，账上分清军粮与赈粮。分储更贵，也需防小站官吏各自侵吞。",
+          left: {
+            label: "加固大仓，集中看守",
+            effects: { law: 2, army: 2, gold: 6, people: -2 },
+            response: "粮食集中进大仓，看守省人，耗损也少。各处守军和赈户却更依赖同一条运粮路，一旦受阻便难接济。",
+          },
+          right: {
+            label: "分站轮换，交叉验仓",
+            effects: { court: 2, law: 2, army: 2, gold: -4, people: 2 },
+            response: "仓小而路多，轮换须有实粮。账比从前烦琐，边营与赈场却各有了不依赖一座大城的后手。",
+            sets: ["gewu-depots"],
+          },
+          requires: ["gewu-payroll", "gewu-audit", "gewu-grain-tax", "gewu-relief"],
+        },
+      ],
+    ],
+  },
+
+  // ── 崇祯十二年 ──
+  {
+    id: "gucheng",
+    name: "谷城安置",
+    time: { year: 12, order: 1 },
+    steps: [
+      [
+        {
+          id: "s-xianzhong",
+          name: "谷城降兵归谁管",
+          avatar: "🚩",
+          text: "张献忠自崇祯三年在米脂起事，转战秦、楚、蜀之间，几次受抚又几次再反，官军始终没能剿灭他。这回他势穷，在谷城受了招抚；主持这局的是五省总督熊文灿——朝中主抚的担子，如今压在他一人身上。熊文灿递来的却不是报喜的奏折，而是一堆要朝廷定规矩的问题：这支降兵要不要编进国家的军籍；他们的将帅由本营自己推举，还是由督抚任命；粮饷是交给地方官按名册发放，还是听凭本营自行散给。与此同时，降营既说愿意交出藏起的军械，又说缺粮。熊文灿请皇帝定一个受降的通则，好让以后各处照办。",
+          left: {
+            label: "收编入军籍，将帅由督抚任命",
+            effects: { court: -2, law: 2, gold: -4, people: 3 },
+            response: "你定下受降通则：降兵一律编入军籍，将帅由督抚委任，粮饷由地方官照名册发放，藏起的军械另定期限交出。官府为此多花一笔钱，这一步要走部院与督抚的章程，不能一道旨意办完，朝廷说话的分量稍减，将领们怨恨被管住；好处是降众有多少人、在何处都有册可查，乡里不再怕他们再抢，愿意种地的能分到口粮。",
+            sets: ["gucheng-register"],
+          },
+          right: {
+            label: "听本营自推将帅，粮饷自己散给",
+            effects: { court: 2, law: -3, army: 2, gold: 2 },
+            response: "你依熊文灿：将帅听本营自推，粮饷由本营自行散给，官府不登其名籍。省下一笔支费，诸将感朝廷不疑，营里也安；只是这支兵成了将帅的私有，营中不行朝廷法度，日后若再变，官府连有多少人、在哪里都说不清。",
+            sets: ["gucheng-leaders"],
+          },
+          people: ["zhangxianzhong", "xiongwenchan"],
+        },
+      ],
+      [
+        {
+          id: "g-gucheng-households",
+          name: "一营具结与查验之权",
+          avatar: "议",
+          text: "谷城粮册已收，清丈册籍也可查田界。张献忠请出一营之结，全营自相担保，求免逐户查验；熊文灿则以器械当责兵备道清查、田土当责有司清丈，二者非一纸具结可代。所当断者：具结得废官司之验否。",
+          left: {
+            label: "田归有司，械归兵备道",
+            effects: { law: 2, army: -2, gold: -3, people: 3 },
+            response: "你定例：具结不得免查验。田土责有司清丈，器械责兵备道清查，冒粮者道臣核之。查办多所支费，营伍以见疑而解；然愿耕者按户受田，藏械者别自为案，有司始知所承。",
+            sets: ["gucheng-households"],
+          },
+          right: {
+            label: "准一营具结，免其编验",
+            effects: { law: -3, army: 2, gold: 3 },
+            response: "你准张献忠以一营具结当查验，器械听其自缴，田土付有司后理。官司省此一番查办之费，降营以安；只是空户冒粮者无从败露，械留营中，有司不复得而问。",
+          },
+          requires: ["gucheng-register", "gewu-taxroll"],
+          people: ["zhangxianzhong", "xiongwenchan"],
+        },
+        {
+          id: "c-gucheng-households-claims",
+          name: "漏籍申诉之期与隐匿之责",
+          avatar: "议",
+          text: "谷城受抚者不断陈诉，或称口粮被冒领，或称已受之田复为人有。请定申诉之期：过限者尚准陈首否，复查属道臣还是巡按，地方官隐匿不报者何以坐之；或谓名册已定，宜先清营外之械，田讼且缓。",
+          left: {
+            label: "立申诉之期，复查归道臣",
+            effects: { army: -2, gold: -3, people: 3 },
+            response: "你准漏登之家以一年内陈首为限，复查专属道臣，巡按得稽其隐，地方官隐匿者提问。查办多费，营中亦分兵为护；然冒领者渐出，愿耕者得复其田，降众始知上法之信。",
+          },
+          right: {
+            label: "过期不许复诉，先清营械",
+            effects: { law: -2, army: 2, gold: 2, people: -2 },
+            response: "你以名册已定，过期不许复诉，止令先清营外之械，田讼付有司缓理。官司省一番查办，械既出而兵威少振；只是隐匿之家幸而不败，争田者终岁无控所，法由此玩。",
+          },
+          people: ["zhangxianzhong", "xiongwenchan"],
+        },
+      ],
+      [
+        {
+          id: "g-gucheng",
+          name: "谷城安置要查到户",
+          avatar: "籍",
+          text: "谷城报来的不是新一轮招抚喜报，而是受抚各部的安置清册。张献忠等旧部中有人冒领、藏械，也有人领到荒地却拿不到种粮。工赈与清丈已经有底册，督抚现在必须逐户核验，不能把众人重新打包交给旧头领。",
+          left: {
+            label: "按原营交粮，先稳住头领",
+            effects: { court: 2, law: -2, army: -2, gold: 6, people: 2 },
+            response: "官府把粮集中交给旧头领，省了分送各户和逐户查验的费用。可哪些人实际领粮、哪些名字是冒报、谁还藏着兵器，官府仍未查清。",
+          },
+          right: {
+            label: "逐户核田粮，分散安置查藏械",
+            effects: { court: 2, law: 2, army: -2, gold: -4, people: 6 },
+            response: "愿耕者得种粮，愿役者入公册，藏械滋事者另案查办。流众不再全系于某个头领一念，复叛的根基削薄，却不敢说天下从此无盗。",
+            sets: ["gewu-settlement"],
+          },
+          requires: ["gewu-relief", "gewu-taxroll", "gucheng-households"],
+          people: ["zhangxianzhong", "xiongwenchan", "yangsichang"],
+        },
+        {
+          id: "c-gucheng-settlement-incomplete",
+          name: "降众销籍为民之令",
+          avatar: "议",
+          text: "谷城降众仍有人不获种粮，亦有人听旧头领呼唤而去来。请定销籍之令：愿去者准其销去降籍、有司编户授田否，资送口粮于何项认支；或谓未可即散，仍隶兵备道羁管，画地以居，以免四出难稽。",
+          left: {
+            label: "准销籍为民，有司编附",
+            effects: { army: -2, gold: -4, people: 4 },
+            response: "你准愿去者一体销其降籍，有司编户授田，资送口粮于工赈项下认支。库藏费此一项，营中亦少一分可调之众；然降户既列版籍，旧头领不得而复收其众，谷城之患移于疆吏。",
+          },
+          right: {
+            label: "未准销籍，画地羁管",
+            effects: { law: -2, army: 2, gold: 2, people: -3 },
+            response: "你以未可即散，不许销籍，仍隶兵备道羁管，画地而居，省其资送之费。见在之众可得而稽，营区自此肃然；只是降户终无出路，田粮之讼日积，羁管之官亦渐玩其法。",
+          },
+          people: ["zhangxianzhong", "xiongwenchan", "yangsichang"],
+        },
+      ],
+    ],
+  },
+  {
+    id: "jinzhou-supply",
+    name: "锦州粮道",
+    time: { year: 12, order: 4 },
+    steps: [
+      [
+        {
+          id: "g-command",
+          name: "带兵的人不独掌钱袋",
+          avatar: "令",
+          text: "实发军饷行了多年，主将仍可能借点名、调防把公兵变成亲兵。兵部请把作战指挥与饷册核付分开：临阵号令仍归主将，军籍、钱粮由另设人员复核，也不让监军越级发战令。",
+          left: {
+            label: "主将统筹，年末统一核账",
+            effects: { court: 2, law: -4, army: 6, gold: 4 },
+            response: "临急调兵调粮都快了，老军饷凭据仍须留存。只是核账落在事后，主将日常挪移军额的权力没有拆开。",
+          },
+          right: {
+            label: "军令归将，饷册另核",
+            effects: { court: 2, law: 2, army: -4, gold: 6 },
+            response: "主将照常指挥作战，另有人核对军籍、发放兵饷，也不得越权指挥。冒领军饷少了，原来靠分饷笼络亲兵的将领却不肯配合，交接一时受阻。",
+            sets: ["gewu-command"],
+          },
+          requires: ["gewu-payroll", "gewu-audit", "gewu-tenure"],
+        },
+        {
+          id: "c-command-provisional-orders",
+          name: "兵权饷权分任之制",
+          avatar: "议",
+          text: "锦州又催饷，而各镇领兵、任饷之责尚未画一。兵部请定通例：护运之令兵部署名，支放之责道臣任之，失陷侵欺各坐所掌；主将则请一体包办，事完补交粮册，以免文移误期。",
+          left: {
+            label: "兵饷分任，各坐所掌",
+            effects: { law: 2, army: -2, gold: -3 },
+            response: "你定兵饷分任之例：领兵之令兵部署名，饷册支放责之道臣，失陷侵欺各坐所掌。文移往返，另设理饷之员多此一费，粮队后时而出；然自后各镇不得以缺饷诿于行伍。",
+          },
+          right: {
+            label: "主将一体包办，事后报数",
+            effects: { law: -3, army: 3, gold: 2 },
+            response: "你以军前便宜不可中制，准主将一体包办，事完补交粮册。粮队即时启行，护运得人；只是支放之数皆出本镇自报，朝廷但据末后一册，侵冒无从根问。",
+          },
+        },
+      ],
+      [
+        {
+          id: "g-guanning",
+          name: "关宁饷权与轮调之责",
+          avatar: "镇",
+          text: "锦州一线仍资关宁各镇。兵部与户部会议：各镇公储、公汇之饷由何衙门支放，督师行檄与镇将号令权责各归于谁；至于何日换防、何营护粮，兵部谓此行期当听将领自定，不宜上烦宸断。旧将多以一军为家业，家丁口粮尽出私账。",
+          left: {
+            label: "饷归公汇，号令责成督师",
+            effects: { court: 2, law: 2, army: -2, gold: 6 },
+            response: "你定关宁饷例：各镇兵饷由户部汇解边储道，按印册给发，将领不得自行那移；赏功之费另贮公储，动用须会同督师与道臣。督师掌调度檄行，镇将得自定其行期。冒额既清，库帑自实，各镇始知朝廷之信。只是将领不复以饷养私，边军顿觉拘束。",
+            sets: ["gewu-guanning"],
+          },
+          right: {
+            label: "饷仍镇将自领，暂缓轮调",
+            effects: { court: 2, law: -2, army: 2, gold: 4 },
+            response: "你以边情方棘，兵饷仍由本镇自行领放，户部但以将领报数准销，轮调且缓。各营照旧防守，久戍者得安其心，亦省一轮交接之费；镇将感上不疑，尚肯听调。只是饷由将领，印册无从对稽，冒破私债一时俱在，日后要改公汇便难。",
+          },
+          requires: ["gewu-payroll", "gewu-command"],
+          people: ["zadashou", "wusanggui"],
+        },
+        {
+          id: "c-guanning-escort-only",
+          name: "欠饷出何项钱粮",
+          avatar: "议",
+          text: "吴三桂与各镇以换防后旧欠无归为词，交防之期遂迟，粮车且待于途。兵部请定欠饷之所出：于边储协济银内先行补发，并准久戍者再留一季；户部则以协济自有正额，请如额交防，欠饷另俟核议。",
+          left: {
+            label: "先补积欠，准留一季",
+            effects: { law: -2, army: 2, gold: -4 },
+            response: "你准积年欠饷于边储协济银内先行补发，久戍者并准再留一季。边储为此早支，擅留戍所之禁由此启端；然士心以固，乐于赴防，粮车亦得有接应之兵。",
+          },
+          right: {
+            label: "如额交防，欠饷另议",
+            effects: { army: -2, gold: 2, people: -2 },
+            response: "你令如额交防，欠饷另俟户部核议，不许借口滞留。轮调如期，协济正额不遭早支；只是久戍者失望，护路之兵不肯代出，粮车遂久顿于途中。",
+          },
+          people: ["zadashou", "wusanggui"],
+        },
+      ],
+      [
+        {
+          id: "g-jinzhou",
+          name: "锦州围困中的粮路",
+          avatar: "关",
+          text: "清军收紧锦州外围，祖大寿接连求援。粮站已交出存粮，登莱船队送来物料，工师也修好一批器具；各段守兵错开换防，路上仍有人接应。是继续分批送粮，还是趁道路尚通，先护送外围军民后撤？",
+          left: {
+            label: "轮换粮站，分批接济守军",
+            effects: { court: -2, law: 2, army: 2, gold: -4, people: 2 },
+            response: "不以一道催战诏赌尽各镇。粮船仍有损失，围困仍在，但守军能轮换、炮具能修，锦州不再只剩等饿的一条路。",
+            sets: ["gewu-frontier"],
+          },
+          right: {
+            label: "缩短防线，护送外围军民后撤",
+            effects: { court: 2, army: -4, gold: 6, people: 2 },
+            response: "护送一批军民撤至后方，少了一段供饷长路。粮站、工师和船队并未消失，但没有把接济线接成，锦州围困尚无持久解法。",
+          },
+          requires: ["gewu-depots", "gewu-tools", "gewu-denglai", "gewu-command", "gewu-guanning"],
+          people: ["hongchou", "zadashou"],
+        },
+        {
+          id: "c-jinzhou-supply-broken",
+          name: "锦州收到的粮比发出时少",
+          avatar: "议",
+          text: "锦州报来的收粮数少于后方发出的数目，沿途转运、修车与守路仍有耽搁。祖大寿催问下一批何时能到，外围伤兵和民户也求后撤。是再花钱组织小批转运，还是先腾出车船接人？",
+          left: {
+            label: "小批应急转运，损失如实记",
+            effects: { army: 2, gold: -5, people: 1 },
+            response: "一部分粮送入守军手中，沿途损耗另册登记。护路和修车仍常有耽误，下批粮何时到尚难保证。",
+          },
+          right: {
+            label: "接出外围伤兵，缩短守线",
+            effects: { army: -3, gold: 2, people: 3 },
+            response: "车船接回一批伤兵与民户，外围守线缩短，供养压力稍减。锦州仍受围困，城中继续催粮。",
+          },
+          people: ["hongchou", "zadashou"],
+        },
+      ],
+    ],
+  },
+
+  // ── 崇祯十三年 ──
+  {
+    id: "epidemic",
+    name: "大疫防治",
+    time: { year: 13, order: 2 },
+    steps: [
+      [
+        {
+          id: "g-health",
+          name: "报病的人不先问罪",
+          avatar: "医",
+          text: "崇祯十三年，山西等地传来病讯，邻县担心病势沿商路扩散。医者尚不明白病因，请每十日报送病人数目，将饮水与污水分开，并给隔离人家口粮；地方官怕一报病就要停市，军营也担心粮运受阻。",
+          left: {
+            label: "据实报病，先做卫生隔离",
+            effects: { court: -2, law: -2, army: -2, gold: -4, people: 4 },
+            response: "毋以少报病数为考成。隔离户给口粮，净水与清污分办；并无包治之药，却开始能在疾病传开前看见警讯。",
+            sets: ["gewu-health"],
+          },
+          right: {
+            label: "先施药，暂不限制来往",
+            effects: { court: 2, army: 2, gold: 2, people: -2 },
+            response: "市集与行军不受阻，现有医者仍在看病。工坊照开，但病例没有统一汇报，邻县难以及早作防备。",
+          },
+          requires: ["gewu-budget", "gewu-relief"],
+        },
+        {
+          id: "c-health-warning-local",
+          name: "疫伤隐匿之罪",
+          avatar: "议",
+          text: "外地已报疫，邻境犹讳之。请定例：疫伤须实时具奏，隐匿者以何罪坐之，太医院是否遣官巡行各省；地方官则谓一报病即须停市、粮运俱阻，请止令有司自行备办，无庸遣官。",
+          left: {
+            label: "实时具奏，遣官巡行",
+            effects: { army: -2, gold: -4, people: 3 },
+            response: "你定疫伤实时具奏之例，隐匿者以欺妄提问，太医院遣官巡行各境。舟车廪给多此一项，军食亦分其半；然病所早闻，邻境得以备御，有司不复以讳报为得计。",
+          },
+          right: {
+            label: "止令地方自理，不遣官",
+            effects: { army: 2, gold: 2, people: -2 },
+            response: "你以报病则市停业废，止令地方官各任其责，太医院不遣官巡行。驿传不阻，粮运如常，亦省遣官之费；只是隐匿无所忌惮，村市病故而莫肯上闻者，十常八九。",
+          },
+        },
+      ],
+      [
+        {
+          id: "g-clinics",
+          name: "病人不必都挤进大城",
+          avatar: "诊",
+          text: "疾病仍在各地来去，地方工学班能协助记录饮水、病舍和道路，却不能代替医者。医者请分区设小医所，重症转送，供清洁饮水与隔离口粮，不以偏方许诺痊愈。分区驻人比集中施药费钱。",
+          left: {
+            label: "分区设医所，保障口粮转送",
+            effects: { court: 2, law: -2, army: -2, gold: -4, people: 4 },
+            response: "医不能起死回生，救助可以不必远行。守所与运粮占了人手，病家却少了沿路求医、沿路传病的苦。",
+            sets: ["gewu-clinics"],
+          },
+          right: {
+            label: "集中医者，扩大临时药棚",
+            effects: { army: 2, gold: 4, people: 2 },
+            response: "药材与医者集中使用，眼前能多诊些人。卫生报告和地方工学照办，但偏远病家仍难获得常年的照护。",
+          },
+          requires: ["gewu-health", "gewu-schools"],
+        },
+        {
+          id: "c-clinics-mobile-teams",
+          name: "惠民药局要不要在各府重设",
+          avatar: "议",
+          text: "各府请求在州县重设惠民药局——官家施药的医局，可医生和经费都没有着落。要定的是三件事：药局到底在各府设不设；经费出在州县的罚银、火耗，还是额定的官银；医生的考核归太医院还是归地方官。另有一议：只留京师一局，遇疫临时设棚施药。",
+          left: {
+            label: "各府重设，考核归地方官",
+            effects: { army: -2, gold: -3, people: 3 },
+            response: "你准各府重设惠民药局，经费从州县的罚银、火耗里支给，医生的考核归地方官，太医院只总其成。每年这项花费不小，工匠与军医也分走一份口粮；好处是生病的人就近能取到药，偏远村子不致于守着等人死。",
+          },
+          right: {
+            label: "只留京师一局，遇疫临时设棚",
+            effects: { army: 2, gold: 2, people: 1 },
+            response: "你只留京师一局，各府不再设官，遇疫临时设棚施药，医生听营伍调用。额定的官银顿时省下，过境与在役的军士先得到医药；只是棚子一撤便无人看守，偏远之民仍旧苦于无处就医。",
+          },
+        },
+      ],
+      [
+        {
+          id: "g-epidemic",
+          name: "大疫来时不能瞒报",
+          avatar: "疫",
+          text: "山西与邻近地区的疫报增多，北直隶也须防备。医者从病例册中查到几处往来密切的村市，请暂缓当地集市、接济隔离户。商人怕断了生计，军营怕误了供粮；医所虽能接诊，也未找到可靠的治法。",
+          left: {
+            label: "只施药清污，集市照开",
+            effects: { court: 2, army: 2, gold: 4, people: -4 },
+            response: "施药与卫生报告仍继续，城门商路一时不受阻。病家没有停工口粮，只能冒险谋生，已有防疫成果未能组成有效隔离。",
+          },
+          right: {
+            label: "按实报告，隔离并补口粮",
+            effects: { court: -2, law: -2, army: -2, gold: -6, people: 6 },
+            response: "病亡如实记，不能许诺人人得活。隔离户拿到饭，邻坊能提早防备，停市也有补偿；疫势被压住一部分，悲伤并未归零。",
+            sets: ["gewu-containment"],
+          },
+          requires: ["gewu-health", "gewu-clinics", "gewu-relief"],
+        },
+        {
+          id: "c-epidemic-triage",
+          name: "病户与商路，两头都要粮",
+          avatar: "议",
+          text: "报病的村镇越来越多，医者与口粮却难送到各处，官府也查不清漏报多少。地方请先接济已知病户、暂停附近集市；商人和营官怕运输断绝，请商路照行，只在沿途增设药棚。",
+          left: {
+            label: "先顾已知病户，暂停附近集市",
+            effects: { army: -2, gold: -4, people: 3 },
+            response: "已知病户领到口粮，少了外出求食的需要。附近集市暂歇，粮运放慢，偏远漏报处仍难照看。",
+          },
+          right: {
+            label: "商路照行，沿途设药棚",
+            effects: { army: 2, gold: -2, people: -2 },
+            response: "商旅和军粮继续通行，药棚接诊沿途病人。人员往来未减，邻村仍担心病势顺路传来。",
+          },
+        },
+      ],
+    ],
+  },
+  {
+    id: "river",
+    name: "开封河患",
+    time: { year: 13, order: 5 },
+    steps: [
+      [
+        {
+          id: "g-maintenance",
+          name: "修好的水工还要年年养",
+          avatar: "堤",
+          text: "崇祯十三年，开封河臣请把堤闸、沟渠和水轮一起纳入逐季养护。已有水工记录、工赈队与独立验账，问题在于地方只爱报新工，不愿留清淤换轴的钱。来年水势难料，先怎样定维修预算？",
+          left: {
+            label: "留维修金，按季查验",
+            effects: { court: 2, law: 2, army: -2, gold: 6, people: 4 },
+            response: "地方不再只靠新工程报功，也得定期检查旧水轮、旧堤闸。停机养护耽误了少量军需，却少了几次大修重建，公库因此省下银钱。",
+            sets: ["gewu-maintenance"],
+          },
+          right: {
+            label: "先扩新工，坏处再修",
+            effects: { court: 4, army: 2, gold: 8, people: -2 },
+            response: "维修钱暂可另用，新工也快落成。旧水工并未被拆，但没有固定养护，今后不能只凭建成时的成绩求稳。",
+          },
+          requires: ["gewu-waterworks", "gewu-audit", "gewu-relief"],
+        },
+        {
+          id: "c-river-maintenance-patches",
+          name: "岁修钱粮责成何司",
+          avatar: "议",
+          text: "开封几处旧堤已经松动，历年修防账册未清，河督与抚臣互诿。请定岁修钱粮之所归：专归河督道库自支，抢险即官为雇夫，失防官员提问；或摊派沿河州县，有司与河司分任其责。",
+          left: {
+            label: "岁修专归河督道库",
+            effects: { army: -2, gold: -4, people: 3 },
+            response: "你准岁修钱粮专归河督道库，抢险即官为雇夫，失防官员提问如例。道库多此一支，河兵亦归本伍、不复代役；然险段即日夯筑，近堤之民得雇值以安，责有所归。",
+          },
+          right: {
+            label: "摊派沿河州县分任",
+            effects: { law: 2, army: -3, gold: 2 },
+            response: "你把岁修之费摊派沿河州县，有司与河司分任其责，失防者不得独坐。河库顿省，册籍各归其曹而吏无所诿；只是征夫上堤，军余亦派其半，操守之伍遂废。",
+          },
+        },
+      ],
+      [
+        {
+          id: "g-river-survey",
+          name: "开引河分洪，淹谁的地、谁来赔",
+          avatar: "议",
+          text: "崇祯十四年，堤闸养护的册籍与官样量尺都已可用。河臣实测，有几处低地正当分水之势：若开引河减缓水势，那一带的田屋必被淹。要断的是三件事：迁移之地由哪个衙门勘定、赔田的钱从哪一项给发、哪几处该认下这个牺牲。",
+          left: {
+            label: "准开引河，先把低地百姓迁走",
+            effects: { court: -2, law: 2, gold: -3, people: 3 },
+            response: "你准开引河减缓水势，低地居民先行迁移，赔田的钱从河工赎事例银里给发，勘地的责任专归河臣会同府州。被淹那一带的士绅纷纷上告，朝廷里议论汹汹，御前担下这个名字；但水有了去处，几郡的田屋因此保全。",
+            sets: ["river-surveyed"],
+          },
+          right: {
+            label: "分水且缓，只守现有堤线",
+            effects: { court: 2, gold: 3, people: -3 },
+            response: "你说低地百姓都是朝廷赤子，不可故意给他们降灾，分水之议且缓，只令谨守现有堤线，赔田的钱更不必议。库银留下，地方也以不轻动为便；只是水至而无处可泄，低地居民昼夜守堤，一溃便连人带屋一同漂走。",
+          },
+          requires: ["gewu-maintenance", "gewu-measure"],
+        },
+        {
+          id: "c-river-survey-landmarks",
+          name: "黄河滩地归何司清勘",
+          avatar: "议",
+          text: "开封旧图与见在河道多不合，滩地日垦，侵占之讼不绝，养护水位之册亦不足据以定守。河臣请定清勘之责：黄河故道与见在滩地，责成河臣会同有司一体清勘，另绘图册，侵占者退；守城官请以饷绌，止令自报。",
+          left: {
+            label: "河臣会同有司一体清勘",
+            effects: { army: -2, gold: -3, people: 3 },
+            response: "你准黄河故道与见在滩地责成河臣会同有司一体清勘，别绘图册，侵占者依册退还原主。踏勘多此经费，河兵亦分其役；然田有定界，争者息讼，护堤之地不复为势家所并。",
+          },
+          right: {
+            label: "图册仍旧，止令有司自报",
+            effects: { army: 2, gold: 2, people: -3 },
+            response: "你以兵饷方绌，不许另勘，图册且仍其旧，滩地听有司自行申报。经费不增，兵得归伍，城守有备；只是旧图终不可据，侵占者利其模糊，失地之民无所赴诉。",
+          },
+        },
+      ],
+      [
+        {
+          id: "g-kaifeng",
+          name: "水位已到撤离警戒处",
+          avatar: "河",
+          text: "崇祯十四年，开封堤外涨水，几个险段渗漏，水位已逼近预定的撤离界限。河臣请修补险段，并按名册先撤低地居民、赔付受损田地；守城官怕钱粮分散，要求先加固城堤，低地暂缓搬迁。",
+          left: {
+            label: "修险段，按册赔田并预先疏散",
+            effects: { court: 2, law: -2, army: -2, gold: -4, people: 5 },
+            response: "险段开始修补，低地居民按名册撤到接应处，领到口粮与赔款。守堤人仍逐日查看水位和渗漏。",
+            sets: ["gewu-river"],
+          },
+          right: {
+            label: "集中守城堤，暂缓低地撤离",
+            effects: { court: 2, army: 2, gold: 4, people: -3 },
+            response: "物料与人手先集中到城堤，迁户赔田的钱暂时省下。低地居民仍留原处，担心夜里来水无船可走。",
+          },
+          requires: ["gewu-relief", "gewu-waterworks", "gewu-maintenance", "river-surveyed"],
+        },
+        {
+          id: "c-kaifeng-emergency-plan",
+          name: "旧堤渗漏，村民等船",
+          avatar: "议",
+          text: "开封旧堤渗漏，低地村民已来求船，官府却还没安排妥当撤离路线与接济。河臣请临时雇船先迁走最险处的人；守城官坚持把工料集中到城堤，城外乡村先各寻高地避水。",
+          left: {
+            label: "临时雇船，先迁最险几村",
+            effects: { army: -2, gold: -4, people: 4 },
+            response: "临时雇来的船接走最险处一批居民。远村的道路和人数还没查清，官府仍难安排接应。",
+          },
+          right: {
+            label: "集中守城，村外就地避险",
+            effects: { army: 2, gold: 3, people: -4 },
+            response: "工匠与物料先用来加固城堤，城外接应只得搁下。低地村民扶老携幼自行避水，粮食难以带走。",
+          },
+          people: ["licheng"],
+        },
+      ],
+    ],
+  },
+
+  // ── 崇祯十四年 ──
+  {
+    id: "songjin",
+    name: "松锦军议",
+    time: { year: 14, order: 3 },
+    steps: [
+      [
+        {
+          id: "s-jinzhou",
+          name: "松锦军前请定方略",
+          avatar: "🧱",
+          text: "崇祯十四年，清军在锦州、松山方向加紧围逼，祖大寿催援，洪承畴奉命筹集援军。兵部要先定解围日期，催诸镇会师；前线请先查各营存粮能吃几日、后路如何接应，再定进兵方略。",
+          left: {
+            label: "先定解围期限，再查粮数",
+            effects: { court: 4, law: -3, army: 2, gold: -4 },
+            response: "各营奉限期集结，兵粮清单随后补交。将领忙着赶路，担心稍有延误就被追究逗留之罪。",
+            sets: ["songjin-deadline"],
+          },
+          right: {
+            label: "先核粮与退路，不先限日",
+            effects: { court: -3, law: 2, army: 2, gold: -3 },
+            response: "各营先报实存粮数和退路，洪承畴据此筹画接应。朝中催战的奏疏更多，指责前线迟迟不进。",
+            sets: ["songjin-stocktake"],
+          },
+          people: ["huangtaiji", "hongchou", "zadashou"],
+        },
+      ],
+      [
+        {
+          id: "s-yuan-songjin",
+          name: "松山对垒",
+          avatar: "🏹",
+          text: "袁崇焕仍在辽东，参与松锦军议。他请留一支预备营，分段护送粮队，与洪承畴、城内祖大寿约定接应；主战将领担心围势愈久愈紧，要求集中诸镇兵马，立即向围军进攻。",
+          left: {
+            label: "集中诸镇，马上压向围军",
+            effects: { court: 4, law: -3, army: 2, gold: -4 },
+            response: "袁崇焕与诸营奉令前移，准备集中出击。后方留下的兵少了，护送粮队与接应退兵更加吃紧。",
+            sets: ["songjin-assault"],
+          },
+          right: {
+            label: "分段接济，给主将缓守余地",
+            effects: { court: -3, law: 2, army: 2, gold: -4 },
+            response: "预备营留在后方，各段分别安排接济。袁崇焕与洪承畴得以从容调度，城内仍催问援兵何时到达。",
+            sets: ["songjin-paced"],
+          },
+          requires: ["yuan-alive"],
+          people: ["yuanchonghuan", "huangtaiji", "hongchou", "zadashou"],
+        },
+        {
+          id: "s-songjin",
+          name: "诸镇是急攻还是留后手",
+          avatar: "🏴",
+          text: "洪承畴汇总各镇兵粮，祖大寿仍在锦州等待接应。军议有人请集中精锐一次解围，也有人请留预备营、分段接济。前者担心迟则围势更紧，后者怕精兵尽出，后方粮队无人护送、败退时无人接应。",
+          left: {
+            label: "集中精锐急攻，先求破围",
+            effects: { court: 4, law: -3, army: 2, gold: -4 },
+            response: "诸镇精锐向前集结，准备攻打围军。后方可用的兵力减少，运粮人要求增派护兵的文书接连送来。",
+            sets: ["songjin-assault"],
+          },
+          right: {
+            label: "留预备营，分段接济缓守",
+            effects: { court: -3, law: 2, army: 2, gold: -4 },
+            response: "洪承畴留下预备营，分段布置接应与粮运。祖大寿仍在城中待援，缓守也须不断补入钱粮。",
+            sets: ["songjin-paced"],
+          },
+          people: ["huangtaiji", "hongchou", "zadashou"],
+        },
+      ],
+      [
+        {
+          id: "g-songjin",
+          name: "松锦不是一纸死局",
+          avatar: "垒",
+          text: "各营查过存粮，后方又留了预备兵，沿途粮站与护送队终于能按约接应。松锦围困未解，但守军尚有补给，外围也留有退路。是继续轮换驻军、分批运粮，还是趁道路可通，有序收缩外围防线？",
+          left: {
+            label: "收缩外围防线，掩护各营退守",
+            effects: { court: 2, army: -2, gold: 6, people: 2 },
+            response: "退的是外围据点，不是把全军丢在城下。旧粮路接走伤兵与民户，工师照常修造，只是向前恢复的余地少了。",
+            sets: ["gewu-songjin"],
+          },
+          right: {
+            label: "接济轮防，拒绝限日决战",
+            effects: { court: -2, law: 2, army: 2, gold: -4, people: 2 },
+            response: "围困未解，援守可续。诸镇不曾被一诏催成全军覆没，粮路、炮队与守城人仍在，才有下一步谈守谈和的本钱。",
+            sets: ["gewu-songjin"],
+          },
+          requires: ["gewu-frontier", "gewu-depots", "songjin-stocktake", "songjin-paced"],
+          people: ["hongchou", "zadashou"],
+        },
+        {
+          id: "c-songjin-withdrawal",
+          name: "前营缺粮，伤兵难撤",
+          avatar: "议",
+          text: "前进各营缺粮，围内也催不到足数，护粮与接应始终未能衔接。将领请求放弃部分外围据点，集中车船撤回援军和伤兵；主战官员不甘退兵，要求把余粮再押上去，抢救一处受困据点。",
+          left: {
+            label: "承认失地，掩护援军撤整",
+            effects: { court: -3, army: -3, gold: -3, people: 3 },
+            response: "外围据点放弃，部分援军与伤兵撤回整顿。城内仍受围困，退回的将领要交代丢失的阵地与军械。",
+            sets: ["songjin-retreated"],
+          },
+          right: {
+            label: "再投余粮救一处据点",
+            effects: { court: 2, army: -5, gold: -5, people: -2 },
+            response: "余粮用于突援，只接出部分守兵。各镇伤亡加重，军械散失，后方可再调动的钱粮更少了。",
+            sets: ["songjin-defeated"],
+          },
+          people: ["hongchou", "zadashou"],
+        },
+      ],
+    ],
+  },
+
+  // ── 崇祯十五年 ──
+  {
+    id: "peace",
+    name: "公开议和",
+    time: { year: 15, order: 1 },
+    steps: [
+      [
+        {
+          id: "g-peace",
+          name: "和议也要先有授权",
+          avatar: "和",
+          text: "崇祯十五年，皇太极一方提出停战条件，仍索取岁币。陈新甲请按章程先查守备所需、划定付费上限，再授权使者商谈。主战诸臣反对让步，要求拨款、撤防逐项过审；陈新甲则请暂不外泄谈判细节。",
+          left: {
+            label: "照章授权，划定付费上限",
+            effects: { court: -6, law: -2, army: 2, gold: 4 },
+            response: "陈新甲奉准派使接触，岁币上限与守备开支先列明。急攻筹款暂缓，边营仍驻原防线，主战诸臣争议不休。",
+            sets: ["peace-talks"],
+          },
+          right: {
+            label: "拒绝岁币条件，继续备战",
+            effects: { court: 8, law: 4, army: -6, gold: -8 },
+            response: "拒议亦入公册，不能假称谈判从未发生。名分无损，辽饷与征调仍照旧支出。",
+          },
+          requires: ["gewu-charter"],
+          people: ["huangtaiji", "chenxinjia"],
+        },
+        {
+          id: "s-mihe",
+          name: "与虏密议",
+          avatar: "📯",
+          text: "皇太极一方愿谈停战，却要岁币与边界承诺。朝中尚无共同审议密旨的章程，陈新甲请你亲自担下议和授权。是先秘密接触、探明条件，还是明示拒谈，把钱粮继续用于现有防线？",
+          left: {
+            label: "承担密谈授权，暂不撤防",
+            effects: { court: -4, law: -2, army: 2, gold: -2 },
+            response: "陈新甲奉密旨派人接触，边营继续守防。议和由你授意，往来文书一旦传开，主战诸臣势必追问。",
+            sets: ["peace-talks"],
+          },
+          right: {
+            label: "拒绝密谈，筹足防费",
+            effects: { court: 4, army: 2, gold: -4 },
+            response: "拒谈之意传达清方，兵部照现有防线筹饷。主战诸臣稍安，户部却须继续负担驻军和运输开支。",
+          },
+          people: ["huangtaiji", "chenxinjia"],
+        },
+      ],
+      [
+        {
+          id: "g-peace-ratify",
+          name: "签下的和约谁负责",
+          avatar: "约",
+          text: "陈新甲呈来与皇太极一方议定的停战条款，岁币、边界和留守军费都已列明，等候朝廷核准。主战诸臣仍指责让步过多，要求说明是谁准许使臣开价；陈新甲请依原授权审议，免得两边都不认账。",
+          left: {
+            label: "承担授权责任，按章核准条约",
+            effects: { court: -6, law: -2, army: 4, gold: 6 },
+            response: "朝廷承担已授权的让步，使臣不背密旨之罪。条约生效，守备按批准数保留。",
+            sets: ["peace-kept"],
+          },
+          right: {
+            label: "撤回和议，停使另议守战",
+            effects: { court: 6, law: -10, army: -6, gold: -6 },
+            response: "使臣无罪，撤谈之责归朝廷。新章程未废，但已经授权的承诺又变了，边营重开战备，国信受损。",
+          },
+          requires: ["gewu-charter", "peace-talks"],
+          people: ["huangtaiji", "chenxinjia"],
+        },
+        {
+          id: "s-mihe-leak",
+          name: "和议事泄",
+          avatar: "📕",
+          text: "陈新甲与皇太极一方谈得条款，往来文书却被误抄入邸报。主战朝臣指责擅议和款，追问谁曾授权。陈新甲所奉密旨出自你手，是承认授权、公布条款，还是将议和罪责推给他，下令处死？",
+          left: {
+            label: "承认密旨，保使臣并公布条款",
+            effects: { court: -6, law: -3, army: 3, gold: 4 },
+            response: "你承认授权，陈新甲得以保全，停战条款获准执行。主战诸臣仍不满密议让步，要求日后先交朝议。",
+            sets: ["peace-kept"],
+          },
+          right: {
+            label: "斩新甲以掩其迹",
+            effects: { court: 6, law: -10, army: -6, gold: -6 },
+            response: "陈新甲被处死，朝廷拒不承认曾准许议和。清军不再相信来使，重新发起攻势；朝中也再没人愿意替你办这样的密差。",
+            sets: ["exec"],
+          },
+          requires: ["peace-talks"],
+          excludes: ["gewu-charter"],
+          people: ["huangtaiji", "chenxinjia"],
+        },
+        {
+          id: "c-peace-withdraw-talks",
+          name: "拒谈之后，使者如何安置",
+          avatar: "议",
+          text: "朝廷未准议和，陈新甲手中只有往来试探的文书。边将问是否撤回等候消息的使者，户部也催定守备开支。是公开列明防费、撤使备战，还是留人联络，暂缓不急的军需采办？",
+          left: {
+            label: "撤回使者，公开列守备预算",
+            effects: { court: -2, law: 2, army: 2, gold: -3 },
+            response: "使者奉令撤回，边营所需的钱粮逐项列明。陈新甲按原命办事，未因谈判未开而获罪。",
+          },
+          right: {
+            label: "留下联络人，暂缩非急军费",
+            effects: { court: 2, army: -3, gold: 2 },
+            response: "联络人留下等候消息，非急军需暂缓采办。清军与边营仍各自设防，联络往来尚未换来停战。",
+          },
+          people: ["huangtaiji", "chenxinjia"],
+        },
+      ],
+      [
+        {
+          id: "g-peace-dividend",
+          name: "有了余钱，还要不要扩战",
+          avatar: "息",
+          text: "崇祯十五年大汛，开封部分田地受淹，先前巡堤、撤离和口粮接应减轻了灾损。停战条约已经核准，民间商税也可查用；户部请留足守备后，拿节余帮助灾户复业，兵部则想趁机补充军器兵额。",
+          left: {
+            label: "增拨战费，谋求扩大战果",
+            effects: { court: 4, army: 6, gold: -8, people: -2 },
+            response: "增饷仍经议账，边营愿战，声威一振。工坊与新章程没有消失，但新增财源又填入战场，养民的转机被推后了。",
+          },
+          right: {
+            label: "留足守备，节余先用于复业",
+            effects: { court: 2, law: 2, army: -3, gold: 6, people: 4 },
+            response: "边营保留必要军费，节余转去补偿灾田、帮助复业。地方逐户登记支用，商税和库款也有了周转余地。",
+            sets: ["gewu-peace-dividend"],
+          },
+          requires: ["gewu-charter", "gewu-market", "peace-kept", "gewu-river"],
+        },
+        {
+          id: "c-peace-dividend-flood",
+          name: "有了余钱，还要不要扩战",
+          avatar: "息",
+          text: "本年黄河大汛，开封低地多处受淹，撤离与赈粮接应不及，灾民急需船粮。停战省下部分支出，民间商税也有进项。户部请留足守备后拨款救灾复业，兵部却要求先补军器和兵额。",
+          left: {
+            label: "节余先补军费，赈济缩额",
+            effects: { court: 3, army: 4, gold: -4, people: -4 },
+            response: "边军多得一笔钱，军器与粮饷先获补充。赈济数额缩减，低地灾户仍等船粮，返乡复耕更迟。",
+          },
+          right: {
+            label: "留足守备钱粮，其余救灾复业",
+            effects: { law: 2, army: -3, gold: 2, people: 3 },
+            response: "守备钱粮留足，其余节余用于雇船送粮、修复灾田。救灾花费很大，户部能留存的银钱有限。",
+            sets: ["gewu-peace-dividend"],
+          },
+          requires: ["gewu-charter", "gewu-market", "peace-kept"],
+          excludes: ["gewu-river"],
+          people: ["licheng"],
+        },
+        {
+          id: "c-peace-close-river",
+          name: "人已撤出，灾田还待补偿",
+          avatar: "议",
+          text: "本年开封大汛，先前巡堤、撤离和口粮接应减少了伤亡，受淹田地仍须补偿。户部尚无法确认能挪出多少守备节余，现有税入又有限。是另拨灾田补偿，还是分季支付，先留急用军费？",
+          left: {
+            label: "守备照实支，另拨灾田补偿",
+            effects: { army: -2, gold: -4, people: 4 },
+            response: "受淹农户领到补偿，得以购种修田。守备仍照实际需要支出，另拨赈款使官库周转更加吃紧。",
+          },
+          right: {
+            label: "补偿分季付，先留急用军费",
+            effects: { army: 2, gold: 2, people: -2 },
+            response: "急用军费暂有着落，灾田补偿改为分季支付。农户等钱买种修田，有些人不得不先向乡里举债。",
+          },
+          requires: ["gewu-river"],
+        },
+        {
+          id: "c-peace-close-deficit",
+          name: "军费与赈粮都等拨款",
+          avatar: "议",
+          text: "本年开封遭大汛，低地居民撤离不及，赈粮也未及时送到，灾情仍陆续报来。户部拿不出稳定余款，军营和灾区都在催钱。是裁减不急的采办、先雇船送粮，还是先足守备，赈款分批拨付？",
+          left: {
+            label: "裁非急采办，先救灾户",
+            effects: { army: -3, gold: -4, people: 4 },
+            response: "船粮先发往灾区，部分灾户得到接济。不急的军器采办延后，军营只能继续修用现有器物。",
+          },
+          right: {
+            label: "先足守备，赈款分批拨付",
+            effects: { army: 2, gold: 2, people: -4 },
+            response: "守备钱粮先行拨足，军营能维持驻防。赈款分批送出，灾户等候更久，修屋复耕都被耽误。",
+          },
+          people: ["huangtaiji"],
+        },
+      ],
+    ],
+  },
+  {
+    id: "chuanting",
+    name: "孙传庭整军",
+    time: { year: 15, order: 4 },
+    steps: [
+      [
+        {
+          id: "s-chuanti",
+          name: "传庭出狱",
+          avatar: "🕯️",
+          text: "崇祯十五年，孙传庭已经在诏狱里关了三年。三年前清兵从墙子岭入塞，他带秦兵千里入援；不肯把兵交给监军、又与中枢争用兵的缓急，仗还没打完，劾他的章疏先到了——削籍，下狱。如今朝臣请重查旧案，让他赴陕整军。关中募兵、军粮和农户复业都缺人统筹，地方官频繁催问主事者；反对者则坚持旧处分，主张继续由地方官暂管军务。",
+          left: {
+            label: "重新核案，释出赴陕整军",
+            effects: { court: -2, law: 4, army: 6, gold: -6, people: 2 },
+            response: "孙传庭获释领职，赴陕清点现兵与存粮。各县开始交报人数，他还须筹饷、整顿营伍，才能展开训练。",
+            sets: ["chuanting-released"],
+          },
+          right: {
+            label: "继续羁押，地方暂署军务",
+            effects: { court: 3, law: -4, army: -4, gold: 2 },
+            response: "孙传庭继续被羁押，地方官暂管关中军务。募兵与筹粮仍由各县分头办理，遇事层层请示。",
+            sets: ["exec"],
+          },
+          people: ["licheng", "sunchuanting"],
+        },
+      ],
+      [
+        {
+          id: "g-guanzhong",
+          name: "募兵与春耕争人手",
+          avatar: "耕",
+          text: "孙传庭到陕，李鸿基已受约束入军籍，按户安置也让不少流民有了去处。返乡农户却缺耕牛、欠旧税，强催募兵又会误农时。孙传庭请分别拨款供现役训练、助农户复业，地方官则催着先补税欠。",
+          left: {
+            label: "补牛缓旧欠，按册募兵给饷",
+            effects: { court: -2, army: 2, gold: -4, people: 4 },
+            response: "返乡农户得到耕牛接济，旧欠暂缓追催。愿入营者逐人领饷，孙传庭按到营人数编队训练。",
+            sets: ["gewu-guanzhong", "guanzhong-recovery"],
+          },
+          right: {
+            label: "先收旧欠，恢复各县常额",
+            effects: { court: 2, law: 2, gold: 10, people: -4 },
+            response: "各县催收旧欠，税银补进官库。刚领到田地、恢复生计的家庭却又得省下口粮交税，来年的种子和耕牛钱更难凑齐。",
+          },
+          requires: ["chuanting-released", "lz-absorbed", "gewu-settlement"],
+          people: ["licheng", "sunchuanting"],
+        },
+        {
+          id: "c-guanzhong-recruit",
+          name: "新募秦兵不能靠空名册",
+          avatar: "议",
+          text: "孙传庭已出狱到任，关中仍有流民四处找活，返乡农户又被催缴旧欠。他请少催农户、逐人点验募兵，备好实饷再收人；兵部要尽快补足秦兵，各县因而请求先按限额报送名册。",
+          left: {
+            label: "逐人点兵发饷，给农户留农时",
+            effects: { court: -2, army: 2, gold: -4, people: 3 },
+            response: "到营者逐一点验领饷，孙传庭据此编训。返乡户少受催逼，能赶上耕种，扩募人数也相应放缓。",
+            sets: ["guanzhong-recovery"],
+          },
+          right: {
+            label: "限时报满兵额，旧欠照催",
+            effects: { court: 2, army: -3, gold: 3, people: -3 },
+            response: "册上兵额很快齐了，到营人数与粮饷却对不上，孙传庭仍得逐营核验。",
+          },
+          requires: ["chuanting-released"],
+          people: ["licheng", "sunchuanting"],
+        },
+        {
+          id: "c-guanzhong-without-general",
+          name: "孙传庭在狱，地方催兵催粮",
+          avatar: "议",
+          text: "孙传庭没有获释，关中军务由地方官暂管。县里同时催募兵和旧欠，农户眼看要误播种，现营也缺口粮。是先拨粮给驻军、缓催农户，还是先收旧欠充实官库，把募兵延后？",
+          left: {
+            label: "先给现营实粮，暂缓农户旧欠",
+            effects: { army: 2, gold: -4, people: 3 },
+            response: "现营领到口粮，农户少一轮催缴，得以赶种。地方官继续维持驻军，孙传庭仍被羁押。",
+          },
+          right: {
+            label: "先收旧欠，暂停扩募",
+            effects: { army: -2, gold: 4, people: -3 },
+            response: "官库收进一笔旧欠，农户手里的种粮钱更少。地方暂缓扩募，只能靠现有守军应付各处防务。",
+          },
+          people: ["sunchuanting"],
+        },
+      ],
+      [
+        {
+          id: "s-chuanti-ready",
+          name: "传庭练兵",
+          avatar: "🗡️",
+          text: "跨入崇祯十六年，孙传庭送来到营兵册与农户复业安排，停战也使部分军费得以转用。秦兵尚在训练，朝中却催他限日出师。孙传庭请继续留营操练，每年核查粮饷与成效，免得新兵仓促上阵。",
+          left: {
+            label: "催他即刻东出",
+            effects: { court: 6, law: -4, army: -8, gold: -6 },
+            response: "檄符三下。传庭泣疏：「兵聚而未更战阵，未可用也。」——你读过这句话的下文。",
+          },
+          right: {
+            label: "留守训练，按粮饷逐年考成",
+            effects: { court: -4, law: 4, army: 6, gold: -4, people: 3 },
+            response: "秦兵留营操练，粮饷按期供应。孙传庭得以逐步练成骨干，也须逐年呈报训练成效和开支。",
+            sets: ["chuanting-wait"],
+          },
+          requires: ["chuanting-released", "peace-kept", "guanzhong-recovery"],
+          people: ["sunchuanting"],
+        },
+        {
+          id: "c-chuanting-short-pay",
+          name: "孙传庭为现兵催粮",
+          avatar: "议",
+          text: "孙传庭已在关中，筹得的钱粮却不足以支撑大举出师，新募人数也还未核清。他请先缩小募额，守住要地、查清现饷；朝中催战者要求照已报兵额出发，欠缺的钱粮沿途再筹。",
+          left: {
+            label: "缩募额守要地，核清现饷",
+            effects: { court: -3, army: 2, gold: -3, people: 2 },
+            response: "孙传庭把钱粮集中到现营，留住一部分骨干，暂守要地。扩募与长期训练仍受经费限制。",
+          },
+          right: {
+            label: "按报额催出，缺饷路上筹",
+            effects: { court: 3, army: -5, gold: 2, people: -3 },
+            response: "出师令催各营上路，点到的兵却少于名册。军士缺饷，沿途地方又被催粮，操练也被打断。",
+          },
+          requires: ["chuanting-released"],
+          people: ["sunchuanting"],
+        },
+        {
+          id: "c-chuanting-still-imprisoned",
+          name: "孙传庭还在狱中，关中的兵饷谁管",
+          avatar: "议",
+          text: "孙传庭还没有释放，关中兵马的钱粮没人总负责，临时官署报的缺额与饷册对不上。兵部请立一个暂行的规矩：另设道臣综理关中兵饷，户部按季稽核，督抚只管催征，不能越过督师催战。另一议则说不必添官，仍由现有衙门按现有兵数拨饷。",
+          left: {
+            label: "另设道臣综理，户部按季稽核",
+            effects: { court: -2, law: 3, army: 1, gold: -3 },
+            response: "你准关中兵饷另设道臣综理，户部按季稽核，吃空额者问罪，督抚不能越过督师催战。添官多这一笔开销，握兵权的督抚怨恨被裁制，朝廷也等于自认此前无人负责。但饷银有了可对账的实数，眼下在营的兵能吃饱，孙传庭仍在狱中。",
+          },
+          right: {
+            label: "不添新官，按现有兵数拨饷",
+            effects: { law: 1, army: -2, gold: 2 },
+            response: "你说关中的事务仍由现有衙门综理，按现有兵数拨饷，不另添官，也不禁止督抚催战。库银不多花一分，权柄不多分一处，朝廷的章程也不乱。只是缺额没人追究得动，虚冒仍挂在空册上，眼下在营的兵因为领不到饷一天天散去。",
+          },
+          people: ["sunchuanting"],
+        },
+      ],
+    ],
+  },
+
+  // ── 崇祯十六年 ──
+  {
+    id: "succession",
+    name: "新政查验与储君承诺",
+    time: { year: 16, order: 2 },
+    steps: [
+      [
+        {
+          id: "s-htj",
+          name: "皇太极病亡，旧约如何续行",
+          avatar: "🐺",
+          text: "崇祯十六年，皇太极病亡。清廷议立年幼的福临，由多尔衮、济尔哈朗辅政。先前签下的停战条约尚在，新主是否照旧履行，边将急等答复。是派使带旧约前往确认，还是趁权力交接试探边堡？",
+          left: {
+            label: "确认旧约，守备不因丧讯撤空",
+            effects: { court: -2, law: 2, army: 2, gold: -3 },
+            response: "使者带去旧约副本，清廷确认照旧履行。边营继续留兵守备，使节与商旅得以按原约往来。",
+            sets: ["peace-renewed"],
+          },
+          right: {
+            label: "试探边堡，暂缓续约确认",
+            effects: { court: 4, law: -3, army: 3, gold: -3 },
+            response: "边堡交锋增多，清廷要求解释出兵用意。新主尚未正式确认旧约，边将只得加紧戒备。",
+            sets: ["peace-border-probe"],
+          },
+          requires: ["peace-kept"],
+          people: ["huangtaiji", "duoerhun", "haoge"],
+        },
+        {
+          id: "c-htj-no-treaty",
+          name: "清廷易主，先守还是试探",
+          avatar: "议",
+          text: "崇祯十六年，皇太极病亡，清廷议立年幼的福临，多尔衮与济尔哈朗辅政。双方此前未定停战条约，边地仍各自戒备。有将领请先稳住关口、查探新令，也有人想趁清廷交接出兵试探。",
+          left: {
+            label: "守边核军情，不趁丧讯轻进",
+            effects: { court: -2, law: 2, army: 2, gold: -3 },
+            response: "各营照旧守关，斥候查探清廷新令和调兵动向。边将暂不轻进，粮饷仍按原有守备拨给。",
+          },
+          right: {
+            label: "拨粮试探边堡，防其增援",
+            effects: { court: 3, law: -2, army: 3, gold: -4 },
+            response: "小队领粮出关试探，清廷也向边堡增兵。各营戒备加紧，后方须预留更多接应的钱粮。",
+          },
+          people: ["huangtaiji", "duoerhun", "haoge"],
+        },
+      ],
+      [
+        {
+          id: "g-inspection",
+          name: "别只给朕看样板县",
+          avatar: "县",
+          text: "新政成绩册堆满御案，最穷的县却报得最迟。复核团请抽查仓里实粮、病家口粮、工钱和旧债兑付，让佃户、工匠能当面申诉。查出多征的税就退还，查出被侵吞的钱就追缴，并改掉有漏洞的办法，不能为了漂亮数字让地方藏人藏账。",
+          left: {
+            label: "抽查普通县，公布差错补救",
+            effects: { court: 2, law: -2, army: -2, gold: 6, people: 2 },
+            response: "政不以饰观为成。追回虚支，宽免错征，也承认有些县尚未做好；能改错，比一纸天下大治更可信。",
+            sets: ["gewu-inspection"],
+          },
+          right: {
+            label: "先表彰样板，少扰地方",
+            effects: { court: 6, law: 2, gold: 4, people: -2 },
+            response: "地方少一轮迎检，朝廷也有可示人的成绩。各项制度照常运行，但普通县究竟得到多少好处，终究没有查明。",
+          },
+          requires: ["gewu-audit", "gewu-charter", "gewu-peace-dividend", "peace-renewed", "gewu-songjin"],
+        },
+        {
+          id: "c-inspection-open-ledger",
+          name: "新政账册之外，还有欠粮欠薪",
+          avatar: "议",
+          text: "地方呈来新政功绩册，民间却仍有赈粮短发、工钱拖欠的申诉，官册还不足以说明实情。核查官请抽查几个普通县，直接问领粮者和工匠；地方官嫌往来耗费，请先核现有官册，暂缓下县。",
+          left: {
+            label: "抽查普通县，公布拖欠与短发",
+            effects: { court: -2, law: 2, gold: -3, people: 3 },
+            response: "查验官问到领粮者与工匠，追补部分短粮欠薪。尚未查清的县列出待办清单，地方须继续交代。",
+          },
+          right: {
+            label: "只核官册，推迟实地查访",
+            effects: { court: 3, gold: 3, people: -2 },
+            response: "地方少了一轮接待，核查只在官册间进行。账上数目容易对齐，未入账的欠粮欠薪仍难发现。",
+          },
+        },
+      ],
+      [
+        {
+          id: "g-capital",
+          name: "一笔急调赈粮，也要两京留账",
+          avatar: "储",
+          text: "核查已查到普通县，内廷忽请凭中旨调走备用赈粮，改账先留北京，日后再补南京副本。辅臣请照应急条款共同签署、限期复查，将公账、图册和粮册同步分存两京；内廷嫌手续拖慢军中急用。",
+          left: {
+            label: "准这次中旨，副本以后再补",
+            effects: { court: 5, law: -4, army: 2, gold: 4 },
+            response: "粮食先调作急用，内廷办事快了。南京仍存旧数，复核官要查这批粮的去向，只能再向北京追索改账。",
+          },
+          right: {
+            label: "按应急条款复核，两京同步留本",
+            effects: { court: -3, law: 3, army: -2, gold: -3, people: 2 },
+            response: "辅臣共同签署，定下复查期限，两京各存同样的账粮图册。调拨稍慢，赈粮改拨多少、由谁接手都可追查。",
+            sets: ["south-prep", "charter-copies"],
+          },
+          requires: ["gewu-charter", "gewu-inspection", "gewu-depots", "gewu-settlement"],
+          people: ["wangchengen"],
+        },
+        {
+          id: "c-capital-partial-backup",
+          name: "调粮之前，先留一份账",
+          avatar: "议",
+          text: "内廷请凭中旨调粮，辅臣却查不齐各处钱粮和安置记录，两京也难及时核对。是只准限额应急，抄出已有账册送南京备查，还是把钱粮与原册都留在北京，先满足眼前军需？",
+          left: {
+            label: "限额救急，抄现有底册南送",
+            effects: { court: -2, law: 2, gold: -3, people: 2 },
+            response: "急调粮数受到限制，现有账册另抄一份送南京。两京有了部分可核对的凭据，其余缺账还须追补。",
+            sets: ["south-prep"],
+          },
+          right: {
+            label: "钱粮账册留京，先足眼前急用",
+            effects: { court: 3, law: -2, army: 2, gold: 3 },
+            response: "钱粮和原册集中京师，内廷调拨更快。南京难以核实最新收支，遇到疑账只能往返请查。",
+          },
+          people: ["wangchengen"],
+        },
+      ],
+      [
+        {
+          id: "g-succession",
+          name: "储君承诺，继位后也守章程",
+          avatar: "继",
+          text: "新政查验和两京副本已办，太子朱慈烺开始学习钱粮与政务。辅臣请把查账、任期、议事、救济及应急限权列入常年讲习，并让储君承诺日后继位也照章办理；东宫官属则想给未来君主留下临机裁断的余地。",
+          left: {
+            label: "先教储君，别束缚后人",
+            effects: { court: 8, law: -4, army: 2, gold: 2 },
+            response: "储君懂得新政的用处，却仍可即位后一言尽改。器院、工学、税关都还在，制度的寿命却又押在一个人的性情上。",
+          },
+          right: {
+            label: "公开承诺，继位也守章程",
+            effects: { court: -4, law: 2, army: -2, gold: 6, people: 4 },
+            response: "此约不因易君而废。借券与雇约少了一层朝令夕改的疑惧；后人能否守成没有神谕，至少已有可据以争辩的成文之约。",
+            sets: ["gewu-succession"],
+          },
+          requires: ["gewu-inspection", "gewu-charter", "charter-copies"],
+          people: ["taizi"],
+        },
+        {
+          id: "c-succession-unfinished",
+          name: "把未做完的事也教给东宫",
+          avatar: "议",
+          text: "东宫准备政务讲习，太子朱慈烺将读到各地新政账册，其中仍有未查清的欠款与工程。辅臣请连这些难题一起讲明，保存原册供查问；东宫官属怕议论牵涉太多人，只想先讲已办妥的事。",
+          left: {
+            label: "进展欠账一起讲，保留原册",
+            effects: { court: -2, law: 2, gold: -2, people: 2 },
+            response: "储君读到已办政务，也看见欠款与未完工程。原册留下供讲习查问，尚未议定的规矩仍须朝臣续议。",
+          },
+          right: {
+            label: "先讲已办项目，未决事暂封存",
+            effects: { court: 3, law: -2, gold: 2 },
+            response: "东宫先讲办妥的政务，争议账册封存。官员免了当面解释旧欠，储君也少了追问钱粮去向的机会。",
+          },
+          people: ["taizi"],
+        },
+      ],
+    ],
+  },
+
+  // ── 崇祯十七年 ──
+  {
+    id: "finale",
+    name: "甲申终章",
+    time: { year: 17, order: 1 },
+    steps: [
+      [
+        {
+          id: "g-finale-gewu",
+          name: "格物中兴",
+          avatar: "兴",
+          text: "甲申年，边境暂得停战，秦兵得以留营训练，关中百姓逐渐复业。病家有人照料，堤闸有人巡查，官府花钱也得向议事者交代。蒸汽泵还只是少数试件；真正留下的，是工师能接着前人的记录改进器物，皇帝也不能任意绕过章程。如今要决定，这些约定能否传给后人。",
+          left: {
+            label: "守章程，让后人继续革新",
+            effects: {  },
+            response: "功不独归一君，法不止于一朝。把未解的问题、能用的办法与约束权力的章程，一并交给后来人。",
+            finale: "reform",
+          },
+          right: {
+            label: "收回裁断权，扩军图强",
+            effects: {  },
+            response: "器械与财源仍在，皇权却越过了自己立下的界线。技术不会一夜消失，能纠错、能接续的制度开始后退。",
+            finale: "reform-retreat",
+          },
+          requires: ["gewu-institute", "gewu-budget", "gewu-artisans", "gewu-seeds", "gewu-measure", "gewu-payroll", "gewu-waterworks", "gewu-review", "gewu-shipping", "gewu-customs", "gewu-audit", "gewu-apprentices", "gewu-manuals", "gewu-exams", "gewu-tenure", "gewu-council", "gewu-relief", "gewu-taxroll", "gewu-grain-tax", "gewu-credit", "gewu-fuel", "gewu-tools", "gewu-health", "gewu-depots", "gewu-pump", "gewu-schools", "gewu-clinics", "gewu-command", "gewu-maintenance", "gewu-charter", "gewu-market", "gewu-peace-dividend", "gewu-inspection", "gewu-succession", "gewu-denglai", "gewu-settlement", "gewu-frontier", "gewu-containment", "gewu-river", "lz-absorbed", "peace-kept", "chuanting-wait"],
+          excludes: ["exec"],
+          resourceBounds: { court: { min: 45, max: 80 }, law: { min: 45, max: 80 }, army: { min: 45, max: 80 }, gold: { min: 45, max: 80 }, people: { min: 75 } },
+          people: ["wangchengen"],
+        },
+        {
+          id: "g-finale-incomplete",
+          name: "有了另一种甲申",
+          avatar: "续",
+          text: "甲申到了，一些流民已领到田地和种粮，边防各营也靠粮站接济保住了骨干。京师仍不断收到求援的军报，地方账目和安置还有许多漏洞。朝廷尚有可用的兵粮：是先稳守防线，让百姓休养、逐项补救，还是集中诸军，清除京城附近的兵患？",
+          left: {
+            label: "稳住防线，休养并修补制度",
+            effects: {  },
+            response: "守不是坐待覆亡。以尚在的仓粮、军伍与安置之法为本，缓解民困，再补未竟的制度。",
+            finale: "reform-hold",
+          },
+          right: {
+            label: "整合诸军，限期清除近畿兵患",
+            effects: {  },
+            response: "战亦须量粮量力，不许一诏尽催天下兵。已有的后勤与安置是此番出兵的底线，不是可以挥霍的筹码。",
+            finale: "reform-battle",
+          },
+          requires: ["gewu-settlement", "gewu-frontier"],
+          people: ["wangchengen"],
+        },
+        {
+          id: "s-finale-restore",
+          name: "勤王兵至",
+          avatar: "🏹",
+          text: "三月，敌军逼近昌平，孙传庭率秦兵从关中来援，水师也赶到天津。边境停战后调回的兵马陆续抵京，各军请你定下方略：出城决战，还是依托城墙坚守，等待敌军缺粮？三百年基业，系于眼前这一战。",
+          left: {
+            label: "亲督诸军，决战近畿",
+            effects: {  },
+            response: "",
+            finale: "battle",
+          },
+          right: {
+            label: "坚壁京师，待其粮尽",
+            effects: {  },
+            response: "",
+            finale: "hold",
+          },
+          requires: ["peace-kept", "chuanting-wait"],
+          people: ["sunchuanting", "wangchengen"],
+        },
+        {
+          id: "s-finale",
+          name: "国破之日",
+          avatar: "👑",
+          text: "崇祯十七年三月十九，外城已陷，宫卫都散了，百官或逃或降。王承恩仍跟在你身后，眼前是通往煤山的石阶。有人劝你趁天未明试着突围，南下南京；宫门之外，还能否走通，无人敢保证。三百年基业，在你一念之间。",
+          left: {
+            label: "上煤山取义",
+            effects: {  },
+            response: "",
+            finale: "meishan",
+          },
+          right: {
+            label: "突围往南京",
+            effects: { court: -10, law: -6, gold: -12, people: -8 },
+            response: "",
+            finale: "south",
+          },
+          people: ["wangchengen"],
+        },
+      ],
+    ],
+  },
+]
+
+/** 全部事件的平铺视图（含终章候选），人物事件表与提示求解器共用 */
+export const ALL_EVENTS: GameEvent[] = CHAPTERS.flatMap((chapter) => chapter.steps.flat())
+
+/** 事件 id → 最早可落槽位（范围篇章取年期首槽），供测试与人物纪年反查 */
+export const EVENT_SLOT: Record<string, number> = (() => {
+  const slots: Record<string, number> = {}
+  for (const chapter of CHAPTERS) {
+    const start = chapterStart(chapter.time)
+    chapter.steps.forEach((candidates, step) => {
+      for (const event of candidates) slots[event.id] = start + step
+    })
   }
-}
-
-function card(
-  id: string,
-  name: string,
-  text: string,
-  left: Choice,
-  right: Choice,
-  requires: string[] = [],
-): GameEvent {
-  return { id, name, avatar: '议', text, left, right, requires: requires.length ? requires : undefined }
-}
-
-function at(slot: number, event: GameEvent): GameEvent {
-  return { ...event, year: yearOf(slot), order: (slot % CARDS_PER_YEAR) + 1 }
-}
-
-function chapter(id: string, name: string, start: number, steps: GameEvent[][]): StoryChapter {
-  return { id, name, start, steps: steps.map((candidates, index) => candidates.map(event => at(start + index, event))) }
-}
-
-// 同一步按数组顺序取首张可用卡；条件变体在前，最后一张永远无条件兜底。
-// 同一原卡只归属一个步骤；新增的中间决定用旗标进入本章后续验收。
-export const STORY_CHAPTERS: StoryChapter[] = [
-  chapter('wei', '宫门定策', 0, [
-    // Phase 1 · 宫门定策
-    [source('s-tuogu')],
-    [source('s-dianjianglu')],
-    [source('s-gongnv')],
-    // Phase 2 · 先断内援
-    [source('s-kesi')],
-    [source('s-cui')],
-    // Phase 3 · 收网
-    [source('s-wangtiqian')],
-    [source('s-impeach-wei')],
-    [
-      source('s-wei', ['wei-watched'], { resourceBounds: { law: { min: 40 }, army: { min: 40 } } }),
-      source('s-wei-rash', [], { resourceBounds: { army: { min: 40 } } }),
-      source('s-wei-failed', ['warned'], { resourceBounds: { army: { max: 39 } } }),
-      source('s-wei-stalled'),
-    ],
-  ]),
-  chapter('institute', '器院立局', 8, [
-    [source('g-institute')],
-    [
-      source('g-budget', ['gewu-institute']),
-      card('c-institute-budget-old', '历年拖欠的匠人工钱，怎么付清',
-        '器院没能设立，各省历年拖欠工匠的工价银却堆在工部的册子上。匠户垫钱办事多年领不到一钱，地方官便以此推托，不肯应募做工。户部请求按册用商税银两清付积欠；工部则自请节省本部的料银，不再摊派民匠。这个例一开，往后招募工匠就有了凭据。',
-        option('准以商税银按册清付积欠', { gold: -4, law: 2, people: 2 }, '你把商税银两认作匠价，历年积欠按册发给，户部与工部一同核销。国库多支出这一笔，但每一册都查得清；工匠领到现银，才肯应官府招募，各省也不再拿「工钱未曾发放」作推托的由头。'),
-        option('只准工部自行节省', { gold: 3, army: 2, people: -3 }, '你只准工部在本部料银内挪借节省，旧欠仍挂在册上不销。国库不另支银，工部为完额照数催造军器，边营按期得器；垫钱多年的匠户反被官府催逼，逃出匠籍的人在路上接连不断。')),
-    ],
-    [
-      source('g-artisans', ['gewu-institute', 'gewu-budget']),
-      card('c-institute-artisans-repairs', '班匠折银的通例',
-        '器院没有常年经费，工部手上只有旧日班匠名册。轮班应役者多不愿北上，愿来者又要举家移徙。工部请以官价募匠代轮班，匠籍且存其旧，工食银两并入部议确项；另有主照祖制轮役、将省下之银解赴边库者。',
-        option('准折银雇募，存其匠籍', { gold: -3, army: 2, people: 2 }, '你准各省以官价募匠代轮班，工食著为部议确项，匠籍仍旧不除。户部岁添此数，然军器得匠而修，边营按期获器；应募者按月领值，其家听移京师，不复以役期为累。'),
-        option('仍照班匠轮役解银', { gold: 2, army: 3, people: -4 }, '你止令依旧例轮班应役，折银解部，匠价遂并入边饷之数。军需先足，营中得器最快，库藏亦省；轮误者照例赔日，逃亡相踵，匠户终不肯携家与秘技赴官坊。')),
-    ],
-    [
-      source('g-measure', ['gewu-institute', 'gewu-budget', 'gewu-artisans'], {
-        text: '器院铸成官样的尺和秤各一副，徐光启奏请发到各省与九边：今后量田亩、造军器、收发钱粮，都照这一副官样来算。要朝廷定三件事——官样归哪个衙门掌管、隔几年校验一次；验收不合的，退换和赔累算在哪个衙门头上；私造尺秤的人由谁拿问、按什么罪办。边营正催取火器，嫌这些步骤太慢。',
-      }),
-      card('c-institute-measure-samples', '军器验收不合，退换与赔累算谁的',
-        '官样的尺和秤还没有颁到各省，工部也找不到常年负责校验的人。军营催着领车轴和火器，工部请定一条明白的例：未经官样验过的不许发营，退换的费用与追赔的责任落在哪个衙门。营官说边务正急，这个例一行，军器必定误期。',
-        option('定退换之例，验明才发营', { gold: -2, army: -2, law: 2 }, '你准未经官样验过的一律退换，赔累由承办官员担当，不许摊到州县头上。工部添设校验之人，花不了多少钱，军中器械从此有可复验的数目；只是这一批火器迟发，边营怨恨朝廷拿规矩误他们的装备。'),
-        option('急用的先发营，验过再补单', { gold: 2, army: 3, law: -2 }, '你准急用的车轴火器先发边营，验过之后补单，退换之例且缓。省下校验一番开销，军营按期得器；只是没有凭据的数目一拖多年，日后真要追赔，没有一个衙门肯认，户部、工部都拿不出对得上账的本子。')),
-    ],
-  ]),
-  chapter('yuan', '袁崇焕之狱', 13, [
-    [source('s-jisi', [], {
-      text: '皇太极绕道入塞，兵锋逼近北京。袁崇焕率关宁军赶来勤王，请给营地和口粮。城里担心客兵扰民，城外将士却已连日奔走；先怎样安置这支援军？',
-      left: option('划营给粮，准其休整', { gold: -6, army: 8, court: -4, people: 2 }, '关宁军领粮整队，随后在城外迎敌。京城官民仍担心客兵滋扰，要求营官严加约束。', ['jisi-muster']),
-      right: option('不许入城，城外接战', { army: -6, court: 4, people: -2 }, '关宁军疲惫接战，怨城内不肯接济；守城官员又怕援军生乱，双方来往愈发紧张。', ['jisi-outside']),
-    })],
-    [
-      source('s-jisi2', ['jisi-muster'], {
-        text: '勤王军已经得到休整，城下交战仍让京师惊恐。流言说袁崇焕故意引敌来京，密报又指后金军在放反间消息。是先关押主将，还是保留其职、把调兵记录交法司查验？',
-        left: option('收押候审，另派人接军', { court: 6, law: -6, army: -8 }, '袁崇焕入狱候审，新将仓促接军，部将心生疑惧。法司开始调取文书，核查通敌指控。', ['yuan-imprisoned', 'exec']),
-        right: option('留职核查，不凭流言定罪', { court: -4, law: 4, army: 6, gold: -2 }, '袁崇焕继续领军，来往文书送交法司。要求拿人的奏疏仍不断送来，朝中争论更烈。', ['yuan-free']),
-      }),
-      card('c-yuan-rumour-outside', '城外援军也卷入流言',
-        '关宁军在城外苦战，未得充分休整，京城仍有人把敌军到来归罪袁崇焕。要求拿人的奏疏与催粮的军报一同送到，是将他收押换将，还是补查军报、先把欠下的口粮发给将士？',
-        option('收押换将，再查文书', { court: 6, law: -6, army: -8 }, '袁崇焕入狱候审，换将又耗数日。部将忙于交接，法司尚在核对各营进退的军报。', ['yuan-imprisoned', 'exec']),
-        option('补粮留任，交法司核查', { gold: -4, court: -4, law: 4, army: 6 }, '城外将士得到补粮，袁崇焕继续领军。连日苦战的疲惫尚未缓过，营中仍有怨言。', ['yuan-free'])),
-    ],
-    [
-      source('s-yuan-liaodong', ['yuan-free'], {
-        text: '法司核查军报，未能证实袁崇焕通敌，他仍在辽东任事。如今他请修筑大凌河城，以屯田接济驻军；户部却说现有饷银难兼顾筑城与守边。是准他向前经营，还是把兵粮集中到宁远、锦州一线？',
-      }),
-      source('s-yuanshi', [], {
-        text: '袁崇焕案到了最后裁决。先前收押造成的军心动摇尚未平息，法司却仍拿不出谋款引敌的实证。是迎合京城众议处死他，还是撤去无实证的罪名、让他回辽任事？',
-      }),
-    ],
-  ]),
-  chapter('wuqiao', '吴桥兵变', 23, [
-    [source('s-wuqiao', [], {
-      name: '吴桥兵变的平叛方略',
-      text: '孔有德部过吴桥起事，登州未失。孙元化请定剿抚之方：一是明发讨逆之令，以登莱道将以下俱听督师节制，兵部但司饷银，不得中制；先以兵封要路，护住炮局与军报，进剿次第由督师自定。二是先遣使赍诏入营招抚，分辨首从，统属之权且未议定。',
-      left: option('明发讨逆，节制尽属督师', { gold: -4, army: 2, people: -2 }, '你明发讨逆之令，命登莱道将以下俱听孙元化节制，兵部但司饷银，不得中制。分兵封锁要路，炮局与军报得及转移，叛军进退皆有所碍；行旅为之中绝，沿边百姓颇苦催调。', ['wuqiao-cordon']),
-      right: option('主抚不烦大兵，分辨首从', { gold: -2, court: -2, people: 2 }, '你从主抚之议，遣使赍诏入营，只许分辨首从，不烦大兵进剿。乱军得粮即散，未受刀兵；然朝廷威令不出宫门，孙元化以招抚自任。要路未曾封锁，救人与炮局须别觅通路。', ['wuqiao-envoys']),
-    })],
-    [
-      card('g-wuqiao-protect', '炮可再铸，工师图册难再得',
-        '登莱匠人已有雇约，孙元化能按名册点出工师与家眷。乱军逼近，官船车马的运力只够一头：请定专载之令——专载工师、炮料与图册，饷银另雇民车递运，失陷之责着落登莱道；或以军饷成炮为先，工师图册听其自便。',
-        option('定为专载之令，任失陷之责', { gold: -4, army: -2, people: 4 }, '你准官船车马专载工师、炮料与图册，饷银另雇民车递运，所费于登莱饷内支给；未能载去之炮，着登莱道任其失陷。国库多此一费，营中少一批现炮，工师与其家口则尽数撤出。', ['wuqiao-protected', 'wuqiao-artisans-safe']),
-        option('饷炮先走，图册听其自便', { gold: 2, army: 4, people: -4 }, '你以军饷成炮为急，船车尽数先运入守营，不另雇民车。库银得省，守军速得有炮之实；工师家口各自避乱，图册量具随之散失，日后修铸只靠少数熟手口述。'),
-        ['gewu-artisans']),
-      card('c-wuqiao-protect-scattered', '逃散的匠户如何安插',
-        '乱军走过的地方，工匠散在民间，名册已经点不齐。孙元化请定一条通行令：遭难匠户的家眷由所在州县安置，口粮从器院的匠价银里按季发给，逃散的工匠一概不许追拿。另有一议：只按登莱旧册点收入营，不在册的官府一概不管，省下这笔口粮钱，把车船运力留给军需。',
-        option('准安置给粮，不许追拿工匠', { gold: -4, army: -2, people: 4 }, '你准遭难匠户的家眷由所在州县安置，口粮从匠价银里按季发给，逃散的工匠一概不许捕拿。官库多出这一项开销，车船也被占去几分，营中少一分运力。匠户知道有依靠，陆续到官府投回名籍。', ['wuqiao-artisans-safe']),
-        option('只按旧册点收，其余一概不管', { gold: 2, army: 2, people: -4 }, '你只准按登莱旧册点收入营，不在册的官府一概不管，口粮也无从再发。匠价银留下备作军需，车船得专运炮械。渡口上的家眷没有依倚，散落的工匠一旦被追拿比对，当天就远远藏走。')),
-    ],
-    [
-      card('g-wuqiao-rations', '乱兵的头目与跟随者如何定罪',
-        '要道已有守兵，各营的人名与欠饷数目也能照册查点。孙元化请定一个定罪通则：首恶几人依律处决，其余一概赦免，愿意回军的编入指定营伍、听督抚统率，口粮从登莱饷银内按名发放。另一派则说：不必分首恶与跟随，把赏银交给旧头领，由他约束部众，几天就能安定。',
-        option('只杀首恶，其余赦免归队', { gold: -4, court: -2, law: 2, army: 2, people: 2 }, '你准首恶若干人依律处决，其余一概不问，愿回军的听督抚收籍编营，口粮按名发放。登莱饷银多这一项开销，另案追查也烦累地方官；宽严之份交与章程和督抚执掌，御前一时不便随时更改，朝中还有人说你太宽。好处是当过乱兵的人有了出路，裹挟入伙的手法就此失灵。', ['wuqiao-disciplined']),
-        option('赏银交给旧头领，不分首从', { gold: -2, court: 2, army: 2, law: -4 }, '你把赏银交给旧头领自行分发，不区分首恶与跟随，也不再另设查案的衙门。乱事几天就平，朝廷省下一半开销，众将觉得陛下信得过他们，营里暂时安稳；只是银到了谁手里没有册子可查，日后这支兵成了头领的私产，官府再也没法过问。'),
-        ['wuqiao-cordon', 'gewu-payroll']),
-      card('c-wuqiao-rations-emergency', '仓粮可否不俟报径支',
-        '各营人数与道路情形尚未查清，缺粮军士与趁乱抢掠者已不可分。督抚请定仓折径支之例：不俟户部复准，即于地方仓粮折色内先行给发，事后造册核销，侵欺之责坐该镇道；另有主必先收入城，非复准不得擅支。',
-        option('准径动仓折，事后核销', { gold: -4, army: -2, people: 4 }, '你准督抚不俟报而径动地方仓粮，折色给发，其银先行那移、事后造册送部核销，侵欺者坐该镇道。国库为此多垫一笔，守城之粮亦分去一分；然愿归者得食而出乱营，胁随之党渐散。', ['wuqiao-rations-emergency']),
-        option('粮必俟复准，先收入城', { gold: 2, army: 2, people: -3 }, '你令仓粮非户部复准不得擅支，一体先收入城以备门户。库项不致无着，守城有粮而心稍定；城外饥军无所待命，出乱营归队者由此日少，抢掠者仍杂其间。')),
-    ],
-    [
-      source('g-wuqiao', ['gewu-artisans', 'gewu-payroll', 'gewu-review', 'wuqiao-protected', 'wuqiao-disciplined'], {
-        name: '登莱炮局的去留',
-        text: '工师家眷和图册已安置，补粮与查案分开办理，乱军的联系渐被切断。孙元化请拨款恢复炮局、修船整军，并逐项复查开支；户部担心钱粮难继，主张带工匠撤走，放弃当地厂坊。',
-      }),
-      card('c-wuqiao-artisans', '工师去留与匠籍世守',
-        '救出的工师已在登莱以外，炮局图册船料多失，原处难再开工。孙元化请在异地拨料开局，准工师给廪留任，并除匠籍世守之令，其家听别籍自便；户部另议但给路费遣归，匠籍仍照旧世守，以省常年廪给之费。',
-        option('准开局给廪，除其世籍', { gold: -4, army: 2, people: 2 }, '你准异地开局，工师给廪留任，匠役不必世守其籍，愿去者听，其家别籍自便。廪给与料价并出官库，岁费不赀；然军器自此有可修之人，营中得器渐易，孙元化亦以籍册待查。', ['wuqiao-workshop-saved']),
-        option('但给路费遣归，匠籍仍旧', { gold: -2, army: -2, people: 3 }, '你止给路费遣令还乡，更不开局，匠籍仍照世守之例。廪给之费顿省，失所家口得归故土；只是军器一遇损坏，仍须到处访求熟手，登莱以来之炮竟无可修之所。'),
-        ['wuqiao-artisans-safe']),
-      card('c-wuqiao-losses', '登莱的损失清单',
-        '工师家口没能成批护出，营伍也未恢复秩序，叛军抢去部分炮械船只。孙元化因失守被问罪：是先接济逃散人员、查明责任再判，还是处死巡抚、撤并据点，把余粮留给后方？',
-        option('接济逃散者，查损追责', { gold: -4, law: 2, people: 2, army: -2 }, '逃散者得到接济，炮械与船只的损失逐项登记。孙元化交接候审，法司将查明各处失守的责任。'),
-        option('处死孙元化，撤并据点', { gold: 3, army: -4, people: -2 }, '孙元化以失守罪被处死，据点撤并后省下一段守费。叛军仍占有炮船，失散匠户也尚未寻回。')),
-    ],
-  ]),
-  chapter('shipping', '海贸立约', 27, [
-    [
-      source('g-shipping', ['gewu-review']),
-      card('c-shipping-charterless', '官货许否借民船',
-        '郑芝龙不肯签下长年承运之契，海上一事遂无通行之令。军营催拨铁料，兵部请暂借民船装载，由海防同知填给船引，失风者按船均赔；或以民船必不可信，改从陆路趱运，脚价派之驿递。',
-        option('准借民船，给引责赔', { gold: -3, army: 2, law: -2 }, '你暂准借民船载运官货，海防同知填给船引，失风之人按船均赔，脚价于军需银内支给。军营早得铁料；只是无长契而临时借载，赔案纷纷，沿边有司缘此开任意派船之例。'),
-        option('不许借载，改由陆运', { gold: -5, army: -2, people: 2 }, '你以民船不可倚为常令，不许借载，官货改从陆路趱运，脚价开销银内支给。沿海商民不遭摊派之累；只是驿递大耗，陆路迂远，铁料后时方至营中。')),
-    ],
-    [
-      source('g-customs', ['gewu-shipping']),
-      card('c-shipping-customs-port', '海关税银留本还是解京',
-        '海运长契未成，各港仍自设杂费之关。户部请定关卡非经部议不得增设，税银除留巡防经费外尽数解京；港官则请留本充饷，任其自行裁并，以速巡船。此议不决，则一货数征，商皆辞去。',
-        option('关卡归部议，余税解京', { gold: -3, law: 2, people: 2, army: -2 }, '你准增设关卡必由户部题覆，税银除留巡防外尽数解京。朝廷遂得稽其总目，商船不遭重复之征；惟巡船须按季请领部拨，款未到时，出海巡查顿减。'),
-        option('准留本充饷，听港自并', { gold: 2, army: 3, people: -3 }, '你准各港留税充饷，重叠之关任其自行裁并。户部不另发帑而巡船得足，海面稍靖；只是税银不复上计，商船逐港输钱，一批货几于纳再三之费。')),
-    ],
-    [
-      source('g-audit', ['gewu-customs', 'gewu-budget']),
-      card('c-shipping-audit-receipts', '番舶抽分必凭收单',
-        '一船铁料到港，商家称尾款未清，港口与军营所执收单多寡不合。户部请定通则：番舶抽分必凭官给收单，无单者其货入官，稽核专属户部主事，验货另委他人；营官以军需方急，请止按现货结放。',
-        option('立收单为凭，稽核归户部', { gold: -3, law: 3, army: -2 }, '你准抽分必凭官给收单，无单者入官，稽核专属户部，验货别委其人。办货之费稍增，船候单不行，军器迟收；然价差自此有案可追，港口不得自为多寡。'),
-        option('止按现货结放，稽核委地方', { gold: 2, army: 2, law: -3 }, '你令先按现货给价放行，稽核且委之地方。库银无所别支，军营速得铁料；只是收单存废无人主张，无单之货亦竟不行入官之科，价差遂成不了之案。')),
-    ],
-    [
-      card('g-shipping-dispute', '一帮之众非有司所能制',
-        '有船商首告郑氏亲信虚报风损，海防同知以其徒党半在船上、非本衙门所能制，直请敕旨。所当断者：郑氏一帮是否尽隶有司，违令者许何衙门径行提问，船引与航路之权归官给还是任其自相授受。税册与验货之单俱在。',
-        option('准隶有司，船引官给', { gold: 2, court: -2, law: 3, army: -2 }, '你定海商一律隶于有司之例：违令者海防同知得径提问，船引航路皆由官给，争议之段别行召商。追出虚报之赔与引银并入关税，郑氏及其在朝之党怏怏，军粮因此后时；然海上始知有官法。', ['shipping-arbitrated']),
-        option('且仍其旧，赔补以货', { gold: 4, army: 2, law: -3 }, '你以海事非文法所能绳，止令郑氏按数赔货，不立官给船引之名，有司亦不复擅问。赔货折银入库，军粮依期而至；只是他日虚报风损者，更无衙门得与计较，诸商遂各归其党。'),
-        ['gewu-shipping', 'gewu-customs', 'gewu-audit']),
-      card('c-shipping-dispute-private', '官课民债先后之序',
-        '一船货到港短数，郑氏归咎港吏漏记，港吏称船上少装，验单不足凭以定责，小货主嗷然待偿。请定清偿之序：官课与民债何者先给，短少之数何衙门得而断定；或先提承运押金对单，官课即刻抵清。',
-        option('先偿民债，海关道断之', { gold: -4, people: 3, law: 1 }, '你准先偿小民之债，官课候后清，短数之案专归海关道断结。官库先行垫付，所费不赀，须俟得实之家追赔；然贷本者得还，商情少慰，海关亦有所禀承而不敢自为轻重。'),
-        option('先抵官课，扣押金候对', { gold: 2, army: -3, people: -2, law: 2 }, '你以国课先于民债，准将承运押金抵课，非对单明白不许给发。库课不致虚悬，断数亦归有衙门；只是停运候对，数船军料后时，小货主终岁不得偿。')),
-    ],
-  ]),
-  chapter('relief', '工赈与收编', 43, [
-    [
-      source('g-relief', ['gewu-budget', 'gewu-council'], {
-        text: '陕西、河南饥民塞路，公账与筹议之局此时已经立起。户部请定通例：用修渠筑路的官银雇丁壮做工、按日给粮，老幼病弱另设养济院给粥。要断的是三件事：这算常年之政通行各省，还是只行一季；银子从国库正项出，还是从州县罚银、火耗里出；工程限定在哪几项。',
-      }),
-      card('c-relief-temporary-grain', '灾伤先开仓还是候勘',
-        '饥民已到城外，常年工赈的工程尚未议定。荒政旧例必俟勘报方许动支，巡抚请改立通例：灾伤之地，有司不俟报便行粜借，先济老弱，事后以实数核销；户部则谓不俟报而擅支，自此仓库无可稽。',
-        option('准不俟报，便行粜借', { gold: -4, people: 4, army: -2 }, '你准有司不俟勘报即行粜借，先给老弱口粮，事后造册送部核销，折色银两仍于库项动支。仓粮耗得甚速，营食亦分去一分；然活者众而流者止，荒政自此有径行之例。'),
-        option('仍候勘报，平价出粜', { gold: 2, people: -3, court: 2 }, '你令仍照荒政旧例，俟勘报到日方许动支，官仓平价出粜、留仓底以待后患。余粮与银都在，户部以稽核为得；只是文移往返，贫无所赍者无从得食，四出求粮者愈众。')),
-    ],
-    [
-      source('g-taxroll', ['gewu-relief', 'gewu-measure']),
-      card('c-relief-taxroll-disputes', '垦熟的荒田：免税几年、由谁丈量',
-        '回乡的农人已经把荒地垦熟，大户却拿着旧契来争这块田，县里既没有准确的册，也派不出人丈量。户部说国家赋额有定，请照旧册催征，并且准大户代为缴赋；巡按请求定一条通例：报垦的荒地几年之内不征赋、丈量归哪个衙门专管、隐瞒强占的人按什么罪办。春耕就在眼前，两议都要御前定夺。',
-        option('报垦三年内不催征，庄田一体丈量', { gold: -3, court: -2, people: 3 }, '你准报垦之地三年内不许催征，丈量专归府厅，大户的庄田一体入丈。豁掉的赋额须由别项补足，朝廷岁入顿少；乡绅凡有门路者群起反对，御前顶住这层压力才办得下去。开荒的人安心种地，流亡的渐渐回到册籍之内。'),
-        option('照旧额催征，丈量缓一步', { gold: 4, law: 2, people: -4 }, '你以额赋不可轻改，只令照旧册催征，准大户代缴，丈量且缓。国用先济，旧册有凭据，胥吏也无从多报少报；只是垦荒的人收成要分一半给人，从没田的人终究没有认荒的机会。')),
-    ],
-    [source('s-chuangjiang', [], {
-      text: '陕西巡抚孙传庭在子午谷设伏，生擒闯王高迎祥。捷报进京，他奏上来的却不是报功的册子：秦兵是他一手练的，兵部却要调这支兵出关、听别处调度，他连章不肯。此刻献俘案送到御前，请一并裁定是否给降众归籍期限。招抚名单中的李鸿基另涉早年的杀督队官案，法司要求继续查证；各地则催问，愿降者该如何接纳？',
-      left: option('处决高迎祥，降众照捕令办', { gold: 4, court: 6, army: 4, people: -6 }, '高迎祥伏法，各地继续依捕令追缉，愿降者更怕入营。法司仍在追查李鸿基所涉旧案。', ['gao-executed']),
-      right: option('收押高迎祥，限期接纳归籍', { gold: -4, court: -2, law: -2, army: 4, people: 4 }, '高迎祥收押候审，归降条件明示各营，普通降众与旧案当事人分开核查。', ['gao-amnesty']),
-    })],
-    [
-      source('g-recruit', ['post-kept', 'gewu-payroll', 'gewu-relief', 'gewu-taxroll', 'gao-amnesty'], {
-        text: '裁驿以来，被裁驿卒与流亡逃丁成批投入军门求食。陕西三边总督请定招抚通例：旧案未结者一体宽免否，核籍编伍听督抚还是缴有司明正其罪，口粮行饷于何项给发，地方治安之责归于谁。户部以饷无可加，兵部以伍无可补，两疏俱到御前。',
-      }),
-      source('s-licheng-officer', ['post-kept'], {
-        name: '驿站送来了求归名册',
-        text: '驿站解来一批求归降众的名册，也解来他们名下未结的旧案文书。督抚请求开一个受降的例：愿归的一体收进营伍，不必取乡邻的保结，先发给口粮再核案；法司却说未结之案一概收伍，等于军门夺了法司的权，仍应缴回地方官府查问。两议所争的是谁有宽免之权、名册归谁掌管。',
-        left: option('开受降之例，免取乡邻保结', { gold: -4, army: -2, people: 3, law: 2 }, '你准开受降之例：愿归的一体收营，不取乡邻保结，口粮就从抚按的招募银里发给，未结的旧案仍交法司一并核查。营伍自此鱼龙混杂，战守之兵因此稍分；好处是求归的人不致半途失所，旧案也不至于全然作废。'),
-        right: option('仍缴回地方，照案查问', { gold: 2, court: 3, people: -2, army: -2 }, '你从法司之议：未结之案仍缴地方官府查问，不轻易开收伍之例，法司的权不被军门夺去。招募银得存，朝廷于体统稍伸；求归的人疑惧不前，流亡满路，营伍也补不到新丁。'),
-      }),
-      card('c-recruit-no-post', '流亡资送之费认支于谁',
-        '驿路既裁，流亡归籍者处处有之而无门可投。兵部请定资送之例：听经过州县递为资送，口粮工食即于该州县站银、工食内认支，稽迟不送者提问该管官；守将则请止令到营自便，其费留充本营粮饷。',
-        option('准州县递送，认支其费', { gold: -4, people: 3, army: -2 }, '你准流亡归籍者听经过州县递为资送，口粮工食于站银工食内认支，稽迟者提问该管官。州县苦其无艺，见在行伍亦分粮于路人；然归籍者有资，散卒渐知投营之所。'),
-        option('止令到营自便，费留本营', { gold: 3, army: 2, people: -3 }, '你不立资送之例，止令愿投者到营自便，站银工食留充本营粮饷。见在军食稍充，有司免一分赔累；只是无资者中道而毙，远处流亡终不知当投何处。')),
-    ],
-  ]),
-  chapter('workshop', '精密工坊攻关', 53, [
-    [
-      source('g-fuel', ['gewu-credit']),
-      source('g-fuel', ['gewu-waterworks'], {
-        id: 'c-fuel-waterworks', excludes: ['gewu-credit'],
-        text: '多年的水力作坊试验留下了炉温与耗料记录，长期借款却没有谈成。工师请求就从水坊每年的岁修银里挪出一笔，连着几年试焦。户部说岁修有定额，挪动要由御前裁定。要断的是三件事：这笔挪借准不准通行各处？年终核销归哪个衙门？窑烟污水损人田屋的赔账又着落在何处？',
-      }),
-      card('c-workshop-fuel-unfunded', '试焦续费与禁炭之令',
-        '长期借款未成，试焦之费遂无可指。工部请另拨国库一项以续其试，并申山场禁炭之令，收薪山之利以给官炉；户部则谓禁炭一行，民苦贵薪，不如且罢新炉、留此一项之费与民休息。',
-        option('不另拨库项，禁炭且缓', { gold: 2, army: -3, people: 2 }, '你以民炊为先，不许另拨库项续试，禁炭之令亦缓行。库藏不耗，村人犹得贱炭，旧炉照数应付；只是新炉竟罢，铳炮大件仍苦于无薪，边营久不得坚利之器。'),
-        option('准另拨库项，并行禁炭', { gold: -4, army: 3, people: -2 }, '你准于太仆寺马价银内另拨一项续办试焦，并申禁炭之令，山场之利尽隶官征。焦成而炉可继，军器日以精；民间薪价顿贵，贫户至拾薪于郊，水坊附近之田并受窑烟之损。')),
-    ],
-    [
-      source('g-tools', ['gewu-fuel', 'gewu-measure'], {
-        text: '焦炭已经可用。工师请求造镗床与量规，说这种手艺必须常年做才练得精，有水力作坊的地方仍准兼用水力。工部愿意领这个局，但要按官价定额核销；内库也想领，只向御前报数。要断的是四件事：这个局归哪个衙门，每年经费从哪一项开支，验收拿什么为准，进局的工匠照旧匠籍签派，还是官府招募、按月给工钱。',
-      }),
-      card('c-workshop-tools-handfit', '军器折抵成数之例',
-        '镗床初成，出品未精，工师犹在考较量规。营中催索修件，兵部请准不合者折抵成数、照数通完其额；工部请定驳换之例：必以官样量规为凭，不合者不许折抵，废件赔累坐承办之官，不许那抵别项。',
-        option('不许折抵，赔累任官', { gold: -4, army: 3, people: 2 }, '你定例：军器必以官样量规验数，不合者不许折抵成数，补造之费与废件赔累俱坐承办之官，不许派及州县。工部多此一项赔支，营中却按期得合格之器，匠役亦不复自匿其短。'),
-        option('准其折抵，通完额数', { gold: 2, army: -3, law: 2 }, '你准不合者折抵成数，止据所造多寡通完其额，不许另行请费。省下补造之银，部册亦有一本可稽；只是器械以不及格者充数，临阵可用之器顿少，边镇屡以为言。')),
-    ],
-    [
-      card('g-tool-seals', '试造伤人的恤典与停作之章',
-        '试筒接缝于热试时泄漏，伤匠数人。工部请先给恤典、定为永章，并准其停作待验；营官以军期方急，请不停作、恤典临时施给，章程且缓。所当断者：伤匠养赡于何项给发，其责谁任，试造可否即行停作。',
-        option('准其停作，恤典著为永例', { gold: -4, army: -2, law: 2, people: 2 }, '你准试器伤者一体停作待验，养赡之费著为永例，于各局匠价与公余银内给发，不许摊派里甲，章程归工部订定。库藏多此一项，军器迟发；然承办之司自此不敢以人试器。', ['gewu-seals']),
-        option('不许停作，恤典从简', { gold: 2, army: 2, law: -2 }, '你以军需方棘，不许停作，伤匠量给赏银，其费即于本局料银内那移，章程未及订定。器械不致后时，部库亦无所添支；只是何人应恤、几何当停，一凭当局口头，后此无从援据。'),
-        ['gewu-tools', 'gewu-review']),
-      card('c-workshop-seals-stop', '试造未成的考成与经费',
-        '试筒漏水之由未得，一说孔径未合，一说用料过劣。承办官恐干考成，请拨款继试；工部署官请以未成者并入考成、经费停给，料银移修现用之器。所当断者：试造未成而无欺冒者，还坐承办官否。',
-        option('案卷明者不坐，经费照拨', { gold: -3, people: 3, army: -2 }, '你定例：试造未成而案卷明备者不与考成之罚，经费照数续拨，伤匠并给其恤。户部岁多此无着之支，军营且缓新器；然承办之司自此敢试，不饰败为成以倖考成。'),
-        option('并入考成，经费停给', { gold: 2, army: 2, law: -2 }, '你把未成之试并入考成，经费停给，见在料银移修旧器，军营先得可用之件。库藏节此一支；只是无名之罚既行，自后匿败讳损、不以实报者，法司无从诘之。')),
-    ],
-    [
-      source('g-pump', ['gewu-measure', 'gewu-waterworks', 'gewu-review', 'gewu-fuel', 'gewu-tools', 'gewu-seals'], {
-        text: '多年炼焦、镗孔之后，工师请求在浅煤井试制蒸汽抽水器，说接缝与每天耗煤量要连年试验，未必能成，旧式水车还得留着备用。矿主嫌它费料。要断的是四件事：连年试验的钱从矿税、内库还是工部出；试成之后各省官矿是不是一律推行；没试成而花的钱算谁的罪；原先靠蹬水车吃饭的人怎么安置。',
-      }),
-      card('c-workshop-pump-waterwheel', '官矿排水责成何司',
-        '浅井积水日长，试泵之验未足为凭，矿主请以见在矿税偿其费而罢官采。工部请定排水之责专归提举司，仍照额采办，不许以水废井；户部则以矿税日亏，请量豁其额，止令有司自护窑井。',
-        option('责成提举司，不许请豁', { gold: -4, army: 2, people: 2 }, '你定官矿排水之责专归提举司，置备水车，其费于矿税赢余内支给，不足则为拨补，不许概行请豁。国库岁少此数，营中所用煤铁不致缺乏，矿役亦得雇值以存。'),
-        option('准豁矿税，闭井恤役', { gold: -2, army: -2, people: 3 }, '你准矿税不足者照数量豁，积水之井概行封闭，排水之责止委有司。省一番营办之费，役户得免于下井，仍给口粮以恤之；只是煤铁俱减，军器之料仰给他省。')),
-    ],
-    [
-      source('g-schools', ['gewu-apprentices', 'gewu-manuals', 'gewu-exams'], {
-        name: '地方工学班向京师要师傅',
-        text: '多年来，工坊带出了一批学徒，工艺刊本与实学取士也积累了师资。地方请派人开班，教看图、量田、修器，并讲明试验中的失误；京师军营却急缺熟手，希望留下师傅，只向各地寄送刊本。',
-        left: option('熟手集中京师，地方先用刊本', { gold: 4, court: 4, army: 2, people: -2 }, '师傅留京赶修军器，省下外派的开支。地方虽收到刊本，遇到难处仍无人示范，只能再请京师答疑。'),
-      }),
-      card('c-workshop-schools-visits', '地方工学设官之议',
-        '各省请以书院隙地设工学班，教算学、测绘与修器。所当断者：是否设官给俸，经费出学田还是耗羡，教习考课之权在京师还是各省。工部请先派员走数省示范；京师营官以急修方殷，请止颁刊本而留其人于京。',
-        option('设官给俸，教习分省', { gold: -3, people: 3, army: -2 }, '你准各省设工学教习一员，量给俸廪，经费于学田及耗羡内支给，考课之权分属有司。士大夫耻言匠技，京师急修少此数人；然县里始有能自量田、修轮、核仓之人员。'),
-        option('不设官，止颁刊本', { gold: 2, army: 3, people: -2 }, '你不设工学之官，止令京师刊本书册颁发各府，师傅尽留京营赶办急修。省设官廪给之费，军器早成；地方遇册外之误，仍须函询京师，动经月余。')),
-    ],
-  ]),
-  chapter('gucheng', '谷城安置', 60, [
-    [source('s-xianzhong', [], {
-      name: '谷城降兵归谁管',
-      text: '张献忠自崇祯三年在米脂起事，转战秦、楚、蜀之间，几次受抚又几次再反，官军始终没能剿灭他。这回他势穷，在谷城受了招抚；主持这局的是五省总督熊文灿——朝中主抚的担子，如今压在他一人身上。熊文灿递来的却不是报喜的奏折，而是一堆要朝廷定规矩的问题：这支降兵要不要编进国家的军籍；他们的将帅由本营自己推举，还是由督抚任命；粮饷是交给地方官按名册发放，还是听凭本营自行散给。与此同时，降营既说愿意交出藏起的军械，又说缺粮。熊文灿请皇帝定一个受降的通则，好让以后各处照办。',
-      left: option('收编入军籍，将帅由督抚任命', { gold: -4, court: -2, law: 2, people: 3 }, '你定下受降通则：降兵一律编入军籍，将帅由督抚委任，粮饷由地方官照名册发放，藏起的军械另定期限交出。官府为此多花一笔钱，这一步要走部院与督抚的章程，不能一道旨意办完，朝廷说话的分量稍减，将领们怨恨被管住；好处是降众有多少人、在何处都有册可查，乡里不再怕他们再抢，愿意种地的能分到口粮。', ['gucheng-register']),
-      right: option('听本营自推将帅，粮饷自己散给', { gold: 2, court: 2, army: 2, law: -3 }, '你依熊文灿：将帅听本营自推，粮饷由本营自行散给，官府不登其名籍。省下一笔支费，诸将感朝廷不疑，营里也安；只是这支兵成了将帅的私有，营中不行朝廷法度，日后若再变，官府连有多少人、在哪里都说不清。', ['gucheng-leaders']),
-    })],
-    [
-      card('g-gucheng-households', '一营具结与查验之权',
-        '谷城粮册已收，清丈册籍也可查田界。张献忠请出一营之结，全营自相担保，求免逐户查验；熊文灿则以器械当责兵备道清查、田土当责有司清丈，二者非一纸具结可代。所当断者：具结得废官司之验否。',
-        option('田归有司，械归兵备道', { gold: -3, army: -2, law: 2, people: 3 }, '你定例：具结不得免查验。田土责有司清丈，器械责兵备道清查，冒粮者道臣核之。查办多所支费，营伍以见疑而解；然愿耕者按户受田，藏械者别自为案，有司始知所承。', ['gucheng-households']),
-        option('准一营具结，免其编验', { gold: 3, army: 2, law: -3 }, '你准张献忠以一营具结当查验，器械听其自缴，田土付有司后理。官司省此一番查办之费，降营以安；只是空户冒粮者无从败露，械留营中，有司不复得而问。'),
-        ['gucheng-register', 'gewu-taxroll']),
-      card('c-gucheng-households-claims', '漏籍申诉之期与隐匿之责',
-        '谷城受抚者不断陈诉，或称口粮被冒领，或称已受之田复为人有。请定申诉之期：过限者尚准陈首否，复查属道臣还是巡按，地方官隐匿不报者何以坐之；或谓名册已定，宜先清营外之械，田讼且缓。',
-        option('立申诉之期，复查归道臣', { gold: -3, people: 3, army: -2 }, '你准漏登之家以一年内陈首为限，复查专属道臣，巡按得稽其隐，地方官隐匿者提问。查办多费，营中亦分兵为护；然冒领者渐出，愿耕者得复其田，降众始知上法之信。'),
-        option('过期不许复诉，先清营械', { gold: 2, army: 2, people: -2, law: -2 }, '你以名册已定，过期不许复诉，止令先清营外之械，田讼付有司缓理。官司省一番查办，械既出而兵威少振；只是隐匿之家幸而不败，争田者终岁无控所，法由此玩。')),
-    ],
-    [
-      source('g-gucheng', ['gewu-relief', 'gewu-taxroll', 'gucheng-households']),
-      card('c-gucheng-settlement-incomplete', '降众销籍为民之令',
-        '谷城降众仍有人不获种粮，亦有人听旧头领呼唤而去来。请定销籍之令：愿去者准其销去降籍、有司编户授田否，资送口粮于何项认支；或谓未可即散，仍隶兵备道羁管，画地以居，以免四出难稽。',
-        option('准销籍为民，有司编附', { gold: -4, people: 4, army: -2 }, '你准愿去者一体销其降籍，有司编户授田，资送口粮于工赈项下认支。库藏费此一项，营中亦少一分可调之众；然降户既列版籍，旧头领不得而复收其众，谷城之患移于疆吏。'),
-        option('未准销籍，画地羁管', { gold: 2, army: 2, people: -3, law: -2 }, '你以未可即散，不许销籍，仍隶兵备道羁管，画地而居，省其资送之费。见在之众可得而稽，营区自此肃然；只是降户终无出路，田粮之讼日积，羁管之官亦渐玩其法。')),
-    ],
-  ]),
-  chapter('jinzhou-supply', '锦州粮道', 63, [
-    [
-      source('g-command', ['gewu-payroll', 'gewu-audit', 'gewu-tenure']),
-      card('c-command-provisional-orders', '兵权饷权分任之制',
-        '锦州又催饷，而各镇领兵、任饷之责尚未画一。兵部请定通例：护运之令兵部署名，支放之责道臣任之，失陷侵欺各坐所掌；主将则请一体包办，事完补交粮册，以免文移误期。',
-        option('兵饷分任，各坐所掌', { gold: -3, law: 2, army: -2 }, '你定兵饷分任之例：领兵之令兵部署名，饷册支放责之道臣，失陷侵欺各坐所掌。文移往返，另设理饷之员多此一费，粮队后时而出；然自后各镇不得以缺饷诿于行伍。'),
-        option('主将一体包办，事后报数', { gold: 2, army: 3, law: -3 }, '你以军前便宜不可中制，准主将一体包办，事完补交粮册。粮队即时启行，护运得人；只是支放之数皆出本镇自报，朝廷但据末后一册，侵冒无从根问。')),
-    ],
-    [
-      source('g-guanning', ['gewu-payroll', 'gewu-command'], {
-        name: '关宁饷权与轮调之责',
-        text: '锦州一线仍资关宁各镇。兵部与户部会议：各镇公储、公汇之饷由何衙门支放，督师行檄与镇将号令权责各归于谁；至于何日换防、何营护粮，兵部谓此行期当听将领自定，不宜上烦宸断。旧将多以一军为家业，家丁口粮尽出私账。',
-      }),
-      card('c-guanning-escort-only', '欠饷出何项钱粮',
-        '吴三桂与各镇以换防后旧欠无归为词，交防之期遂迟，粮车且待于途。兵部请定欠饷之所出：于边储协济银内先行补发，并准久戍者再留一季；户部则以协济自有正额，请如额交防，欠饷另俟核议。',
-        option('先补积欠，准留一季', { gold: -4, army: 2, law: -2 }, '你准积年欠饷于边储协济银内先行补发，久戍者并准再留一季。边储为此早支，擅留戍所之禁由此启端；然士心以固，乐于赴防，粮车亦得有接应之兵。'),
-        option('如额交防，欠饷另议', { gold: 2, army: -2, people: -2 }, '你令如额交防，欠饷另俟户部核议，不许借口滞留。轮调如期，协济正额不遭早支；只是久戍者失望，护路之兵不肯代出，粮车遂久顿于途中。')),
-    ],
-    [
-      source('g-jinzhou', ['gewu-depots', 'gewu-tools', 'gewu-denglai', 'gewu-command', 'gewu-guanning'], {
-        text: '清军收紧锦州外围，祖大寿接连求援。粮站已交出存粮，登莱船队送来物料，工师也修好一批器具；各段守兵错开换防，路上仍有人接应。是继续分批送粮，还是趁道路尚通，先护送外围军民后撤？',
-      }),
-      card('c-jinzhou-supply-broken', '锦州收到的粮比发出时少',
-        '锦州报来的收粮数少于后方发出的数目，沿途转运、修车与守路仍有耽搁。祖大寿催问下一批何时能到，外围伤兵和民户也求后撤。是再花钱组织小批转运，还是先腾出车船接人？',
-        option('小批应急转运，损失如实记', { gold: -5, army: 2, people: 1 }, '一部分粮送入守军手中，沿途损耗另册登记。护路和修车仍常有耽误，下批粮何时到尚难保证。'),
-        option('接出外围伤兵，缩短守线', { gold: 2, army: -3, people: 3 }, '车船接回一批伤兵与民户，外围守线缩短，供养压力稍减。锦州仍受围困，城中继续催粮。')),
-    ],
-  ]),
-  chapter('epidemic', '大疫防治', 66, [
-    [
-      source('g-health', ['gewu-budget', 'gewu-relief'], {
-        text: '崇祯十三年，山西等地传来病讯，邻县担心病势沿商路扩散。医者尚不明白病因，请每十日报送病人数目，将饮水与污水分开，并给隔离人家口粮；地方官怕一报病就要停市，军营也担心粮运受阻。',
-      }),
-      card('c-health-warning-local', '疫伤隐匿之罪',
-        '外地已报疫，邻境犹讳之。请定例：疫伤须实时具奏，隐匿者以何罪坐之，太医院是否遣官巡行各省；地方官则谓一报病即须停市、粮运俱阻，请止令有司自行备办，无庸遣官。',
-        option('实时具奏，遣官巡行', { gold: -4, people: 3, army: -2 }, '你定疫伤实时具奏之例，隐匿者以欺妄提问，太医院遣官巡行各境。舟车廪给多此一项，军食亦分其半；然病所早闻，邻境得以备御，有司不复以讳报为得计。'),
-        option('止令地方自理，不遣官', { gold: 2, army: 2, people: -2 }, '你以报病则市停业废，止令地方官各任其责，太医院不遣官巡行。驿传不阻，粮运如常，亦省遣官之费；只是隐匿无所忌惮，村市病故而莫肯上闻者，十常八九。')),
-    ],
-    [
-      source('g-clinics', ['gewu-health', 'gewu-schools']),
-      card('c-clinics-mobile-teams', '惠民药局要不要在各府重设',
-        '各府请求在州县重设惠民药局——官家施药的医局，可医生和经费都没有着落。要定的是三件事：药局到底在各府设不设；经费出在州县的罚银、火耗，还是额定的官银；医生的考核归太医院还是归地方官。另有一议：只留京师一局，遇疫临时设棚施药。',
-        option('各府重设，考核归地方官', { gold: -3, people: 3, army: -2 }, '你准各府重设惠民药局，经费从州县的罚银、火耗里支给，医生的考核归地方官，太医院只总其成。每年这项花费不小，工匠与军医也分走一份口粮；好处是生病的人就近能取到药，偏远村子不致于守着等人死。'),
-        option('只留京师一局，遇疫临时设棚', { gold: 2, people: 1, army: 2 }, '你只留京师一局，各府不再设官，遇疫临时设棚施药，医生听营伍调用。额定的官银顿时省下，过境与在役的军士先得到医药；只是棚子一撤便无人看守，偏远之民仍旧苦于无处就医。')),
-    ],
-    [
-      source('g-epidemic', ['gewu-health', 'gewu-clinics', 'gewu-relief'], {
-        text: '山西与邻近地区的疫报增多，北直隶也须防备。医者从病例册中查到几处往来密切的村市，请暂缓当地集市、接济隔离户。商人怕断了生计，军营怕误了供粮；医所虽能接诊，也未找到可靠的治法。',
-      }),
-      card('c-epidemic-triage', '病户与商路，两头都要粮',
-        '报病的村镇越来越多，医者与口粮却难送到各处，官府也查不清漏报多少。地方请先接济已知病户、暂停附近集市；商人和营官怕运输断绝，请商路照行，只在沿途增设药棚。',
-        option('先顾已知病户，暂停附近集市', { gold: -4, people: 3, army: -2 }, '已知病户领到口粮，少了外出求食的需要。附近集市暂歇，粮运放慢，偏远漏报处仍难照看。'),
-        option('商路照行，沿途设药棚', { gold: -2, army: 2, people: -2 }, '商旅和军粮继续通行，药棚接诊沿途病人。人员往来未减，邻村仍担心病势顺路传来。')),
-    ],
-  ]),
-  chapter('river', '开封河患', 69, [
-    [
-      source('g-maintenance', ['gewu-waterworks', 'gewu-audit', 'gewu-relief'], {
-        text: '崇祯十三年，开封河臣请把堤闸、沟渠和水轮一起纳入逐季养护。已有水工记录、工赈队与独立验账，问题在于地方只爱报新工，不愿留清淤换轴的钱。来年水势难料，先怎样定维修预算？',
-      }),
-      card('c-river-maintenance-patches', '岁修钱粮责成何司',
-        '开封几处旧堤已经松动，历年修防账册未清，河督与抚臣互诿。请定岁修钱粮之所归：专归河督道库自支，抢险即官为雇夫，失防官员提问；或摊派沿河州县，有司与河司分任其责。',
-        option('岁修专归河督道库', { gold: -4, people: 3, army: -2 }, '你准岁修钱粮专归河督道库，抢险即官为雇夫，失防官员提问如例。道库多此一支，河兵亦归本伍、不复代役；然险段即日夯筑，近堤之民得雇值以安，责有所归。'),
-        option('摊派沿河州县分任', { gold: 2, army: -3, law: 2 }, '你把岁修之费摊派沿河州县，有司与河司分任其责，失防者不得独坐。河库顿省，册籍各归其曹而吏无所诿；只是征夫上堤，军余亦派其半，操守之伍遂废。')),
-    ],
-    [
-      card('g-river-survey', '开引河分洪，淹谁的地、谁来赔',
-        '崇祯十四年，堤闸养护的册籍与官样量尺都已可用。河臣实测，有几处低地正当分水之势：若开引河减缓水势，那一带的田屋必被淹。要断的是三件事：迁移之地由哪个衙门勘定、赔田的钱从哪一项给发、哪几处该认下这个牺牲。',
-        option('准开引河，先把低地百姓迁走', { gold: -3, court: -2, law: 2, people: 3 }, '你准开引河减缓水势，低地居民先行迁移，赔田的钱从河工赎事例银里给发，勘地的责任专归河臣会同府州。被淹那一带的士绅纷纷上告，朝廷里议论汹汹，御前担下这个名字；但水有了去处，几郡的田屋因此保全。', ['river-surveyed']),
-        option('分水且缓，只守现有堤线', { gold: 3, court: 2, people: -3 }, '你说低地百姓都是朝廷赤子，不可故意给他们降灾，分水之议且缓，只令谨守现有堤线，赔田的钱更不必议。库银留下，地方也以不轻动为便；只是水至而无处可泄，低地居民昼夜守堤，一溃便连人带屋一同漂走。'),
-        ['gewu-maintenance', 'gewu-measure']),
-      card('c-river-survey-landmarks', '黄河滩地归何司清勘',
-        '开封旧图与见在河道多不合，滩地日垦，侵占之讼不绝，养护水位之册亦不足据以定守。河臣请定清勘之责：黄河故道与见在滩地，责成河臣会同有司一体清勘，另绘图册，侵占者退；守城官请以饷绌，止令自报。',
-        option('河臣会同有司一体清勘', { gold: -3, people: 3, army: -2 }, '你准黄河故道与见在滩地责成河臣会同有司一体清勘，别绘图册，侵占者依册退还原主。踏勘多此经费，河兵亦分其役；然田有定界，争者息讼，护堤之地不复为势家所并。'),
-        option('图册仍旧，止令有司自报', { gold: 2, army: 2, people: -3 }, '你以兵饷方绌，不许另勘，图册且仍其旧，滩地听有司自行申报。经费不增，兵得归伍，城守有备；只是旧图终不可据，侵占者利其模糊，失地之民无所赴诉。')),
-    ],
-    [
-      source('g-kaifeng', ['gewu-relief', 'gewu-waterworks', 'gewu-maintenance', 'river-surveyed'], {
-        name: '水位已到撤离警戒处',
-        text: '崇祯十四年，开封堤外涨水，几个险段渗漏，水位已逼近预定的撤离界限。河臣请修补险段，并按名册先撤低地居民、赔付受损田地；守城官怕钱粮分散，要求先加固城堤，低地暂缓搬迁。',
-        left: option('修险段，按册赔田并预先疏散', { gold: -4, court: 2, law: -2, army: -2, people: 5 }, '险段开始修补，低地居民按名册撤到接应处，领到口粮与赔款。守堤人仍逐日查看水位和渗漏。', ['gewu-river']),
-        right: option('集中守城堤，暂缓低地撤离', { gold: 4, court: 2, army: 2, people: -3 }, '物料与人手先集中到城堤，迁户赔田的钱暂时省下。低地居民仍留原处，担心夜里来水无船可走。'),
-      }),
-      card('c-kaifeng-emergency-plan', '旧堤渗漏，村民等船',
-        '开封旧堤渗漏，低地村民已来求船，官府却还没安排妥当撤离路线与接济。河臣请临时雇船先迁走最险处的人；守城官坚持把工料集中到城堤，城外乡村先各寻高地避水。',
-        option('临时雇船，先迁最险几村', { gold: -4, people: 4, army: -2 }, '临时雇来的船接走最险处一批居民。远村的道路和人数还没查清，官府仍难安排接应。'),
-        option('集中守城，村外就地避险', { gold: 3, army: 2, people: -4 }, '工匠与物料先用来加固城堤，城外接应只得搁下。低地村民扶老携幼自行避水，粮食难以带走。')),
-    ],
-  ]),
-  chapter('songjin', '松锦军议', 72, [
-    [source('s-jinzhou', [], {
-      name: '松锦军前请定方略',
-      text: '崇祯十四年，清军在锦州、松山方向加紧围逼，祖大寿催援，洪承畴奉命筹集援军。兵部要先定解围日期，催诸镇会师；前线请先查各营存粮能吃几日、后路如何接应，再定进兵方略。',
-      left: option('先定解围期限，再查粮数', { gold: -4, court: 4, army: 2, law: -3 }, '各营奉限期集结，兵粮清单随后补交。将领忙着赶路，担心稍有延误就被追究逗留之罪。', ['songjin-deadline']),
-      right: option('先核粮与退路，不先限日', { gold: -3, court: -3, law: 2, army: 2 }, '各营先报实存粮数和退路，洪承畴据此筹画接应。朝中催战的奏疏更多，指责前线迟迟不进。', ['songjin-stocktake']),
-    })],
-    [
-      source('s-yuan-songjin', ['yuan-alive'], {
-        text: '袁崇焕仍在辽东，参与松锦军议。他请留一支预备营，分段护送粮队，与洪承畴、城内祖大寿约定接应；主战将领担心围势愈久愈紧，要求集中诸镇兵马，立即向围军进攻。',
-        left: option('集中诸镇，马上压向围军', { gold: -4, court: 4, army: 2, law: -3 }, '袁崇焕与诸营奉令前移，准备集中出击。后方留下的兵少了，护送粮队与接应退兵更加吃紧。', ['songjin-assault']),
-        right: option('分段接济，给主将缓守余地', { gold: -4, court: -3, law: 2, army: 2 }, '预备营留在后方，各段分别安排接济。袁崇焕与洪承畴得以从容调度，城内仍催问援兵何时到达。', ['songjin-paced']),
-      }),
-      source('s-songjin', [], {
-        name: '诸镇是急攻还是留后手',
-        text: '洪承畴汇总各镇兵粮，祖大寿仍在锦州等待接应。军议有人请集中精锐一次解围，也有人请留预备营、分段接济。前者担心迟则围势更紧，后者怕精兵尽出，后方粮队无人护送、败退时无人接应。',
-        left: option('集中精锐急攻，先求破围', { gold: -4, court: 4, army: 2, law: -3 }, '诸镇精锐向前集结，准备攻打围军。后方可用的兵力减少，运粮人要求增派护兵的文书接连送来。', ['songjin-assault']),
-        right: option('留预备营，分段接济缓守', { gold: -4, court: -3, law: 2, army: 2 }, '洪承畴留下预备营，分段布置接应与粮运。祖大寿仍在城中待援，缓守也须不断补入钱粮。', ['songjin-paced']),
-      }),
-    ],
-    [
-      source('g-songjin', ['gewu-frontier', 'gewu-depots', 'songjin-stocktake', 'songjin-paced'], {
-        text: '各营查过存粮，后方又留了预备兵，沿途粮站与护送队终于能按约接应。松锦围困未解，但守军尚有补给，外围也留有退路。是继续轮换驻军、分批运粮，还是趁道路可通，有序收缩外围防线？',
-        left: { ...source('g-songjin').left, sets: ['gewu-songjin'] },
-      }),
-      card('c-songjin-withdrawal', '前营缺粮，伤兵难撤',
-        '前进各营缺粮，围内也催不到足数，护粮与接应始终未能衔接。将领请求放弃部分外围据点，集中车船撤回援军和伤兵；主战官员不甘退兵，要求把余粮再押上去，抢救一处受困据点。',
-        option('承认失地，掩护援军撤整', { gold: -3, court: -3, army: -3, people: 3 }, '外围据点放弃，部分援军与伤兵撤回整顿。城内仍受围困，退回的将领要交代丢失的阵地与军械。', ['songjin-retreated']),
-        option('再投余粮救一处据点', { gold: -5, army: -5, court: 2, people: -2 }, '余粮用于突援，只接出部分守兵。各镇伤亡加重，军械散失，后方可再调动的钱粮更少了。', ['songjin-defeated'])),
-    ],
-  ]),
-  chapter('peace', '公开议和', 75, [
-    [
-      source('g-peace', ['gewu-charter'], {
-        text: '崇祯十五年，皇太极一方提出停战条件，仍索取岁币。陈新甲请按章程先查守备所需、划定付费上限，再授权使者商谈。主战诸臣反对让步，要求拨款、撤防逐项过审；陈新甲则请暂不外泄谈判细节。',
-        left: option('照章授权，划定付费上限', { gold: 4, army: 2, court: -6, law: -2 }, '陈新甲奉准派使接触，岁币上限与守备开支先列明。急攻筹款暂缓，边营仍驻原防线，主战诸臣争议不休。', ['peace-talks']),
-      }),
-      source('s-mihe', [], {
-        text: '皇太极一方愿谈停战，却要岁币与边界承诺。朝中尚无共同审议密旨的章程，陈新甲请你亲自担下议和授权。是先秘密接触、探明条件，还是明示拒谈，把钱粮继续用于现有防线？',
-        left: option('承担密谈授权，暂不撤防', { gold: -2, army: 2, court: -4, law: -2 }, '陈新甲奉密旨派人接触，边营继续守防。议和由你授意，往来文书一旦传开，主战诸臣势必追问。', ['peace-talks']),
-        right: option('拒绝密谈，筹足防费', { gold: -4, court: 4, army: 2 }, '拒谈之意传达清方，兵部照现有防线筹饷。主战诸臣稍安，户部却须继续负担驻军和运输开支。'),
-      }),
-    ],
-    [
-      source('g-peace-ratify', ['gewu-charter', 'peace-talks'], {
-        text: '陈新甲呈来与皇太极一方议定的停战条款，岁币、边界和留守军费都已列明，等候朝廷核准。主战诸臣仍指责让步过多，要求说明是谁准许使臣开价；陈新甲请依原授权审议，免得两边都不认账。',
-        left: option('承担授权责任，按章核准条约', { gold: 6, army: 4, court: -6, law: -2 }, '朝廷承担已授权的让步，使臣不背密旨之罪。条约生效，守备按批准数保留。', ['peace-kept']),
-      }),
-      source('s-mihe-leak', ['peace-talks'], {
-        excludes: ['gewu-charter'],
-        text: '陈新甲与皇太极一方谈得条款，往来文书却被误抄入邸报。主战朝臣指责擅议和款，追问谁曾授权。陈新甲所奉密旨出自你手，是承认授权、公布条款，还是将议和罪责推给他，下令处死？',
-        left: option('承认密旨，保使臣并公布条款', { gold: 4, army: 3, court: -6, law: -3 }, '你承认授权，陈新甲得以保全，停战条款获准执行。主战诸臣仍不满密议让步，要求日后先交朝议。', ['peace-kept']),
-      }),
-      card('c-peace-withdraw-talks', '拒谈之后，使者如何安置',
-        '朝廷未准议和，陈新甲手中只有往来试探的文书。边将问是否撤回等候消息的使者，户部也催定守备开支。是公开列明防费、撤使备战，还是留人联络，暂缓不急的军需采办？',
-        option('撤回使者，公开列守备预算', { gold: -3, law: 2, court: -2, army: 2 }, '使者奉令撤回，边营所需的钱粮逐项列明。陈新甲按原命办事，未因谈判未开而获罪。'),
-        option('留下联络人，暂缩非急军费', { gold: 2, court: 2, army: -3 }, '联络人留下等候消息，非急军需暂缓采办。清军与边营仍各自设防，联络往来尚未换来停战。')),
-    ],
-    [
-      source('g-peace-dividend', ['gewu-charter', 'gewu-market', 'peace-kept', 'gewu-river'], {
-        text: '崇祯十五年大汛，开封部分田地受淹，先前巡堤、撤离和口粮接应减轻了灾损。停战条约已经核准，民间商税也可查用；户部请留足守备后，拿节余帮助灾户复业，兵部则想趁机补充军器兵额。',
-        right: option('留足守备，节余先用于复业', { gold: 6, court: 2, law: 2, army: -3, people: 4 }, '边营保留必要军费，节余转去补偿灾田、帮助复业。地方逐户登记支用，商税和库款也有了周转余地。', ['gewu-peace-dividend']),
-      }),
-      source('g-peace-dividend', ['gewu-charter', 'gewu-market', 'peace-kept'], {
-        id: 'c-peace-dividend-flood', excludes: ['gewu-river'],
-        text: '本年黄河大汛，开封低地多处受淹，撤离与赈粮接应不及，灾民急需船粮。停战省下部分支出，民间商税也有进项。户部请留足守备后拨款救灾复业，兵部却要求先补军器和兵额。',
-        left: option('节余先补军费，赈济缩额', { gold: -4, court: 3, army: 4, people: -4 }, '边军多得一笔钱，军器与粮饷先获补充。赈济数额缩减，低地灾户仍等船粮，返乡复耕更迟。'),
-        right: option('留足守备钱粮，其余救灾复业', { gold: 2, army: -3, law: 2, people: 3 }, '守备钱粮留足，其余节余用于雇船送粮、修复灾田。救灾花费很大，户部能留存的银钱有限。', ['gewu-peace-dividend']),
-      }),
-      card('c-peace-close-river', '人已撤出，灾田还待补偿',
-        '本年开封大汛，先前巡堤、撤离和口粮接应减少了伤亡，受淹田地仍须补偿。户部尚无法确认能挪出多少守备节余，现有税入又有限。是另拨灾田补偿，还是分季支付，先留急用军费？',
-        option('守备照实支，另拨灾田补偿', { gold: -4, people: 4, army: -2 }, '受淹农户领到补偿，得以购种修田。守备仍照实际需要支出，另拨赈款使官库周转更加吃紧。'),
-        option('补偿分季付，先留急用军费', { gold: 2, army: 2, people: -2 }, '急用军费暂有着落，灾田补偿改为分季支付。农户等钱买种修田，有些人不得不先向乡里举债。'),
-        ['gewu-river']),
-      card('c-peace-close-deficit', '军费与赈粮都等拨款',
-        '本年开封遭大汛，低地居民撤离不及，赈粮也未及时送到，灾情仍陆续报来。户部拿不出稳定余款，军营和灾区都在催钱。是裁减不急的采办、先雇船送粮，还是先足守备，赈款分批拨付？',
-        option('裁非急采办，先救灾户', { gold: -4, people: 4, army: -3 }, '船粮先发往灾区，部分灾户得到接济。不急的军器采办延后，军营只能继续修用现有器物。'),
-        option('先足守备，赈款分批拨付', { gold: 2, army: 2, people: -4 }, '守备钱粮先行拨足，军营能维持驻防。赈款分批送出，灾户等候更久，修屋复耕都被耽误。')),
-    ],
-  ]),
-  chapter('chuanting', '孙传庭整军', 78, [
-    [source('s-chuanti', [], {
-      text: '崇祯十五年，孙传庭已经在诏狱里关了三年。三年前清兵从墙子岭入塞，他带秦兵千里入援；不肯把兵交给监军、又与中枢争用兵的缓急，仗还没打完，劾他的章疏先到了——削籍，下狱。如今朝臣请重查旧案，让他赴陕整军。关中募兵、军粮和农户复业都缺人统筹，地方官频繁催问主事者；反对者则坚持旧处分，主张继续由地方官暂管军务。',
-      left: option('重新核案，释出赴陕整军', { gold: -6, army: 6, court: -2, law: 4, people: 2 }, '孙传庭获释领职，赴陕清点现兵与存粮。各县开始交报人数，他还须筹饷、整顿营伍，才能展开训练。', ['chuanting-released']),
-      right: option('继续羁押，地方暂署军务', { gold: 2, army: -4, court: 3, law: -4 }, '孙传庭继续被羁押，地方官暂管关中军务。募兵与筹粮仍由各县分头办理，遇事层层请示。', ['exec']),
-    })],
-    [
-      source('g-guanzhong', ['chuanting-released', 'lz-absorbed', 'gewu-settlement'], {
-        name: '募兵与春耕争人手',
-        text: '孙传庭到陕，李鸿基已受约束入军籍，按户安置也让不少流民有了去处。返乡农户却缺耕牛、欠旧税，强催募兵又会误农时。孙传庭请分别拨款供现役训练、助农户复业，地方官则催着先补税欠。',
-        left: option('补牛缓旧欠，按册募兵给饷', { gold: -4, army: 2, court: -2, people: 4 }, '返乡农户得到耕牛接济，旧欠暂缓追催。愿入营者逐人领饷，孙传庭按到营人数编队训练。', ['gewu-guanzhong', 'guanzhong-recovery']),
-      }),
-      card('c-guanzhong-recruit', '新募秦兵不能靠空名册',
-        '孙传庭已出狱到任，关中仍有流民四处找活，返乡农户又被催缴旧欠。他请少催农户、逐人点验募兵，备好实饷再收人；兵部要尽快补足秦兵，各县因而请求先按限额报送名册。',
-        option('逐人点兵发饷，给农户留农时', { gold: -4, army: 2, people: 3, court: -2 }, '到营者逐一点验领饷，孙传庭据此编训。返乡户少受催逼，能赶上耕种，扩募人数也相应放缓。', ['guanzhong-recovery']),
-        option('限时报满兵额，旧欠照催', { gold: 3, court: 2, army: -3, people: -3 }, '册上兵额很快齐了，到营人数与粮饷却对不上，孙传庭仍得逐营核验。'),
-        ['chuanting-released']),
-      card('c-guanzhong-without-general', '孙传庭在狱，地方催兵催粮',
-        '孙传庭没有获释，关中军务由地方官暂管。县里同时催募兵和旧欠，农户眼看要误播种，现营也缺口粮。是先拨粮给驻军、缓催农户，还是先收旧欠充实官库，把募兵延后？',
-        option('先给现营实粮，暂缓农户旧欠', { gold: -4, army: 2, people: 3 }, '现营领到口粮，农户少一轮催缴，得以赶种。地方官继续维持驻军，孙传庭仍被羁押。'),
-        option('先收旧欠，暂停扩募', { gold: 4, army: -2, people: -3 }, '官库收进一笔旧欠，农户手里的种粮钱更少。地方暂缓扩募，只能靠现有守军应付各处防务。')),
-    ],
-    [
-      source('s-chuanti-ready', ['chuanting-released', 'peace-kept', 'guanzhong-recovery'], {
-        text: '跨入崇祯十六年，孙传庭送来到营兵册与农户复业安排，停战也使部分军费得以转用。秦兵尚在训练，朝中却催他限日出师。孙传庭请继续留营操练，每年核查粮饷与成效，免得新兵仓促上阵。',
-        right: option('留守训练，按粮饷逐年考成', { army: 6, gold: -4, court: -4, law: 4, people: 3 }, '秦兵留营操练，粮饷按期供应。孙传庭得以逐步练成骨干，也须逐年呈报训练成效和开支。', ['chuanting-wait']),
-      }),
-      card('c-chuanting-short-pay', '孙传庭为现兵催粮',
-        '孙传庭已在关中，筹得的钱粮却不足以支撑大举出师，新募人数也还未核清。他请先缩小募额，守住要地、查清现饷；朝中催战者要求照已报兵额出发，欠缺的钱粮沿途再筹。',
-        option('缩募额守要地，核清现饷', { gold: -3, court: -3, army: 2, people: 2 }, '孙传庭把钱粮集中到现营，留住一部分骨干，暂守要地。扩募与长期训练仍受经费限制。'),
-        option('按报额催出，缺饷路上筹', { gold: 2, court: 3, army: -5, people: -3 }, '出师令催各营上路，点到的兵却少于名册。军士缺饷，沿途地方又被催粮，操练也被打断。'),
-        ['chuanting-released']),
-      card('c-chuanting-still-imprisoned', '孙传庭还在狱中，关中的兵饷谁管',
-        '孙传庭还没有释放，关中兵马的钱粮没人总负责，临时官署报的缺额与饷册对不上。兵部请立一个暂行的规矩：另设道臣综理关中兵饷，户部按季稽核，督抚只管催征，不能越过督师催战。另一议则说不必添官，仍由现有衙门按现有兵数拨饷。',
-        option('另设道臣综理，户部按季稽核', { gold: -3, court: -2, law: 3, army: 1 }, '你准关中兵饷另设道臣综理，户部按季稽核，吃空额者问罪，督抚不能越过督师催战。添官多这一笔开销，握兵权的督抚怨恨被裁制，朝廷也等于自认此前无人负责。但饷银有了可对账的实数，眼下在营的兵能吃饱，孙传庭仍在狱中。'),
-        option('不添新官，按现有兵数拨饷', { gold: 2, army: -2, law: 1 }, '你说关中的事务仍由现有衙门综理，按现有兵数拨饷，不另添官，也不禁止督抚催战。库银不多花一分，权柄不多分一处，朝廷的章程也不乱。只是缺额没人追究得动，虚冒仍挂在空册上，眼下在营的兵因为领不到饷一天天散去。')),
-    ],
-  ]),
-  chapter('succession', '新政查验与储君承诺', 81, [
-    [
-      source('s-htj', ['peace-kept'], {
-        name: '皇太极病亡，旧约如何续行',
-        text: '崇祯十六年，皇太极病亡。清廷议立年幼的福临，由多尔衮、济尔哈朗辅政。先前签下的停战条约尚在，新主是否照旧履行，边将急等答复。是派使带旧约前往确认，还是趁权力交接试探边堡？',
-        left: option('确认旧约，守备不因丧讯撤空', { gold: -3, army: 2, court: -2, law: 2 }, '使者带去旧约副本，清廷确认照旧履行。边营继续留兵守备，使节与商旅得以按原约往来。', ['peace-renewed']),
-        right: option('试探边堡，暂缓续约确认', { gold: -3, army: 3, court: 4, law: -3 }, '边堡交锋增多，清廷要求解释出兵用意。新主尚未正式确认旧约，边将只得加紧戒备。', ['peace-border-probe']),
-      }),
-      card('c-htj-no-treaty', '清廷易主，先守还是试探',
-        '崇祯十六年，皇太极病亡，清廷议立年幼的福临，多尔衮与济尔哈朗辅政。双方此前未定停战条约，边地仍各自戒备。有将领请先稳住关口、查探新令，也有人想趁清廷交接出兵试探。',
-        option('守边核军情，不趁丧讯轻进', { gold: -3, army: 2, law: 2, court: -2 }, '各营照旧守关，斥候查探清廷新令和调兵动向。边将暂不轻进，粮饷仍按原有守备拨给。'),
-        option('拨粮试探边堡，防其增援', { gold: -4, army: 3, court: 3, law: -2 }, '小队领粮出关试探，清廷也向边堡增兵。各营戒备加紧，后方须预留更多接应的钱粮。')),
-    ],
-    [
-      source('g-inspection', ['gewu-audit', 'gewu-charter', 'gewu-peace-dividend', 'peace-renewed', 'gewu-songjin']),
-      card('c-inspection-open-ledger', '新政账册之外，还有欠粮欠薪',
-        '地方呈来新政功绩册，民间却仍有赈粮短发、工钱拖欠的申诉，官册还不足以说明实情。核查官请抽查几个普通县，直接问领粮者和工匠；地方官嫌往来耗费，请先核现有官册，暂缓下县。',
-        option('抽查普通县，公布拖欠与短发', { gold: -3, court: -2, law: 2, people: 3 }, '查验官问到领粮者与工匠，追补部分短粮欠薪。尚未查清的县列出待办清单，地方须继续交代。'),
-        option('只核官册，推迟实地查访', { gold: 3, court: 3, people: -2 }, '地方少了一轮接待，核查只在官册间进行。账上数目容易对齐，未入账的欠粮欠薪仍难发现。')),
-    ],
-    [
-      source('g-capital', ['gewu-charter', 'gewu-inspection', 'gewu-depots', 'gewu-settlement'], {
-        name: '一笔急调赈粮，也要两京留账',
-        text: '核查已查到普通县，内廷忽请凭中旨调走备用赈粮，改账先留北京，日后再补南京副本。辅臣请照应急条款共同签署、限期复查，将公账、图册和粮册同步分存两京；内廷嫌手续拖慢军中急用。',
-        left: option('准这次中旨，副本以后再补', { gold: 4, court: 5, law: -4, army: 2 }, '粮食先调作急用，内廷办事快了。南京仍存旧数，复核官要查这批粮的去向，只能再向北京追索改账。'),
-        right: option('按应急条款复核，两京同步留本', { gold: -3, court: -3, law: 3, army: -2, people: 2 }, '辅臣共同签署，定下复查期限，两京各存同样的账粮图册。调拨稍慢，赈粮改拨多少、由谁接手都可追查。', ['south-prep', 'charter-copies']),
-      }),
-      card('c-capital-partial-backup', '调粮之前，先留一份账',
-        '内廷请凭中旨调粮，辅臣却查不齐各处钱粮和安置记录，两京也难及时核对。是只准限额应急，抄出已有账册送南京备查，还是把钱粮与原册都留在北京，先满足眼前军需？',
-        option('限额救急，抄现有底册南送', { gold: -3, court: -2, law: 2, people: 2 }, '急调粮数受到限制，现有账册另抄一份送南京。两京有了部分可核对的凭据，其余缺账还须追补。', ['south-prep']),
-        option('钱粮账册留京，先足眼前急用', { gold: 3, court: 3, army: 2, law: -2 }, '钱粮和原册集中京师，内廷调拨更快。南京难以核实最新收支，遇到疑账只能往返请查。')),
-    ],
-    [
-      source('g-succession', ['gewu-inspection', 'gewu-charter', 'charter-copies'], {
-        name: '储君承诺，继位后也守章程',
-        text: '新政查验和两京副本已办，太子朱慈烺开始学习钱粮与政务。辅臣请把查账、任期、议事、救济及应急限权列入常年讲习，并让储君承诺日后继位也照章办理；东宫官属则想给未来君主留下临机裁断的余地。',
-      }),
-      card('c-succession-unfinished', '把未做完的事也教给东宫',
-        '东宫准备政务讲习，太子朱慈烺将读到各地新政账册，其中仍有未查清的欠款与工程。辅臣请连这些难题一起讲明，保存原册供查问；东宫官属怕议论牵涉太多人，只想先讲已办妥的事。',
-        option('进展欠账一起讲，保留原册', { gold: -2, court: -2, law: 2, people: 2 }, '储君读到已办政务，也看见欠款与未完工程。原册留下供讲习查问，尚未议定的规矩仍须朝臣续议。'),
-        option('先讲已办项目，未决事暂封存', { gold: 2, court: 3, law: -2 }, '东宫先讲办妥的政务，争议账册封存。官员免了当面解释旧欠，储君也少了追问钱粮去向的机会。')),
-    ],
-  ]),
-]
-
-// 同一道请求有两条来路：欠了禁门的人情，或逆案之后部院无人任事。批语相同，只换奏疏的由头。
-function eunuchMarshal(id: string, text: string, requires: string[]): GameEvent {
-  return card(
-    id,
-    '中官出京监军之请',
-    text,
-    option('准其监督军饷，许密疏奏事', { army: 4, gold: 2, law: -6, court: 4, people: -2 }, '你准内侍出京监督军饷，许他不时密疏奏闻。军报自此直入宫门，饷银也不至层层被部里克扣，登莱、宣府按月都有密折送到御前，催来的银子比往年快。只是督抚自此多了一条不必经内阁的路；后来被密疏说了一句话的人，连回辨的本子也递不上去。'),
-    option('只令部院督饷，勿遣内臣', { court: -4, law: 4, army: -4, gold: -2 }, '你把来旨退了，说监军之权重开弊窦，军饷仍令户部与督抚自行核算。内侍在宫门里失望，密疏之请也止于这一疏。军报慢了一程，饷银仍凭部文周转，边镇与户部的文书往来照旧对不出一份一致的数目。'),
-    requires,
-  )
-}
-
-// 独立长期改革缺前提时允许随机卡补位；危机节点另行合入，两个日常空位不写入本表。
-const standalone: [number, GameEvent[]][] = [
-  [17, [source('s-ych-huajian')]],
-  [18, [source('s-hanzai')]],
-  [20, [source('g-seeds', ['gewu-institute'])]],
-  [21, [source('s-yizhan', [], {
-    right: option('裁官俸保驿站', { gold: 4, court: 2, law: -4, people: 6, army: -2 }, '官俸削薄，部分驿路和驿卒生计得保。饥荒仍会逼人流亡，但朝廷留下了传信、核籍和招抚的通路。', ['post-kept']),
-  })]],
-  [24, [source('g-payroll', ['gewu-budget', 'gewu-measure'])]],
-  [16, [source('g-waterworks', ['gewu-measure', 'gewu-seeds'])]],
-  [17, [source('g-review', ['gewu-waterworks'])]],
-  [19, [
-    source('s-wei-coup', ['wei-failed'], { resourceBounds: { army: { max: 35 } } }),
-    source('s-ni-an', ['wei-down']),
-  ]],
-  [22, [source('s-suncheng')]],
-  [31, [source('g-apprentices', ['gewu-artisans', 'gewu-audit'])]],
-  [32, [source('s-dadian')]],
-  [33, [source('g-manuals', ['gewu-apprentices', 'gewu-measure'])]],
-  [34, [source('g-exams', ['gewu-manuals'])]],
-  [35, [source('g-tenure', ['gewu-exams'])]],
-  [36, [source('g-council', ['gewu-budget', 'gewu-audit', 'gewu-tenure'])]],
-  [37, [source('g-revenue', ['gewu-customs', 'gewu-audit']), source('s-yingdi')]],
-  [39, [source('g-charter', ['gewu-budget', 'gewu-audit', 'gewu-tenure', 'gewu-council'])]],
-  [41, [
-    eunuchMarshal('c-eunuch-marshal-owed', '宫门里头那几个替你换过钥匙、落过闸、传过话的内侍，如今都在各衙门当差，等着你还这一份人情。兵部催饷、登莱造炮、宣府守边，几处都缺一个能直达御前的人。内侍因此有请出京监督军饷：他们不要兵权，只要能在军前宣读诏旨、按月密疏奏闻。', ['eunuch-debt']),
-    eunuchMarshal('c-eunuch-marshal-empty', '逆案一次定了二百五十多人，六部与督抚同时缺额，题补的章奏常在中途。凡有军情，朝臣先要避嫌，边镇也懒得再等部覆。内侍因此有请出京监督军饷：他们不要兵权，只要能在军前宣读诏旨、按月密疏奏闻。', ['ni-an-broad']),
-  ]],
-  [42, [source('g-market', ['gewu-shipping', 'gewu-customs', 'gewu-audit', 'gewu-apprentices', 'gewu-manuals', 'gewu-charter', 'shipping-arbitrated'], {
-    name: '民坊不只给军营做东西',
-    text: '学徒已能凭契约受雇，基础图册也送进民坊。作坊依靠人力和水力生产，海商愿承接布匹、农具与船具外销；军营却想包下熟手与材料。地方请照公开税约保留民用订单，让百姓有活做，官府有税收。',
-  })]],
-  [47, [source('s-daiching')]],
-  [48, [source('s-fuwang')]],
-  [49, [
-    source('s-chaoxian', ['gewu-denglai'], {
-      text: '皇太极称帝后，清方准备进攻朝鲜。登莱此前保住的船队与工师可供接应，但远航仍要另备粮饷。朝廷是派船牵制、接难民，还是先留运力守住自己的海路？',
-    }),
-    card('c-chaoxian-limited-fleet', '登莱船少，朝鲜仍来求援',
-      '清方准备进攻朝鲜，明廷接到求援，登莱却凑不出足够的船只、人手和军器。兵部请租民船送一批粮药，尽力接应；沿海守将担心近海失去运力，要求把现有船只留给本地防务。',
-      option('租船送粮药，量力接应', { gold: -5, army: -2, people: 3, court: 2 }, '租来的民船载粮药出海，送出少量接济。本地运力因而减少，远援所需的护航与后续粮饷仍难筹足。'),
-      option('留船守近海，说明无力远援', { gold: 3, army: 2, court: -3 }, '现有船只留在近海，守军保住运输接应。朝鲜使者带着无力远援的答复离去，求援未获满足。')),
-  ]],
-  [50, [source('g-grain-tax', ['gewu-taxroll', 'gewu-budget'])]],
-  [51, [source('g-credit', ['gewu-grain-tax', 'gewu-customs', 'gewu-audit', 'gewu-charter'])]],
-  [52, [source('s-liangyu', [], {
-    name: '围剿方略与左良玉的军粮',
-    text: '各地流营仍多，兵部提出分区围剿、增饷练兵，左良玉又要求楚军就地筹粮。两道奏疏争的是同一笔钱：户部请连地方能负担多少一起核算，前线却催准主将先向民间取粮，战后再报开支。',
-    left: option('核实兵粮，再定分区进退', { gold: -4, court: -2, law: 3, people: 3, army: 2 }, '左良玉须交出实际兵粮数目，朝廷据此安排分区进退。军费由官库筹拨，地方少受临时征取。'),
-    right: option('准就地筹粮，战后再追报', { gold: 4, army: 3, law: -4, people: -5 }, '国库暂缓支出，楚军直接向地方征粮。农户负担加重，征了多少、送到哪营，朝廷只能等事后追问。'),
-  })]],
-  [58, [source('s-annei', [], {
-    text: '杨嗣昌主张先平内地兵患，再顾边防，要求加征钱粮、扩兵围剿。他数着中原的几支流营：张献忠往来楚、豫之间，其余各部各拥众数万，降了又叛、散了又聚。各地流营与饥民尚多，安置也要花钱，边将又不断催饷。是准他加征扩剿，还是限制扩兵，把财力留给边防与现有安置？',
-  })]],
-  [59, [source('g-depots', ['gewu-payroll', 'gewu-audit', 'gewu-grain-tax', 'gewu-relief'], {
-    left: option('加固大仓，集中看守', { gold: 6, law: 2, army: 2, people: -2 }, '粮食集中进大仓，看守省人，耗损也少。各处守军和赈户却更依赖同一条运粮路，一旦受阻便难接济。'),
-  })]],
-]
-
-export const STANDALONE_EVENTS: GameEvent[] = [
-  ...standalone.flatMap(([slot, candidates]) => candidates.map(event => at(slot, event))),
-  ...CRISIS_EVENTS,
-]
-
-/** 人物事件元数据只取实际排程候选，不混入随机卡、弃用旧剧本或甲申终章。 */
-export const STORY_EVENTS: GameEvent[] = [
-  ...STORY_CHAPTERS.flatMap(item => item.steps.flat()),
-  ...STANDALONE_EVENTS,
-].sort((a, b) => (a.year ?? 0) * CARDS_PER_YEAR + (a.order ?? 1) - ((b.year ?? 0) * CARDS_PER_YEAR + (b.order ?? 1)))
+  return slots
+})()

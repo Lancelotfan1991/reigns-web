@@ -2,10 +2,11 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { advise } from '../../src/composables/useHint'
 import { useGame } from '../../src/composables/useGame'
 import { SCRIPT_SLOTS, type SimState } from '../../src/composables/simulation'
-import { REFORM_FINALES, REFORM_REQUIREMENTS } from '../../src/data/reforms'
+import { ALL_EVENTS } from '../../src/data/chapters'
+import { REFORM_REQUIREMENTS } from '../../src/data/reforms'
 import { healthy, seedRandom } from './helpers'
 
-const gewu = REFORM_FINALES.find((card) => card.id === 'g-finale-gewu')!
+const gewu = ALL_EVENTS.find((card) => card.id === 'g-finale-gewu')!
 
 /** 终章前一刻的局势：手上是 g-finale-gewu，只差按下裁决 */
 function finaleState(flags: string[], resources = healthy()): SimState {
@@ -15,6 +16,7 @@ function finaleState(flags: string[], resources = healthy()): SimState {
     cursor: 0,
     flags: Object.fromEntries(flags.map((flag) => [flag, 1])),
     resources,
+    deal: {},
   }
 }
 

@@ -1,25 +1,30 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { CHAR_MAP } from '../../src/data/characters'
-import { STORY_EVENTS } from '../../src/data/chapters'
-import { FINALE_EVENTS, RANDOM_EVENTS } from '../../src/data/events'
-import { REFORM_EVENTS, REFORM_FINALES } from '../../src/data/reforms'
+import { ALL_EVENTS, EVENT_SLOT } from '../../src/data/chapters'
+import { RANDOM_EVENTS } from '../../src/data/events'
 import { findLifeVerdict, resolveFate } from '../../src/composables/fates'
 import { addFlags } from '../../src/composables/simulation'
 import { useCharacters } from '../../src/composables/useCharacters'
 import { CARDS_PER_YEAR, useGame } from '../../src/composables/useGame'
 import type { FateCtx } from '../../src/composables/fates'
 import type { Decision, GameEvent, Side } from '../../src/types'
-import { healthy, progressSide, reach, seedRandom } from '../game/helpers'
+import { healthy, progressSide, reach, seedRandom, slotOf } from '../game/helpers'
 
-/** 只取运行时真正会发出的卡：SCRIPT_EVENTS 是篇章克隆的模板，混进来会用旧文案盖掉篇章版 */
+/** 运行时真正会发出的卡：篇章卡 + 随机卡池 */
 const pool = new Map<string, GameEvent>()
-for (const card of [...RANDOM_EVENTS, ...FINALE_EVENTS, ...REFORM_EVENTS, ...REFORM_FINALES, ...STORY_EVENTS]) {
+for (const card of [...ALL_EVENTS, ...RANDOM_EVENTS]) {
   pool.set(card.id, card)
 }
 const cards = [...pool.values()]
 
+/** 卡所属槽位的崇祯纪年；随机卡不锁年，按 0 计 */
+function yearOfCard(card: GameEvent): number {
+  const slot = EVENT_SLOT[card.id]
+  return slot === undefined ? 0 : Math.floor(slot / CARDS_PER_YEAR)
+}
+
 function ctxOf(card: GameEvent, side: Side, flags: Record<string, number> = {}): FateCtx {
-  const year = card.year ?? 0
+  const year = yearOfCard(card)
   const decided: Record<string, Decision> = { [card.id]: { eventId: card.id, side, year } }
   return { now: year, decided, flags: addFlags(flags, (side === 'left' ? card.left : card.right).sets) }
 }
@@ -116,7 +121,7 @@ describe('生死之判', () => {
   describe('覆盖面', () => {
     it('锁年诸议里至少十议能出生死页，掉了就是改史断线', () => {
       const firing = cards
-        .filter((c) => c.year !== undefined)
+        .filter((c) => EVENT_SLOT[c.id] !== undefined)
         .filter((c) => lifeOf(c.id, 'left') || lifeOf(c.id, 'right'))
         .map((c) => c.id)
       expect(firing.length).toBeGreaterThanOrEqual(LIFE_CARDS.length)
@@ -193,9 +198,8 @@ describe('生死之判', () => {
     it('当谷城安置只稳住头领时，生死页报后日之判，面板此刻仍写活档', () => {
       const game = useGame()
       game.startGame()
-      const card = pool.get('g-gucheng')!
       game.flags.value = { 'gewu-relief': 1, 'gewu-taxroll': 1 }
-      reach(game, card.year! * CARDS_PER_YEAR + card.order! - 1, progressSide)
+      reach(game, slotOf('g-gucheng'), progressSide)
       expect(game.currentCard.value?.id).toBe('g-gucheng')
       game.resources.value = healthy()
       game.choose('left')

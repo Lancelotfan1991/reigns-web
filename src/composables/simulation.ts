@@ -1,9 +1,8 @@
-import { FINALE_EVENTS, RANDOM_EVENTS } from '../data/events'
-import { REFORM_FINALES } from '../data/reforms'
-import { STANDALONE_EVENTS, STORY_CHAPTERS } from '../data/chapters'
+import { CHAPTERS } from '../data/chapters'
+import { RANDOM_EVENTS } from '../data/events'
+import { CARDS_PER_YEAR, SCRIPT_SLOTS, chapterEnd, chapterStart, turnOf } from './slots'
 import type { AxisKey, Effects, FlagRule, GameEvent, ResourceKey, Side, StoryChapter } from '../types'
 export { CARDS_PER_YEAR, SCRIPT_SLOTS, turnOf, yearOf, slotOfPosition } from './slots'
-import { CARDS_PER_YEAR, SCRIPT_SLOTS, yearOf } from './slots'
 
 /** 四象：归零与满格同样致命 */
 export const AXIS_KEYS: AxisKey[] = ['court', 'law', 'army', 'gold']
@@ -54,59 +53,96 @@ export function eligible(card: GameEvent, flags: Record<string, number>, resourc
     })
 }
 
-const SLOT_CANDIDATES = new Map<string, GameEvent[]>()
-for (const e of STANDALONE_EVENTS) {
-  const key = `${e.year ?? 0}#${(e.order ?? 1) - 1}`
-  const list = SLOT_CANDIDATES.get(key)
-  if (list) list.push(e)
-  else SLOT_CANDIDATES.set(key, [e])
-}
-for (const list of SLOT_CANDIDATES.values()) {
-  list.sort((a, b) => (b.requires?.length ?? 0) - (a.requires?.length ?? 0))
+/** 定点槽位：哪个篇章的哪一步占定此槽，候选按字面顺序取首张符合条件者 */
+interface PointSlot {
+  story: StoryChapter
+  step: number
+  cards: GameEvent[]
 }
 
-const FINALE_CANDIDATES = [...REFORM_FINALES, ...FINALE_EVENTS].sort(
-  (a, b) => (b.requires?.length ?? 0) - (a.requires?.length ?? 0),
-)
-
-/** 篇章连续且互不重叠，故某一步属于哪个篇章可由槽位直接推出 */
-const CHAPTER_BY_SLOT: (StoryChapter | null)[] = Array.from({ length: SCRIPT_SLOTS }, () => null)
-for (const story of STORY_CHAPTERS) {
-  for (let step = 0; step < story.steps.length; step++) CHAPTER_BY_SLOT[story.start + step] = story
+const POINT_BY_SLOT = new Map<number, PointSlot>()
+const WINDOW_CHAPTERS: StoryChapter[] = []
+const WINDOW_BY_ID = new Map<string, StoryChapter>()
+for (const chapter of CHAPTERS) {
+  if ('order' in chapter.time) {
+    const start = chapterStart(chapter.time)
+    chapter.steps.forEach((cards, step) => POINT_BY_SLOT.set(start + step, { story: chapter, step, cards }))
+  } else {
+    WINDOW_CHAPTERS.push(chapter)
+    WINDOW_BY_ID.set(chapter.id, chapter)
+  }
 }
 
-export function chapterAt(index: number): { story: StoryChapter; step: number } | null {
-  if (index < 0 || index >= SCRIPT_SLOTS) return null
-  const story = CHAPTER_BY_SLOT[index]
-  return story ? { story, step: index - story.start } : null
+/** 发牌状态：进行中的范围篇章窗口，以及本局已落下的范围篇章 */
+export interface DealState {
+  /** 多步范围篇章的进行中窗口：篇章 id 与起始槽位 */
+  window?: { id: string; start: number }
+  /** 已发过的范围篇章 id（同一篇章一局只发一次） */
+  fired?: string[]
 }
 
-/** 判断某槽位是否属于连续篇章 */
-export function isChapterSlot(index: number): boolean {
-  return index >= 0 && index < SCRIPT_SLOTS && CHAPTER_BY_SLOT[index] !== null
+export interface DealResult {
+  card: GameEvent | undefined
+  cursor: number
+  deal: DealState
+  /** 所发之牌所属的篇章步骤；随机池为 null。单步分组也是篇章，展示层按步骤数过滤 */
+  chapter: { story: StoryChapter; step: number } | null
 }
 
-/** 发第 index 张牌：篇章槽优先，其次同槽条件卡，最后按本局牌序抽取 */
+/**
+ * 发第 index 张牌，次序：
+ * 0. 续接范围篇章窗口——窗口内每一步取该步首张符合条件者，全不符合则让位但保留窗口；
+ * 1. 定点篇章——该槽候选按字面顺序取首张符合条件者，全不符合即让位；
+ * 2. 范围篇章——仅在无进行中窗口、未发过、落在年期区间、整段无定点篇章且首步有牌可发时启动；
+ * 3. 本局随机池；越过 SCRIPT_SLOTS 即无牌。
+ */
 export function dealAt(
   index: number,
   flags: Record<string, number>,
   resources: Record<ResourceKey, number>,
   pool: GameEvent[],
   cursor: number,
-): { card: GameEvent | undefined; cursor: number } {
-  if (index === SCRIPT_SLOTS) {
-    return { card: FINALE_CANDIDATES.find((c) => eligible(c, flags, resources)), cursor }
+  deal: DealState,
+): DealResult {
+  let state = deal
+  if (state.window) {
+    const story = WINDOW_BY_ID.get(state.window.id)!
+    const step = index - state.window.start
+    if (step >= story.steps.length) {
+      state = { fired: state.fired }
+    } else {
+      const card = story.steps[step].find((c) => eligible(c, flags, resources))
+      if (card) return { card, cursor, deal: state, chapter: { story, step } }
+    }
   }
-  if (index > SCRIPT_SLOTS) return { card: undefined, cursor }
-  const active = chapterAt(index)
-  if (active) {
-    // 每一步都有本篇章的无条件收束分支，前置失败不退回随机池。
-    return { card: active.story.steps[active.step].find((c) => eligible(c, flags, resources))!, cursor }
+  if (index > SCRIPT_SLOTS) return { card: undefined, cursor, deal: state, chapter: null }
+  const point = POINT_BY_SLOT.get(index)
+  if (point) {
+    const card = point.cards.find((c) => eligible(c, flags, resources))
+    if (card) return { card, cursor, deal: state, chapter: { story: point.story, step: point.step } }
   }
-  const key = `${yearOf(index)}#${index % CARDS_PER_YEAR}`
-  const scripted = SLOT_CANDIDATES.get(key)?.find((c) => eligible(c, flags, resources))
-  if (scripted) return { card: scripted, cursor }
-  return { card: pool[cursor], cursor: cursor + 1 }
+  if (!state.window) {
+    for (const story of WINDOW_CHAPTERS) {
+      if (state.fired?.includes(story.id)) continue
+      if (index < chapterStart(story.time) || index > chapterEnd(story.time)) continue
+      const end = index + story.steps.length - 1
+      if (end > SCRIPT_SLOTS) continue
+      let free = true
+      for (let slot = index + 1; slot <= end; slot++) {
+        if (POINT_BY_SLOT.has(slot)) {
+          free = false
+          break
+        }
+      }
+      if (!free) continue
+      const card = story.steps[0].find((c) => eligible(c, flags, resources))
+      if (!card) continue
+      const fired = [...(state.fired ?? []), story.id]
+      if (story.steps.length === 1) return { card, cursor, deal: { fired }, chapter: { story, step: 0 } }
+      return { card, cursor, deal: { fired, window: { id: story.id, start: index } }, chapter: { story, step: 0 } }
+    }
+  }
+  return { card: pool[cursor], cursor: cursor + 1, deal: state, chapter: null }
 }
 
 /** 岁耗按年摊销为整数，增加抉择次数不增加年度耗损；终章不再计时 */
@@ -149,13 +185,14 @@ export function addFlags(flags: Record<string, number>, sets?: string[]): Record
   return after
 }
 
-/** 推演中的局势快照：手上这张牌、旗标、四象与本局牌序游标 */
+/** 推演中的局势快照：手上这张牌、旗标、四象、本局牌序游标与发牌状态 */
 export interface SimState {
   index: number
   card: GameEvent
   cursor: number
   flags: Record<string, number>
   resources: Record<ResourceKey, number>
+  deal: DealState
 }
 
 /** 推演一步的结果：获胜（格物中兴）/ 其它结局 / 还有下一议 */
@@ -179,6 +216,7 @@ export function resolveChoice(state: SimState, side: Side): SimState {
       (state.flags['gewu-customs'] ?? 0) > 0 && (state.flags['gewu-audit'] ?? 0) > 0,
       (state.flags['gewu-tools'] ?? 0) > 0 && (state.flags['gewu-denglai'] ?? 0) > 0,
     ),
+    deal: state.deal,
   }
 }
 
@@ -197,7 +235,7 @@ export function advanceSim(state: SimState, side: Side, pool: GameEvent[]): SimS
   }
   if (after.resources.people <= 0) return { kind: 'end' }
 
-  const dealt = dealAt(after.index, after.flags, after.resources, pool, after.cursor)
+  const dealt = dealAt(after.index, after.flags, after.resources, pool, after.cursor, after.deal)
   if (!dealt.card) return { kind: 'end' }
-  return { kind: 'next', state: { ...after, card: dealt.card, cursor: dealt.cursor } }
+  return { kind: 'next', state: { ...after, card: dealt.card, cursor: dealt.cursor, deal: dealt.deal } }
 }

@@ -1,19 +1,14 @@
 import { describe, expect, it } from 'vitest'
 import { CHARACTERS, CHAR_MAP } from '../../src/data/characters'
-import { STORY_EVENTS } from '../../src/data/chapters'
-import { FINALE_EVENTS, RANDOM_EVENTS } from '../../src/data/events'
+import { ALL_EVENTS } from '../../src/data/chapters'
+import { RANDOM_EVENTS } from '../../src/data/events'
 import { PORTRAIT_IDS, cardPortrait } from '../../src/data/portraits'
-import { REFORM_EVENTS, REFORM_FINALES } from '../../src/data/reforms'
 import type { GameEvent } from '../../src/types'
 
 const IMPERIAL = '👑'
 
-/** 只取运行时真正会发出的卡：SCRIPT_EVENTS 是篇章克隆的模板，混进来会用旧文案盖掉篇章版 */
-const pool = new Map<string, GameEvent>()
-for (const card of [...RANDOM_EVENTS, ...FINALE_EVENTS, ...REFORM_EVENTS, ...REFORM_FINALES, ...STORY_EVENTS]) {
-  pool.set(card.id, card)
-}
-const cards = [...pool.values()]
+/** 运行时真正会发出的卡：篇章卡 + 随机卡池 */
+const cards: GameEvent[] = [...ALL_EVENTS, ...RANDOM_EVENTS]
 
 function namesOf(id: string): string[] {
   const char = CHAR_MAP[id]

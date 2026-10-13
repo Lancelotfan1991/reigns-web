@@ -1,8 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { CARDS_PER_YEAR, RESOURCE_KEYS, SCRIPT_SLOTS, useGame } from '../../src/composables/useGame'
-import { RANDOM_EVENTS, FINALE_EVENTS } from '../../src/data/events'
-import { REFORM_FINALES, REFORM_REQUIREMENTS } from '../../src/data/reforms'
-import { STANDALONE_EVENTS, STORY_CHAPTERS, STORY_EVENTS } from '../../src/data/chapters'
+import { RANDOM_EVENTS } from '../../src/data/events'
+import { REFORM_REQUIREMENTS } from '../../src/data/reforms'
+import { ALL_EVENTS, CHAPTERS, EVENT_SLOT } from '../../src/data/chapters'
+import { chapterStart } from '../../src/composables/slots'
 import type { ResourceKey } from '../../src/types'
 import { atFinale, healthy, progressSide, reach, seedRandom, slotOf } from './helpers'
 
@@ -20,53 +21,54 @@ afterEach(() => {
 })
 
 const fullFlags = () => Object.fromEntries(REFORM_REQUIREMENTS.map((flag) => [flag, 1]))
-const stages = REFORM_REQUIREMENTS.slice(0, 34).map((flag) => STORY_EVENTS.find((card) =>
+const stages = REFORM_REQUIREMENTS.slice(0, 34).map((flag) => ALL_EVENTS.find((card) =>
   [...(card.left.sets ?? []), ...(card.right.sets ?? [])].includes(flag))!)
+const multiChapters = CHAPTERS.filter((story) => story.steps.length > 1)
 const successfulSide = progressSide
 
 describe('T0 连续篇章', () => {
-  it('当排入十五篇章时，52步不重叠，章内每一步都有无条件分支', () => {
-    expect(STORY_CHAPTERS.map((story) => story.steps.length)).toEqual([3, 4, 3, 4, 4, 4, 5, 3, 3, 3, 3, 3, 3, 3, 4])
-    const occupied = new Set<number>()
-    for (const story of STORY_CHAPTERS) {
+  it('当排入篇章时，多步篇章逐步占位不重叠，全部槽位均有定点候选', () => {
+    expect(multiChapters.map((story) => story.steps.length)).toEqual([8, 4, 3, 4, 4, 4, 5, 3, 3, 3, 3, 3, 3, 3, 4])
+    const occupied = new Map<number, string[]>()
+    for (const story of CHAPTERS) {
+      if (!('order' in story.time)) continue
       for (const [step, candidates] of story.steps.entries()) {
-        const index = story.start + step
-        expect(index).toBeLessThan(SCRIPT_SLOTS)
-        expect(occupied.has(index)).toBe(false)
-        occupied.add(index)
-        expect(candidates.some((card) => !card.requires?.length && !card.excludes?.length && !card.resourceBounds)).toBe(true)
-        for (const card of candidates) {
-          expect(card.year).toBe(Math.floor(index / CARDS_PER_YEAR))
-          expect(card.order).toBe(index % CARDS_PER_YEAR + 1)
-          expect(card.left.finale).toBeUndefined()
-          expect(card.right.finale).toBeUndefined()
+        const index = chapterStart(story.time) + step
+        expect(index, story.id).toBeLessThanOrEqual(SCRIPT_SLOTS)
+        expect(occupied.has(index), `${story.id} 与 ${occupied.get(index)} 撞槽 ${index}`).toBe(false)
+        occupied.set(index, candidates.map((card) => card.id))
+        for (const card of candidates) expect(EVENT_SLOT[card.id], card.id).toBe(index)
+        if (story.steps.length > 1) {
+          expect(candidates.some((card) => !card.requires?.length && !card.excludes?.length && !card.resourceBounds), `${story.id} 第 ${step + 1} 步无无条件分支`).toBe(true)
+          for (const card of candidates) {
+            expect(card.left.finale, card.id).toBeUndefined()
+            expect(card.right.finale, card.id).toBeUndefined()
+          }
         }
       }
     }
-    expect(occupied.size).toBe(52)
-    for (const card of STANDALONE_EVENTS) expect(occupied.has(card.year! * CARDS_PER_YEAR + card.order! - 1)).toBe(false)
-    expect(new Set(STANDALONE_EVENTS.map((card) => `${card.year}#${card.order}`)).size).toBe(31)
-    for (const card of STANDALONE_EVENTS) occupied.add(card.year! * CARDS_PER_YEAR + card.order! - 1)
-    expect(Array.from({ length: SCRIPT_SLOTS }, (_, index) => index).filter(index => !occupied.has(index))).toEqual([20, 40])
+    // 定点候选覆盖 0..SCRIPT_SLOTS 每一槽：随机池只在全部候选不合格时兜底
+    expect([...occupied.keys()].sort((a, b) => a - b)).toEqual(Array.from({ length: SCRIPT_SLOTS + 1 }, (_, index) => index))
   })
 
-  it.each(STORY_CHAPTERS)('当进入$name时，任意章内选法均连续走到收束，失败也不插随机卡', (story) => {
+  it.each(multiChapters)('当进入$name时，任意章内选法均连续走到收束，失败也不插随机卡', (story) => {
+    const start = chapterStart(story.time)
     for (const withReforms of [false, true]) {
       for (let mask = 0; mask < 2 ** story.steps.length; mask++) {
         const game = useGame()
         game.startGame()
-        reach(game, story.start, withReforms ? successfulSide : () => 'right')
+        reach(game, start, withReforms ? successfulSide : () => 'right')
         for (let step = 0; step < story.steps.length; step++) {
           expect(game.chapter.value).toEqual({ id: story.id, name: story.name, step: step + 1, total: story.steps.length })
           expect(story.steps[step].map((card) => card.id)).toContain(game.currentCard.value?.id)
           expect(game.currentCard.value?.id.startsWith('r-')).toBe(false)
-          expect(game.year.value).toBe(Math.floor((story.start + step) / CARDS_PER_YEAR))
-          expect(game.turnInYear.value).toBe((story.start + step) % CARDS_PER_YEAR + 1)
+          expect(game.year.value).toBe(Math.floor((start + step) / CARDS_PER_YEAR))
+          expect(game.turnInYear.value).toBe((start + step) % CARDS_PER_YEAR + 1)
           game.resources.value = healthy()
           game.choose(mask & (1 << step) ? 'left' : 'right')
         }
         expect(game.chapter.value?.id).not.toBe(story.id)
-        expect(game.decisions.value).toHaveLength(story.start + story.steps.length)
+        expect(game.decisions.value).toHaveLength(start + story.steps.length)
       }
     }
   })
@@ -76,7 +78,7 @@ describe('T0 连续篇章', () => {
     const reject = useGame()
     accept.startGame()
     reject.startGame()
-    for (const game of [accept, reject]) reach(game, 3, successfulSide)
+    for (const game of [accept, reject]) reach(game, slotOf('g-institute'), successfulSide)
     accept.choose('left')
     reject.choose('right')
     expect(accept.currentCard.value?.id).toBe('g-budget')
@@ -91,12 +93,12 @@ describe('T0 连续篇章', () => {
   it('当在篇章内重开或国势失衡时，不会残留旧篇章或继续发牌', () => {
     const game = useGame()
     game.startGame()
-    reach(game, 5, successfulSide)
+    reach(game, slotOf('g-institute') + 2, successfulSide)
     expect(game.chapter.value?.step).toBe(3)
     game.startGame()
-    expect(game.chapter.value).toEqual({ id: 'wei', name: '宫门定策', step: 1, total: 3 })
+    expect(game.chapter.value).toEqual({ id: 'wei', name: '宫门定策', step: 1, total: 8 })
     expect(game.currentCard.value?.id).toBe('s-tuogu')
-    reach(game, 3, successfulSide)
+    reach(game, slotOf('g-institute'), successfulSide)
     game.resources.value = { ...healthy(), gold: 1 }
     game.choose('left')
     expect(game.isOver.value).toBe(true)
@@ -105,7 +107,7 @@ describe('T0 连续篇章', () => {
     game.choose('right')
     expect(game.decisions.value).toHaveLength(count)
     game.startGame()
-    expect(game.chapter.value).toEqual({ id: 'wei', name: '宫门定策', step: 1, total: 3 })
+    expect(game.chapter.value).toEqual({ id: 'wei', name: '宫门定策', step: 1, total: 8 })
     expect(game.flags.value).toEqual({})
   })
 })
@@ -138,11 +140,18 @@ describe('T0 五次抉择和无放回发牌', () => {
   })
 
   it('当卡池最坏情况下缺少改革前置时，随机池仍覆盖每个非篇章空位', () => {
-    const unconditional = new Set(STORY_EVENTS
-      .filter((card) => !card.requires?.length && !card.excludes?.length && !card.resourceBounds)
-      .map((card) => `${card.year}#${card.order}`))
-    expect(RANDOM_EVENTS.length).toBeGreaterThanOrEqual(SCRIPT_SLOTS - unconditional.size)
-    const all = [...STORY_EVENTS, ...RANDOM_EVENTS, ...FINALE_EVENTS, ...REFORM_FINALES]
+    const unconditional = new Set<number>()
+    for (const story of CHAPTERS) {
+      if (!('order' in story.time)) continue
+      const start = chapterStart(story.time)
+      story.steps.forEach((cards, step) => {
+        if (cards.some((card) => !card.requires?.length && !card.excludes?.length && !card.resourceBounds)) {
+          unconditional.add(start + step)
+        }
+      })
+    }
+    expect(RANDOM_EVENTS.length).toBeGreaterThanOrEqual(SCRIPT_SLOTS + 1 - unconditional.size)
+    const all = [...ALL_EVENTS, ...RANDOM_EVENTS]
     expect(new Set(all.map((card) => card.id)).size).toBe(all.length)
     for (const card of all) {
       expect(card.name.length).toBeGreaterThan(0)
@@ -154,12 +163,6 @@ describe('T0 五次抉择和无放回发牌', () => {
           expect(Number.isInteger(value)).toBe(true)
         }
       }
-    }
-    for (const card of STORY_EVENTS) {
-      expect(card.year).toBeGreaterThanOrEqual(0)
-      expect(card.year).toBeLessThanOrEqual(16)
-      expect(card.order).toBeGreaterThanOrEqual(1)
-      expect(card.order).toBeLessThanOrEqual(CARDS_PER_YEAR)
     }
   })
 
@@ -184,11 +187,11 @@ describe('T0 五次抉择和无放回发牌', () => {
 
 describe('T0 国用积弊', () => {
   const slots = [12, 18, 21, 38]
-  const crisisCards = STORY_EVENTS.filter(card => card.id.startsWith('k-'))
+  const crisisCards = ALL_EVENTS.filter(card => card.id.startsWith('k-'))
 
   it('当积弊候选接入时，十二张卡只占四议，不增加中兴条件或覆盖原有成果', () => {
     expect(crisisCards).toHaveLength(12)
-    expect([...new Set(crisisCards.map(card => card.year! * CARDS_PER_YEAR + card.order! - 1))]).toEqual(slots)
+    expect([...new Set(crisisCards.map(card => slotOf(card.id)))].sort((a, b) => a - b)).toEqual(slots)
     expect(REFORM_REQUIREMENTS).toHaveLength(42)
     for (const card of crisisCards) {
       for (const side of ['left', 'right'] as const) {
@@ -293,9 +296,9 @@ describe('T0 国用积弊', () => {
 
 describe('T0 革新条件链', () => {
   it('当从初始资源逐项裁决时，存在不注入资源与旗标的完整中兴路径', () => {
-    // 此路径与 SCRIPT_SLOTS 强绑定；若 CARDS_PER_YEAR 变化导致长度不匹配，
-    // 需用 DFS/回溯搜索器重新生成（参考 .scratch/path-finder 模板）
-    const path = 'RRLLRLLRRRRRLLRRLRLRRLLLLLLLRLLRLLRLRLLRRLLLRRLLLLLRRLRLLRLRLLRRLLLLRLLLRRLLLRLLRLLRRL'
+    // 此路径与 SCRIPT_SLOTS 强绑定；若卡池或篇章时间变化导致长度不匹配，
+    // 需用资源动力学求解器重新生成（参考 .scratch/reform-path.ts）
+    const path = 'LRRRRRLLLRLLLLRRLRRRRLRLLLLLRLLRLLRLRLLRLRLLRRLLLLLRLLRLLRLRLLRRLLLLRLLLRRLLLRLLRLLRRL'
     expect(path).toHaveLength(SCRIPT_SLOTS + 1)
     const game = useGame()
     game.startGame()
@@ -310,7 +313,7 @@ describe('T0 革新条件链', () => {
     game.choose('left')
     expect(game.ending.value?.title).toBe('格物中兴')
     expect(game.decisions.value).toHaveLength(SCRIPT_SLOTS + 1)
-    expect(game.resources.value).toEqual({ court: 45, law: 68, army: 47, gold: 47, people: 100 })
+    expect(game.resources.value).toEqual({ court: 63, law: 76, army: 46, gold: 46, people: 100 })
   })
 
   it.each([1, 17, 2026, 1644])('当随机种子为%s时，34项建设和42项条件仍按时提供而不靠抽签', (seed) => {
@@ -326,7 +329,7 @@ describe('T0 革新条件链', () => {
     expect(game.currentCard.value?.id).toBe('g-finale-gewu')
   })
 
-  it.each(stages.map((card) => [card.id, card.year! * CARDS_PER_YEAR + card.order! - 1] as const))(
+  it.each(stages.map((card) => [card.id, slotOf(card.id)] as const))(
     '当%s选错时，该阶段和完美路线不会补考', (id, index) => {
       const game = useGame()
       game.startGame()
@@ -345,10 +348,10 @@ describe('T0 革新条件链', () => {
 
   it('当同一建设有互斥变体时，只能在同一个时点获得，不能延后补考', () => {
     for (const flag of REFORM_REQUIREMENTS) {
-      const producers = STORY_EVENTS.filter((card) =>
+      const producers = ALL_EVENTS.filter((card) =>
         [...(card.left.sets ?? []), ...(card.right.sets ?? [])].includes(flag))
       expect(producers.length, flag).toBeGreaterThan(0)
-      expect(new Set(producers.map((card) => `${card.year}#${card.order}`)).size, flag).toBe(1)
+      expect(new Set(producers.map((card) => EVENT_SLOT[card.id])).size, flag).toBe(1)
     }
   })
 
@@ -370,10 +373,9 @@ describe('T0 革新条件链', () => {
     ['s-htj', 'gewu-inspection'],
     ['g-capital', 'gewu-succession'],
   ])('当篇章中间步骤%s选择失败时，后续不能补出%s', (id, lostFlag) => {
-    const card = STORY_EVENTS.find((event) => event.id === id)!
     const game = useGame()
     game.startGame()
-    reach(game, card.year! * CARDS_PER_YEAR + card.order! - 1, successfulSide)
+    reach(game, slotOf(id), successfulSide)
     expect(game.currentCard.value?.id).toBe(id)
     game.resources.value = healthy()
     game.choose(successfulSide(id) === 'left' ? 'right' : 'left')
@@ -385,8 +387,7 @@ describe('T0 革新条件链', () => {
   it.each(['left', 'right'] as const)('当松锦接济已成并选择%s收束时，有序撤军与轮防均能保军通过验收', (side) => {
     const game = useGame()
     game.startGame()
-    const card = STORY_EVENTS.find((event) => event.id === 'g-songjin')!
-    reach(game, card.year! * CARDS_PER_YEAR + card.order! - 1, successfulSide)
+    reach(game, slotOf('g-songjin'), successfulSide)
     expect(game.currentCard.value?.id).toBe('g-songjin')
     game.resources.value = healthy()
     game.choose(side)

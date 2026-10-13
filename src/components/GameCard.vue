@@ -94,24 +94,32 @@ const cardStyle = computed(() => ({
 const leftOpacity = computed(() => (dx.value < 0 ? Math.min(1, -dx.value / 80) : 0))
 const rightOpacity = computed(() => (dx.value > 0 ? Math.min(1, dx.value / 80) : 0))
 
-/** 正文首字作朱印下沉；以引号等标点起手的塘报不强做 */
-const lead = computed(() => (/[\u4e00-\u9fff]/.test(props.event.text[0]) ? props.event.text[0] : ''))
-const body = computed(() => (lead.value ? props.event.text.slice(1) : props.event.text))
-
 /** 卡面主人：解析得出来才挂真人像，否则仍用原来的符号 emoji */
 const face = computed(() => cardPortrait(props.event))
 
 /** 把正文按已识别人物名拆成片段：纯文本段 + 可点击人名段交替 */
 interface TextSeg { text: string; link?: string }
-const textSegments = computed<TextSeg[]>(() => {
-  const raw = lead.value ? body.value : props.event.text
+const rawSegments = computed<TextSeg[]>(() => {
   const names = props.knownNames
-  if (!names?.length) return [{ text: raw }]
+  if (!names?.length) return [{ text: props.event.text }]
   const escaped = names.map((n) => n.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|')
   const re = new RegExp(`(${escaped})`, 'g')
-  return raw.split(re).map((part) =>
+  return props.event.text.split(re).map((part) =>
     names.includes(part) ? { text: part, link: part } : { text: part },
   )
+})
+
+/** 正文首字作朱印下沉；以引号等标点起手、或人名恰在句首时不强做（须留住整段链接） */
+const lead = computed(() => {
+  const first = rawSegments.value.find((seg) => seg.text.length > 0)
+  if (!first || first.link) return ''
+  return /[\u4e00-\u9fff]/.test(first.text[0]) ? first.text[0] : ''
+})
+
+const textSegments = computed<TextSeg[]>(() => {
+  if (!lead.value) return rawSegments.value
+  const [first, ...rest] = rawSegments.value
+  return [{ text: first.text.slice(1) }, ...rest]
 })
 
 defineExpose({ fly })

@@ -2,14 +2,14 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { useCharacters } from '../../src/composables/useCharacters'
 import { CARDS_PER_YEAR, useGame, type Game } from '../../src/composables/useGame'
 import { CHARACTERS, CHAR_MAP } from '../../src/data/characters'
-import { STORY_EVENTS } from '../../src/data/chapters'
-import { FINALE_EVENTS, RANDOM_EVENTS } from '../../src/data/events'
-import { REFORM_FINALES, REFORM_REQUIREMENTS } from '../../src/data/reforms'
+import { ALL_EVENTS, EVENT_SLOT } from '../../src/data/chapters'
+import { RANDOM_EVENTS } from '../../src/data/events'
+import { REFORM_REQUIREMENTS } from '../../src/data/reforms'
 import type { Side } from '../../src/types'
 import { healthy, progressSide, reach, seedRandom } from '../game/helpers'
 
 const sides: Side[] = ['left', 'right']
-const allCards = [...STORY_EVENTS, ...RANDOM_EVENTS, ...FINALE_EVENTS, ...REFORM_FINALES]
+const allCards = [...ALL_EVENTS, ...RANDOM_EVENTS]
 const cards = new Map(allCards.map((card) => [card.id, card]))
 type Overrides = Partial<Record<string, Side>>
 
@@ -34,9 +34,14 @@ function start() {
 }
 
 function indexOf(id: string) {
-  const card = cards.get(id)
-  if (card?.year === undefined || card.order === undefined) throw new Error(`Missing canonical card: ${id}`)
-  return card.year * CARDS_PER_YEAR + card.order - 1
+  const slot = EVENT_SLOT[id]
+  if (slot === undefined) throw new Error(`Missing canonical card: ${id}`)
+  return slot
+}
+
+/** 事件所属槽位的崇祯纪年 */
+function yearIndexOf(id: string): number {
+  return Math.floor(indexOf(id) / CARDS_PER_YEAR)
 }
 
 function toCard(game: Game, id: string, overrides: Overrides = {}) {
@@ -50,7 +55,7 @@ function toYear(game: Game, year: number, overrides: Overrides = {}) {
 
 function pending(game: Game, id: string, event: string) {
   expect(character(game, id).deeds).toContainEqual(expect.objectContaining({
-    eventId: event, year: cards.get(event)!.year, side: null, label: '待裁决',
+    eventId: event, year: yearIndexOf(event), side: null, label: '待裁决',
   }))
 }
 
@@ -91,12 +96,12 @@ describe('T1 人物改革事迹与登场', () => {
     const chars = useCharacters(game)
     expect(character(game, 'xuguangqi')).toMatchObject({ status: 'hidden', appearYear: null, deeds: [] })
     toCard(game, 'g-institute')
-    expect(character(game, 'xuguangqi')).toMatchObject({ status: 'alive', appearYear: cards.get('g-institute')!.year })
+    expect(character(game, 'xuguangqi')).toMatchObject({ status: 'alive', appearYear: yearIndexOf('g-institute') })
     pending(game, 'xuguangqi', 'g-institute')
     expect(character(game, 'xuguangqi').deeds.some((deed) => deed.eventId === 'g-seeds')).toBe(false)
     choose(game, 'left')
     expect(character(game, 'xuguangqi').deeds[0]).toMatchObject({
-      year: cards.get('g-institute')!.year, side: 'left', label: cards.get('g-institute')!.left.label,
+      year: yearIndexOf('g-institute'), side: 'left', label: cards.get('g-institute')!.left.label,
     })
     expect(character(game, 'emperor').deeds.some((deed) => deed.eventId === 'g-institute')).toBe(true)
     for (const view of chars.views.value) {
@@ -117,7 +122,7 @@ describe('T1 人物改革事迹与登场', () => {
     expect(xu).toMatchObject({ status: 'dead', age: 72 })
     expect(xu.note).toContain('崇祯六年卒于官')
     for (const event of ['g-institute', 'g-seeds', 'g-manuals']) {
-      expect(xu.deeds).toContainEqual(expect.objectContaining({ eventId: event, year: cards.get(event)!.year }))
+      expect(xu.deeds).toContainEqual(expect.objectContaining({ eventId: event, year: yearIndexOf(event) }))
     }
   })
 
@@ -163,7 +168,7 @@ describe('T1 失败候选的真实人物事迹', () => {
       choose(game, side)
       for (const id of participants) {
         expect(character(game, id).deeds).toContainEqual(expect.objectContaining({
-          eventId: event, side, year: cards.get(event)!.year, label: cards.get(event)![side].label,
+          eventId: event, side, year: yearIndexOf(event), label: cards.get(event)![side].label,
         }))
       }
     }
@@ -299,7 +304,7 @@ describe('T1 保匠、海贸与军政局部成果', () => {
     const game = start()
     toCard(game, 'g-shipping')
     choose(game, 'left')
-    reach(game, 33, stalledSide)
+    reach(game, 34, stalledSide)
     expect(game.chapter.value).toBeNull()
     expect(game.currentCard.value?.id).toBe('r-cao')
     choose(game, 'right')
@@ -694,11 +699,12 @@ describe('T1 公开议和与新终章', () => {
     const game = start()
     toCard(game, 'g-capital')
     pending(game, 'wangchengen', 'g-capital')
-    expect(character(game, 'wangchengen')).toMatchObject({ status: 'alive', appearYear: cards.get('g-capital')!.year })
+    expect(character(game, 'wangchengen')).toMatchObject({ status: 'alive', appearYear: yearIndexOf('g-capital') })
     expect(character(game, 'wangchengen').note).not.toContain('煤山')
   })
 
-  const finaleCases = REFORM_FINALES.flatMap((card) => sides.map((side) => ({ id: card.id, side })))
+  const finaleIds = ['g-finale-gewu', 'g-finale-incomplete']
+  const finaleCases = finaleIds.flatMap((id) => sides.map((side) => ({ id, side })))
   it.each(finaleCases)('当新终章$id选择$side时，王承恩不被预判或强制记为煤山从死', ({ id, side }) => {
     const game = start()
     toYear(game, 17, id === 'g-finale-gewu' ? {} : { 'g-succession': 'left' })
@@ -706,7 +712,7 @@ describe('T1 公开议和与新终章', () => {
     if (id === 'g-finale-gewu') {
       for (const flag of REFORM_REQUIREMENTS) expect(game.flags.value[flag], flag).toBeGreaterThan(0)
     }
-    expect(character(game, 'wangchengen')).toMatchObject({ status: 'alive', appearYear: cards.get('g-capital')!.year })
+    expect(character(game, 'wangchengen')).toMatchObject({ status: 'alive', appearYear: yearIndexOf('g-capital') })
     expect(character(game, 'wangchengen').deeds).toContainEqual(expect.objectContaining({
       eventId: id, year: 17, side: null,
     }))
