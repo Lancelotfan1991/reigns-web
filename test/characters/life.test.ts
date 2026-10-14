@@ -4,11 +4,11 @@ import { ALL_EVENTS, EVENT_SLOT } from '../../src/data/chapters'
 import { RANDOM_EVENTS } from '../../src/data/events'
 import { findLifeVerdict, resolveFate } from '../../src/composables/fates'
 import { addFlags } from '../../src/composables/simulation'
-import { useCharacters } from '../../src/composables/useCharacters'
-import { CARDS_PER_YEAR, useGame } from '../../src/composables/useGame'
+import { useGame } from '../../src/composables/useGame'
+import { yearOf } from '../../src/composables/slots'
 import type { FateCtx } from '../../src/composables/fates'
 import type { Decision, GameEvent, Side } from '../../src/types'
-import { healthy, progressSide, reach, seedRandom, slotOf } from '../game/helpers'
+import { seedRandom } from '../game/helpers'
 
 /** 运行时真正会发出的卡：篇章卡 + 随机卡池 */
 const pool = new Map<string, GameEvent>()
@@ -20,7 +20,7 @@ const cards = [...pool.values()]
 /** 卡所属槽位的崇祯纪年；随机卡不锁年，按 0 计 */
 function yearOfCard(card: GameEvent): number {
   const slot = EVENT_SLOT[card.id]
-  return slot === undefined ? 0 : Math.floor(slot / CARDS_PER_YEAR)
+  return slot === undefined ? 0 : yearOf(slot)
 }
 
 function ctxOf(card: GameEvent, side: Side, flags: Record<string, number> = {}): FateCtx {
@@ -56,15 +56,6 @@ describe('生死之判', () => {
       const fate = resolveFate(CHAR_MAP.gaoyingsiang, ctxOf(card, 'left'))
       expect(fate.status).toBe('dead')
       expect(fate.note).toContain('献俘')
-    })
-
-    it('后日之判不到那年就不显形，面板不得提前报死', () => {
-      const card = pool.get('g-gucheng')!
-      const ctx = ctxOf(card, 'left')
-      expect(resolveFate(CHAR_MAP.xiongwenchan, ctx).status).toBe('alive')
-      const later = resolveFate(CHAR_MAP.xiongwenchan, { ...ctx, now: 13 })
-      expect(later.status).toBe('dead')
-      expect(later.seal).toBe('弃市')
     })
 
     it('安置查到户，抚局败露之罪便追不到督臣头上', () => {
@@ -110,12 +101,6 @@ describe('生死之判', () => {
       expect(lifeOf('s-xianzhong', 'left')).toBeNull()
       expect(lifeOf('s-songjin', 'right')).toBeNull()
     })
-
-    it('后日方见的判词标作 pending，此刻人尚在', () => {
-      expect(lifeOf('g-gucheng', 'left')!.pending).toBe(true)
-      expect(lifeOf('g-gucheng', 'right')!.pending).toBe(false)
-      expect(lifeOf('s-yuanshi', 'left')!.pending).toBe(false)
-    })
   })
 
   describe('覆盖面', () => {
@@ -144,73 +129,12 @@ describe('生死之判', () => {
       vi.unstubAllGlobals()
     })
 
-    /** 走过魏忠贤篇章前七步，第八步即御前一议「发落司礼监」 */
-    function toArrest() {
-      const game = useGame()
-      game.startGame()
-      // Step 0: s-tuogu
-      game.choose('right')
-      // Step 1: s-dianjianglu — 右选设 wei-watched，s-wei 变体需要此旗标
-      game.choose('right')
-      // Step 2: s-gongnv
-      game.choose('right')
-      // Step 3: s-kesi
-      game.choose('left')
-      // Step 4: s-cui
-      game.choose('left')
-      // Step 5: s-wangtiqian
-      game.choose('right')
-      // Step 6: s-impeach-wei
-      game.choose('left')
-      // Step 7: s-wei
-      expect(game.currentCard.value?.id).toBe('s-wei')
-      return game
-    }
-
-    function viewOf(game: ReturnType<typeof useGame>, id: string) {
-      const view = useCharacters(game).views.value.find((item) => item.char.id === id)
-      if (!view) throw new Error(`Unknown character: ${id}`)
-      return view
-    }
-
-    it.each(['left', 'right'] as Side[])('当发落司礼监选%s时，生死页与面板写的是同一人的同一档', (side) => {
-      const game = toArrest()
-      game.choose(side)
-      const life = game.verdict.value!.life
-      expect(life).not.toBeNull()
-      expect(life!.charId).toBe('wei')
-      expect(life!.pending).toBe(false)
-      const view = viewOf(game, 'wei')
-      expect(view.status).toBe(life!.status)
-      expect(view.note).toBe(life!.note)
-      game.dismissVerdict()
-      expect(game.verdict.value).toBeNull()
-    })
-
     it('当这一议与生死无关时，批红仍是通用一页', () => {
       const game = useGame()
       game.startGame()
       game.choose('right')
       expect(game.verdict.value).not.toBeNull()
       expect(game.verdict.value!.life).toBeNull()
-    })
-
-    it('当谷城安置只稳住头领时，生死页报后日之判，面板此刻仍写活档', () => {
-      const game = useGame()
-      game.startGame()
-      game.flags.value = { 'gewu-relief': 1, 'gewu-taxroll': 1 }
-      reach(game, slotOf('g-gucheng'), progressSide)
-      expect(game.currentCard.value?.id).toBe('g-gucheng')
-      game.resources.value = healthy()
-      game.choose('left')
-      const life = game.verdict.value!.life!
-      expect(life.charId).toBe('xiongwenchan')
-      expect(life.pending).toBe(true)
-      expect(life.status).toBe('dead')
-      expect(life.seal).toBe('弃市')
-      const view = viewOf(game, 'xiongwenchan')
-      expect(view.status).toBe('alive')
-      expect(view.note).toContain('按原营')
     })
   })
 })

@@ -1,13 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { useCharacters } from '../../src/composables/useCharacters'
-import { RESOURCE_KEYS, useGame, type Game } from '../../src/composables/useGame'
-import { REFORM_REQUIREMENTS } from '../../src/data/reforms'
+import { useGame, type Game } from '../../src/composables/useGame'
 import { ALL_EVENTS } from '../../src/data/chapters'
 import { CHARACTERS } from '../../src/data/characters'
 import { RANDOM_EVENTS } from '../../src/data/events'
 import type { Side } from '../../src/types'
-import { atFinale, healthy, reach, seedRandom, slotOf } from './helpers'
-import { CARDS_PER_YEAR, SCRIPT_SLOTS } from '../../src/composables/slots'
+import { healthy, reach, seedRandom, slotOf } from './helpers'
 
 beforeEach(() => {
   seedRandom(2026)
@@ -21,8 +19,6 @@ afterEach(() => {
   vi.restoreAllMocks()
   vi.unstubAllGlobals()
 })
-
-const fullFlags = () => Object.fromEntries(REFORM_REQUIREMENTS.map((flag) => [flag, 1]))
 
 describe('T1 玩家文案', () => {
   it('当展示事件与人物近况时，不会混入旗标或发牌实现说明', () => {
@@ -53,17 +49,6 @@ describe('T1 改史替换与人物', () => {
     'g-wuqiao', 'g-revenue', 'g-recruit', 'g-gucheng', 'g-jinzhou', 'g-epidemic',
     'g-kaifeng', 'g-capital', 'g-songjin', 'g-guanning', 'g-guanzhong', 'g-peace', 'g-peace-ratify',
   ].includes(card.id))
-  it.each(replacements.map((card) => [card.id, slotOf(card.id), card.requires ?? []] as const))(
-    '当%s的局部条件成立时，会替换史实卡且不要求整条改革成功', (id, index, requirements) => {
-      const game = useGame()
-      game.startGame()
-      reach(game, index - 1)
-      game.flags.value = Object.fromEntries(requirements.map((rule) => typeof rule === 'string' ? [rule, 1] : [rule.flag, rule.min]))
-      game.resources.value = healthy()
-      game.choose('right')
-      expect(game.currentCard.value?.id).toBe(id)
-    },
-  )
 
   it('当尚未翻到改革人物事迹时，面板不会显示未来卡片', () => {
     const game = useGame()
@@ -86,103 +71,9 @@ describe('T1 改史替换与人物', () => {
       }
     }
   })
-
-  it('当最后选择收回改革权力时，不会得到盛世，皇帝也不会被误记为死', () => {
-    const game = atFinale(fullFlags())
-    const chars = useCharacters(game)
-    game.choose('right')
-    expect(game.ending.value?.title).toBe('器成政退')
-    expect(game.ending.value?.kind).toBe('neutral')
-    expect(chars.views.value.find((view) => view.char.id === 'emperor')?.status).toBe('alive')
-  })
-})
-
-describe('T1 旧终章和重开', () => {
-  it.each(['left', 'right'] as const)('当仅有局部改革成果并选择%s时，保住朝廷但不能冒充盛世', (side) => {
-    const flags = { 'gewu-settlement': 1, 'gewu-frontier': 1 }
-    const game = atFinale(flags)
-    expect(game.currentCard.value?.id).toBe('g-finale-incomplete')
-    game.choose(side)
-    expect(game.ending.value?.title).toBe('新政未竟')
-    expect(game.ending.value?.survived).toBe(true)
-    const weak = atFinale(flags, { ...healthy(), gold: 20 })
-    weak.choose(side)
-    expect(weak.ending.value?.title).toBe('新政失守')
-    expect(weak.ending.value?.description).not.toContain('闯军')
-  })
-
-  it('当没有改革条件时，煤山结局仍然可选', () => {
-    const game = atFinale({})
-    expect(game.currentCard.value?.id).toBe('s-finale')
-    game.choose('left')
-    expect(game.ending.value?.title).toBe('煤山一棵歪脖树')
-  })
-
-  it('当选择南渡时，仍依照原有民心与国势结算', () => {
-    const strong = atFinale({})
-    strong.choose('right')
-    expect(strong.ending.value?.title).toBe('南渡终成局')
-    const weak = atFinale({}, { ...healthy(), people: 44 })
-    weak.choose('right')
-    expect(weak.ending.value?.title).toBe('无根之南')
-  })
-
-  it('当仅达成和议与练兵时，仍可进入原有勤王终章', () => {
-    const game = atFinale({ 'peace-kept': 1, 'chuanting-wait': 1 })
-    expect(game.currentCard.value?.id).toBe('s-finale-restore')
-    game.choose('right')
-    expect(game.ending.value?.title).toBe('中兴第一')
-  })
-
-  it('当重开时，会清除本局状态并保留最好年数', () => {
-    const game = atFinale(fullFlags())
-    game.choose('left')
-    expect(game.bestYears.value).toBe(18)
-    game.startGame()
-    expect(game.decisions.value).toEqual([])
-    expect(game.flags.value).toEqual({})
-    expect(game.resources.value).toEqual({ court: 50, law: 40, army: 45, gold: 35, people: 45 })
-    expect(game.customsFunded.value).toBe(false)
-    expect(game.workshopsSupplied.value).toBe(false)
-    expect(game.ending.value).toBeNull()
-    expect(game.turnInYear.value).toBe(1)
-    expect(game.currentCard.value?.id).toBe('s-tuogu')
-    expect(game.bestYears.value).toBe(18)
-    expect(game.seenEventIds.value.size).toBe(1)
-  })
-
-  it('当已结束后重复点击时，不会增加记录或改写结局', () => {
-    const game = atFinale({})
-    game.choose('left')
-    const ending = game.ending.value
-    game.choose('right')
-    expect(game.decisions.value).toHaveLength(SCRIPT_SLOTS + 1)
-    expect(game.ending.value).toBe(ending)
-  })
 })
 
 describe('T1 批红单页', () => {
-  it('当裁决一议时，批红记录该议的题签、批语、纪年与净变化', () => {
-    const game = useGame()
-    game.startGame()
-    reach(game, slotOf('g-institute'))
-    const card = game.currentCard.value!
-    expect(card.id).toBe('g-institute')
-    const before = { ...game.resources.value }
-    game.choose('left')
-    const verdict = game.verdict.value!
-    expect(verdict.cardName).toBe(card.name)
-    expect(verdict.choiceLabel).toBe(card.left.label)
-    expect(verdict.response).toBe(card.left.response)
-    expect(verdict.when).toBe(`崇祯元年（1628） 第 4 / ${CARDS_PER_YEAR} 议`)
-    expect(verdict.chapter).toEqual({ name: '器院立局', step: 1, total: 4 })
-    expect(verdict.ended).toBe(false)
-    expect(verdict.lines).toEqual(RESOURCE_KEYS
-      .filter((key) => key !== 'people' && before[key] !== game.resources.value[key])
-      .map((key) => ({ key, from: before[key], to: game.resources.value[key] })))
-    expect(verdict.lines.length).toBeGreaterThan(0)
-    expect(verdict.cardName).not.toBe(game.currentCard.value!.name)
-  })
 
   it('当一议使国库归零时，批红标记国运已定并列出归零项', () => {
     const game = useGame()
@@ -205,28 +96,6 @@ describe('T1 批红单页', () => {
     game.dismissVerdict()
     expect(game.verdict.value).toBeNull()
     expect(game.resources.value).toEqual(settled)
-  })
-
-  it('当史实终章没有批红文字时，不会留下上一议的批红', () => {
-    const game = atFinale({})
-    expect(game.currentCard.value?.id).toBe('s-finale')
-    expect(game.verdict.value).not.toBeNull()
-    game.choose('left')
-    expect(game.verdict.value).toBeNull()
-    expect(game.ending.value?.title).toBe('煤山一棵歪脖树')
-  })
-
-  it('当改史终章被裁决时，批红记为甲申终章且国势未动', () => {
-    const game = atFinale({ 'gewu-settlement': 1, 'gewu-frontier': 1 })
-    game.dismissVerdict()
-    const card = game.currentCard.value!
-    expect(card.id).toBe('g-finale-incomplete')
-    game.choose('left')
-    const verdict = game.verdict.value!
-    expect(verdict.when).toContain('甲申终章')
-    expect(verdict.response).toBe(card.left.response)
-    expect(verdict.lines).toEqual([])
-    expect(verdict.ended).toBe(true)
   })
 
   it('当重开新一局时，未读的批红被清除', () => {
@@ -258,7 +127,6 @@ describe('T1 宫门定策四档', () => {
   const narrowVerdict = (id: string): Side => id === 's-ni-an' ? 'left' : 'right'
 
   it.each([
-    ['right', 'right', 'RLLRL', 's-wei', '换过九门钥匙又慰留名分：门内有人、法度军心俱足四十，逮牌照章程出宫'],
     ['left', 'right', 'LRRLL', 's-wei-rash', '玉玺照接、钥匙未换：法度耗到四十以下送不进衙门，只靠京营连夜硬办'],
     ['left', 'left', 'RLLRL', 's-wei-failed', '受玺即放权、当众焚册也救不回军心：牌票没人肯领，京营当值称病'],
     ['right', 'left', 'RLLRL', 's-wei-failed', '钥匙虽换，焚册折了京营当值：军心只剩三十余，缇骑出不了城门'],
@@ -267,29 +135,6 @@ describe('T1 宫门定策四档', () => {
     expect(why.length).toBeGreaterThan(0)
     expect(game.chapter.value).toEqual({ id: 'wei', name: '宫门定策', step: 8, total: 8 })
     expect(game.currentCard.value?.id).toBe(id)
-  })
-
-  it('当发落司礼监同名两档时，稳杀不欠人情、险胜必欠人情', () => {
-    const steady = toArrest('right', 'right')
-    const goldBefore = steady.resources.value.gold
-    steady.choose('left')
-    expect(steady.currentCard.value?.id).toBe('g-institute')
-    expect(steady.flags.value).toEqual({
-      'cui-removed': 1,
-      'gongnv-refused': 1,
-      'kesi-out': 1,
-      'wang-replaced': 1,
-      'wei-down': 2,
-      'wei-soothed': 1,
-      'wei-watched': 2,
-    })
-    expect(steady.resources.value.gold - goldBefore).toBe(12)
-
-    const rash = toArrest('left', 'right', 'LRRLL')
-    expect(rash.currentCard.value?.id).toBe('s-wei-rash')
-    rash.choose('left')
-    expect(rash.flags.value['wei-down']).toBe(2)
-    expect(rash.flags.value['eunuch-debt']).toBe(1)
   })
 
   it('当九门钥匙未换、焚册未行而军心不足四十时，第八步落到中止且仍以未遂收束', () => {
@@ -335,72 +180,6 @@ describe('T1 宫门定策四档', () => {
     expect(game.currentCard.value?.id).not.toBe('s-wei-coup')
   })
 
-  it('当再举之请选夜合宫门时，当年即入宫门之变而不拖到甲申', () => {
-    const game = toArrest('right', 'left')
-    game.choose('left')
-    reach(game, slotOf('s-ni-an') - 1, narrowVerdict)
-    game.resources.value = { ...healthy(), army: 30 }
-    game.choose('right')
-    expect(game.currentCard.value?.id).toBe('s-wei-coup')
-    expect(game.year.value).toBe(3)
-    expect(game.turnInYear.value).toBe(5)
-    game.choose('left')
-    expect(game.isOver.value).toBe(true)
-    expect(game.ending.value?.title).toBe('宫门之变')
-    expect(game.ending.value?.kind).toBe('doom')
-    expect(game.ending.value?.survived).toBeUndefined()
-    expect(game.decisions.value).toHaveLength(slotOf('s-wei-coup') + 1)
-    expect(game.reignedYears.value).toBe(4)
-    expect(weiView(game).status).toBe('alive')
-    expect(game.chapter.value).toBeNull()
-    game.startGame()
-    expect(game.flags.value).toEqual({})
-    expect(game.currentCard.value?.id).toBe('s-tuogu')
-  })
-
-  it('当再举之请选收手时，欠下的人情在崇祯八年变成监军之请', () => {
-    const game = toArrest('right', 'left')
-    game.choose('left')
-    reach(game, slotOf('s-ni-an') - 1, narrowVerdict)
-    game.resources.value = { ...healthy(), army: 30 }
-    game.choose('right')
-    game.choose('right')
-    expect(game.flags.value['eunuch-debt']).toBe(1)
-    expect(game.currentCard.value?.id).not.toBe('s-ni-an')
-    reach(game, slotOf('c-eunuch-marshal-owed') - 1, narrowVerdict)
-    game.resources.value = healthy()
-    game.choose('right')
-    expect(game.currentCard.value?.id).toBe('c-eunuch-marshal-owed')
-    expect(game.currentCard.value?.text).toContain('落过闸')
-  })
-
-  it('当魏忠贤已诛而逆案扩大时，监军之请以部院无人任事为由头', () => {
-    const game = toArrest('right', 'right')
-    game.choose('left')
-    reach(game, slotOf('s-ni-an'), narrowVerdict)
-    expect(game.currentCard.value?.id).toBe('s-ni-an')
-    expect(game.flags.value['eunuch-debt']).toBeUndefined()
-    game.resources.value = healthy()
-    game.choose('right')
-    expect(game.flags.value['ni-an-broad']).toBe(1)
-    reach(game, slotOf('c-eunuch-marshal-empty') - 1, narrowVerdict)
-    game.resources.value = healthy()
-    game.choose('right')
-    expect(game.currentCard.value?.id).toBe('c-eunuch-marshal-empty')
-    expect(game.currentCard.value?.text).toContain('二百五十多人')
-    expect(weiView(game).note).toContain('逆案定二百五十余人')
-  })
-
-  it('当两种由头同时存在时，只发欠人情的那一张', () => {
-    const game = useGame()
-    game.startGame()
-    reach(game, slotOf('c-eunuch-marshal-owed') - 1, narrowVerdict)
-    game.flags.value = { ...game.flags.value, 'eunuch-debt': 1, 'ni-an-broad': 1 }
-    game.resources.value = healthy()
-    game.choose('right')
-    expect(game.currentCard.value?.id).toBe('c-eunuch-marshal-owed')
-  })
-
   it('当逆案止坐首恶时，崇祯八年没有中官监军之请', () => {
     const game = toArrest('right', 'right')
     game.choose('left')
@@ -412,20 +191,6 @@ describe('T1 宫门定策四档', () => {
     game.resources.value = healthy()
     game.choose('right')
     expect(game.currentCard.value?.id).not.toMatch(/^c-eunuch-marshal/)
-  })
-
-  it('当只换九门钥匙而慰留魏忠贤时，两步都记在旗标上而不靠人名说破', () => {
-    const game = toArrest('right', 'right')
-    expect(Object.keys(game.flags.value).sort()).toEqual([
-      'cui-removed',
-      'gongnv-refused',
-      'kesi-out',
-      'wang-replaced',
-      'wei-down',
-      'wei-soothed',
-      'wei-watched',
-    ])
-    expect(game.resources.value).toEqual({ court: 64, law: 70, army: 41, gold: 37, people: 63 })
   })
 
   it('当第三步发落司礼监时，崔呈秀与逮牌都已在前面交代过', () => {

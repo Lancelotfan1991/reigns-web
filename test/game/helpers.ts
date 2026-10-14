@@ -1,30 +1,14 @@
 import { vi } from 'vitest'
 import { useGame, type Game } from '../../src/composables/useGame'
-import { ALL_EVENTS, EVENT_SLOT } from '../../src/data/chapters'
-import { REFORM_REQUIREMENTS } from '../../src/data/reforms'
-import { CARDS_PER_YEAR, SCRIPT_SLOTS } from '../../src/composables/slots'
-import type { ResourceKey, Side } from '../../types'
-
-export { CARDS_PER_YEAR, SCRIPT_SLOTS }
+import { RESOURCE_KEYS, UNREST_LINE, dealNext, yearOf, yearTick } from '../../src/composables/simulation'
+import { EVENT_SLOT } from '../../src/data/chapters'
+import type { GameEvent, ResourceKey, Side } from '../../src/types'
 
 /** 按事件 ID 反查当前槽位；找不到时抛错，提醒更新测试 */
 export function slotOf(eventId: string): number {
   const slot = EVENT_SLOT[eventId]
   if (slot === undefined) throw new Error(`slotOf: 未找到事件 ${eventId}，请检查 ID 或数据`)
   return slot
-}
-
-const storyCards = new Map(ALL_EVENTS.map((card) => [card.id, card]))
-const prerequisites = new Set(ALL_EVENTS.flatMap((card) =>
-  (card.requires ?? []).map((rule) => typeof rule === 'string' ? rule : rule.flag)))
-
-export function progressSide(id: string): Side {
-  const card = storyCards.get(id)
-  if (!card) return 'right'
-  const sides = (['left', 'right'] as const).filter((side) => !card[side].sets?.includes('exec'))
-  return sides.find((side) => card[side].sets?.some((flag) => REFORM_REQUIREMENTS.includes(flag)))
-    ?? sides.find((side) => card[side].sets?.some((flag) => prerequisites.has(flag)))
-    ?? 'right'
 }
 
 export const healthy = (): Record<ResourceKey, number> => ({ court: 60, law: 60, army: 60, gold: 60, people: 80 })
@@ -48,21 +32,39 @@ export function reach(game: Game, index: number, decide: (id: string) => Side = 
   game.dismissVerdict()
 }
 
+/** 终章候选：两侧任一带 finale 字段 */
+const isFinaleCard = (card: GameEvent) => !!(card.left.finale || card.right.finale)
+
+/**
+ * 走到终章前一张，覆盖旗标与资源后落一子：翻开的第一张即按旗标与国势出的终章候选。
+ * 资源补偿本议效果与岁耗，使终章翻开时恰为 target；走空或终章未按期翻开即抛错，防断言空转。
+ */
 export function atFinale(flags: Record<string, number>, target = healthy()) {
   const game = useGame()
   game.startGame()
-  reach(game, SCRIPT_SLOTS - 1)
-  const card = game.currentCard.value!
+  while (!game.isOver.value && game.currentCard.value && !isFinaleCard(game.currentCard.value)) {
+    const snap = game.snapshot()
+    if (!snap) break
+    const peek = dealNext(snap.flags, snap.resources, snap.deal)
+    if (!peek.card || isFinaleCard(peek.card)) break
+    game.resources.value = healthy()
+    game.choose('right')
+  }
+  const card = game.currentCard.value
+  if (!card || game.isOver.value) throw new Error('atFinale: 未能走到终章前一张')
   game.flags.value = { ...flags }
   const before = { ...target }
-  for (const key of Object.keys(before) as ResourceKey[]) before[key] -= card.right.effects[key] ?? 0
-  if (!game.customsFunded.value) before.gold += 1
-  if (!game.workshopsSupplied.value) before.army += 1
-  if (target.people < 30) {
-    before.army += 1
-    before.law += 1
+  for (const key of RESOURCE_KEYS) before[key] -= card.right.effects[key] ?? 0
+  const tick = yearTick(yearOf(game.cardKey.value), game.decisions.value.at(-1)?.year ?? -1)
+  if (!game.customsFunded.value) before.gold += tick
+  if (!game.workshopsSupplied.value) before.army += tick
+  if (target.people < UNREST_LINE) {
+    before.army += tick
+    before.law += tick
   }
   game.resources.value = before
   game.choose('right')
+  const landed = game.currentCard.value
+  if (!landed || !isFinaleCard(landed)) throw new Error('atFinale: 终章未在下一议翻开')
   return game
 }
