@@ -58,8 +58,8 @@ export interface GameEvent {
   people?: string[]
 }
 
-/** 篇章时间：定点=某年某议；范围=某年期区间内择空闲槽位落下 */
-export type ChapterTime = { year: number; order: number } | { year: number; yearEnd: number }
+/** 篇章时间：某年某议（编年键）；步骤自起始键逐位递进 */
+export type ChapterTime = { year: number; order: number }
 
 export interface StoryChapter {
   id: string

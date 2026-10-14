@@ -2,22 +2,22 @@ import { computed, ref } from 'vue'
 import { findLifeVerdict } from './fates'
 import {
   AXIS_KEYS,
-  CARDS_PER_YEAR,
-  SCRIPT_SLOTS,
-  UNREST_LINE,
+  FINALE_YEAR,
   RESOURCE_KEYS,
+  TOTAL_STEPS,
+  UNREST_LINE,
   addFlags,
   applyEffects as applyToResources,
-  dealAt,
+  dealNext,
   eligible,
   initialResources,
-  makePool,
+  yearTick,
 } from './simulation'
 import type { AxisKey, ChapterProgress, Decision, Ending, Effects, GameEvent, ResourceKey, Side, Verdict } from '../types'
 import type { DealResult, DealState, SimState } from './simulation'
-import { turnOf, yearOf } from './slots'
+import { yearOf } from './slots'
 
-export { AXIS_KEYS, CARDS_PER_YEAR, RESOURCE_KEYS, SCRIPT_SLOTS, UNREST_LINE }
+export { AXIS_KEYS, RESOURCE_KEYS, TOTAL_STEPS, UNREST_LINE }
 
 export const RESOURCE_META: Record<ResourceKey, { icon: string; name: string; color: string; hint: string }> = {
   court: { icon: '🏛️', name: '君威', color: '#a8322a', hint: '谁的话还算数' },
@@ -223,8 +223,9 @@ function loadBest(): number {
 
 export function useGame() {
   const resources = ref<Record<ResourceKey, number>>(initialResources())
-  const deck = ref<GameEvent[]>([])
-  const cardIndex = ref(0)
+  const currentCard = ref<GameEvent | null>(null)
+  /** 当前牌的编年键；终章落定后仍停在自己的键上，故结局页的纪年不倒退 */
+  const cardKey = ref(0)
   const ending = ref<Ending | null>(null)
   /** 待读的批红：null 表示当前在决策页，读完后回到决策页 */
   const verdict = ref<Verdict | null>(null)
@@ -233,10 +234,12 @@ export function useGame() {
   const decisions = ref<Decision[]>([])
   /** 旗标计数：关键抉择写下的痕迹，决定后续槽位发哪张分叉卡 */
   const flags = ref<Record<string, number>>({})
-  /** 本局随机牌序：开局洗好一次，与推演共用同一份，故 god 模式能照真实牌序算到底 */
-  let pool = makePool()
-  let cursor = 0
-  let dealState: DealState = {}
+  /** 本局牌堆进度：篇章直排后牌序即数据顺序，与推演共用同一份，故 god 模式能照真实牌序算到底 */
+  let dealState: DealState = { seq: 0 }
+  /** 上一议所在年份；-1 = 尚未裁决，故首议即结算第一年的岁耗 */
+  let lastYear = -1
+  /** 牌堆走完（只发生在甲申终章抉择之后） */
+  const deckDone = ref(false)
   /** 当前手上这张牌所属的篇章步骤；单步分组也是篇章，展示层按步骤数过滤 */
   const dealChapter = ref<DealResult['chapter']>(null)
   const chapter = computed<ChapterProgress | null>(() => {
@@ -246,31 +249,35 @@ export function useGame() {
     return { id: active.story.id, name: active.story.name, step: active.step + 1, total: active.story.steps.length }
   })
 
-  /** 惰性发第 index 张牌；越过终章即无牌 */
-  function dealCard(index: number): GameEvent | undefined {
-    const dealt = dealAt(index, flags.value, resources.value, pool, cursor, dealState)
-    cursor = dealt.cursor
+  /** 发下一张牌；牌堆走完返回 undefined */
+  function dealCard(): GameEvent | undefined {
+    const dealt = dealNext(flags.value, resources.value, dealState)
     dealState = dealt.deal
     dealChapter.value = dealt.chapter
+    if (!dealt.card || dealt.key === null) return undefined
+    cardKey.value = dealt.key
     return dealt.card
   }
 
-  /** 0 = 天启七年，N = 崇祯N年，17 = 甲申终章当年；纪年与槽位严格对应 */
-  const year = computed(() => yearOf(cardIndex.value))
+  /** 0 = 天启七年，N = 崇祯N年，17 = 甲申终章当年；纪年随发牌键推进 */
+  const year = computed(() => yearOf(cardKey.value))
   const yearText = computed(() => {
     const y = year.value
     return `${yearLabel(y)}（${1627 + Math.min(Math.max(y, 0), 17)}）`
   })
-  const currentCard = computed<GameEvent | null>(() => deck.value[cardIndex.value] ?? null)
   const isOver = computed(() => ending.value !== null)
   /** 在位年数（天启七年为第 1 年，终章年为第 18 年） */
   const reignedYears = computed(() => year.value + 1)
   const isNewRecord = computed(() => isOver.value && reignedYears.value > bestYears.value)
   /** 终章是否被触发（区别于中途失衡而亡） */
-  const reachedFinale = computed(() => isOver.value && cardIndex.value >= deck.value.length)
+  const reachedFinale = computed(() => isOver.value && deckDone.value)
   const unrest = computed(() => resources.value.people < UNREST_LINE)
-  /** 当前是本年度第几议（1-based）；终章为 null */
-  const turnInYear = computed(() => turnOf(cardIndex.value))
+  /** 本年度第几议（1-based，运行时计数）；甲申终章为 null */
+  const turnInYear = computed(() => {
+    const y = year.value
+    if (y >= FINALE_YEAR) return null
+    return 1 + decisions.value.filter((d) => d.year === y).length
+  })
   const customsFunded = computed(() => !!flags.value['gewu-customs'] && !!flags.value['gewu-audit'])
   const workshopsSupplied = computed(() => !!flags.value['gewu-tools'] && !!flags.value['gewu-denglai'])
 
@@ -291,11 +298,10 @@ export function useGame() {
   function startGame() {
     resources.value = initialResources()
     flags.value = {}
-    pool = makePool()
-    cursor = 0
-    dealState = {}
-    deck.value = [dealCard(0)!]
-    cardIndex.value = 0
+    dealState = { seq: 0 }
+    lastYear = -1
+    currentCard.value = dealCard() ?? null
+    deckDone.value = currentCard.value === null
     ending.value = null
     verdict.value = null
     decisions.value = []
@@ -312,7 +318,7 @@ export function useGame() {
     resources.value = applyToResources(
       resources.value,
       effects,
-      turnInYear.value,
+      yearTick(year.value, lastYear),
       customsFunded.value,
       workshopsSupplied.value,
     )
@@ -348,7 +354,7 @@ export function useGame() {
     const before = { ...resources.value }
     const progress = chapter.value
     const turn = turnInYear.value
-    const when = `${yearText.value} ${turn === null ? '甲申终章' : `第 ${turn} / ${CARDS_PER_YEAR} 议`}`
+    const when = `${yearText.value} ${turn === null ? '甲申终章' : `第 ${turn} 议`}`
     verdict.value = null
     settle(card, side)
 
@@ -374,6 +380,7 @@ export function useGame() {
     const choice = side === 'left' ? card.left : card.right
     decisions.value.push({ eventId: card.id, side, year: year.value })
     const next = applyEffects(choice.effects)
+    lastYear = year.value
     flags.value = addFlags(flags.value, choice.sets)
 
     // 终章分支：按国势数值决定南渡、决战、坚守成败
@@ -424,14 +431,11 @@ export function useGame() {
     advance()
   }
 
-  /** 推进一张：纪年随槽位推进 */
+  /** 推进一张：发牌器接着直排顺序走；走完即甲申终章已落定 */
   function advance() {
-    const nextIndex = cardIndex.value + 1
-    if (nextIndex >= deck.value.length) {
-      const dealt = dealCard(nextIndex)
-      if (dealt) deck.value.push(dealt)
-    }
-    cardIndex.value = nextIndex
+    const dealt = dealCard()
+    currentCard.value = dealt ?? null
+    if (!dealt) deckDone.value = true
   }
 
   function gameOver(result: Ending) {
@@ -452,19 +456,25 @@ export function useGame() {
     verdict.value = null
   }
 
-  /** 交给推演模块的当前局势快照：本局真实牌序也在内，故可算到底 */
-  function snapshot(): { state: SimState; pool: GameEvent[] } | null {
+  /** 交给推演模块的当前局势快照：牌堆进度也在内，故可沿真实牌序算到底 */
+  function snapshot(): SimState | null {
     const card = currentCard.value
     if (!card || isOver.value) return null
     return {
-      state: { index: cardIndex.value, card, cursor, flags: flags.value, resources: resources.value, deal: dealState },
-      pool,
+      card,
+      key: cardKey.value,
+      lastYear,
+      depth: decisions.value.length,
+      flags: flags.value,
+      resources: resources.value,
+      deal: dealState,
     }
   }
 
   return {
     resources,
     currentCard,
+    cardKey,
     year,
     yearText,
     ending,

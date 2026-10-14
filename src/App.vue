@@ -9,7 +9,6 @@ import { useCharacters } from './composables/useCharacters'
 import { useHint } from './composables/useHint'
 import {
   AXIS_KEYS,
-  CARDS_PER_YEAR,
   RESOURCE_META,
   SOUTH_PEOPLE_LINE,
   UNREST_LINE,
@@ -155,7 +154,7 @@ onUnmounted(() => window.removeEventListener('keydown', onKey))
             <button class="tip-close" aria-label="关闭" @click="tipOpen = false">✕</button>
           </header>
           <div class="tip-body">
-            <p>你是刚登基的崇祯帝朱由检。每年 {{ CARDS_PER_YEAR }} 次抉择，左右滑动或点击下方按钮定夺。</p>
+            <p>你是刚登基的崇祯帝朱由检。塘报按年递来：大事之年多议，平年略少，全依史事缓急。左右滑动或点击下方按钮定夺。</p>
             <p>朝局由四象撑着，过高与过低一样亡国：</p>
             <dl class="axis-list">
               <template v-for="key in AXIS_KEYS" :key="key">

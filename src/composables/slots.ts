@@ -1,34 +1,22 @@
 import type { ChapterTime } from '../types'
 
-/** 每年抉择次数；修改此值即可调整全年节奏，源码与测试均自动适配 */
-export const CARDS_PER_YEAR = 5
+/** 每年五个编年槽位：篇章时间 (year, order) 的刻度。议数不定额，由篇章直排决定 */
+export const YEAR_SLOTS = 5
 
-const LAST_SCRIPT_YEAR = 16
+/** 甲申年：终章所在之年；此前每跨一年结算一次岁耗 */
+export const FINALE_YEAR = 17
 
-/** 锁年剧本与史实卡的槽位总数；此后的第一张即甲申终章 */
-export const SCRIPT_SLOTS = (LAST_SCRIPT_YEAR + 1) * CARDS_PER_YEAR
-
-/** 槽位 → 年内第几议（1-based）；超出脚本范围返回 null */
-export function turnOf(index: number): number | null {
-  return index < SCRIPT_SLOTS ? (index % CARDS_PER_YEAR) + 1 : null
+/** 编年键 → 年份编号（0 = 天启七年，N = 崇祯N年） */
+export function yearOf(key: number): number {
+  return Math.floor(key / YEAR_SLOTS)
 }
 
-/** 槽位 → 年份编号（0 = 天启七年，N = 崇祯N年） */
-export function yearOf(index: number): number {
-  return Math.floor(index / CARDS_PER_YEAR)
-}
-
-/** 年份 + 年内序号 → 槽位 */
+/** 年份 + 年内序号 → 编年键 */
 export function slotOfPosition(year: number, order: number): number {
-  return year * CARDS_PER_YEAR + (order - 1)
+  return year * YEAR_SLOTS + (order - 1)
 }
 
-/** 篇章时间 → 最早可落槽位：定点即该议；范围取年期首议 */
+/** 篇章时间 → 起始编年键；步骤逐键递进 */
 export function chapterStart(time: ChapterTime): number {
-  return 'order' in time ? slotOfPosition(time.year, time.order) : time.year * CARDS_PER_YEAR
-}
-
-/** 篇章时间 → 最晚可落槽位：定点即该议；范围取年期末议 */
-export function chapterEnd(time: ChapterTime): number {
-  return 'order' in time ? slotOfPosition(time.year, time.order) : slotOfPosition(time.yearEnd, CARDS_PER_YEAR)
+  return slotOfPosition(time.year, time.order)
 }

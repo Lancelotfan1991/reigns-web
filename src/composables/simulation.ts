@@ -1,8 +1,7 @@
 import { CHAPTERS } from '../data/chapters'
-import { RANDOM_EVENTS } from '../data/events'
-import { CARDS_PER_YEAR, SCRIPT_SLOTS, chapterEnd, chapterStart, turnOf } from './slots'
+import { FINALE_YEAR, chapterStart, yearOf } from './slots'
 import type { AxisKey, Effects, FlagRule, GameEvent, ResourceKey, Side, StoryChapter } from '../types'
-export { CARDS_PER_YEAR, SCRIPT_SLOTS, turnOf, yearOf, slotOfPosition } from './slots'
+export { FINALE_YEAR, YEAR_SLOTS, yearOf, slotOfPosition } from './slots'
 
 /** 四象：归零与满格同样致命 */
 export const AXIS_KEYS: AxisKey[] = ['court', 'law', 'army', 'gold']
@@ -25,20 +24,6 @@ export function initialResources(): Record<ResourceKey, number> {
   return { court: 50, law: 40, army: 45, gold: 35, people: 45 }
 }
 
-export function shuffle<T>(list: T[]): T[] {
-  const arr = [...list]
-  for (let i = arr.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1))
-    ;[arr[i], arr[j]] = [arr[j], arr[i]]
-  }
-  return arr
-}
-
-/** 本局随机牌序：开局洗好一次，全程按序抽取且不重复 */
-export function makePool(): GameEvent[] {
-  return shuffle(RANDOM_EVENTS)
-}
-
 export function ruleMet(rule: FlagRule, flags: Record<string, number>): boolean {
   if (typeof rule === 'string') return (flags[rule] ?? 0) >= 1
   return (flags[rule.flag] ?? 0) >= rule.min
@@ -53,114 +38,78 @@ export function eligible(card: GameEvent, flags: Record<string, number>, resourc
     })
 }
 
-/** 定点槽位：哪个篇章的哪一步占定此槽，候选按字面顺序取首张符合条件者 */
-interface PointSlot {
-  story: StoryChapter
+/** 直排牌堆的一条：篇章的某一步占定一个编年键，候选按数组顺序取首张符合条件者 */
+export interface DeckEntry {
+  key: number
+  chapter: StoryChapter
   step: number
   cards: GameEvent[]
 }
 
-const POINT_BY_SLOT = new Map<number, PointSlot>()
-const WINDOW_CHAPTERS: StoryChapter[] = []
-const WINDOW_BY_ID = new Map<string, StoryChapter>()
-for (const chapter of CHAPTERS) {
-  if ('order' in chapter.time) {
+/**
+ * 编年直排：全部篇章的步骤按「年 + 年内序号」排序成一条牌堆，同年同位（并键）按篇章数组顺序先后落座。
+ * 年份即键的年份，纪年与旧槽位制一致；并键让新篇章能插进已占满的年份。
+ */
+export const DECK: DeckEntry[] = (() => {
+  const entries: DeckEntry[] = []
+  for (const chapter of CHAPTERS) {
     const start = chapterStart(chapter.time)
-    chapter.steps.forEach((cards, step) => POINT_BY_SLOT.set(start + step, { story: chapter, step, cards }))
-  } else {
-    WINDOW_CHAPTERS.push(chapter)
-    WINDOW_BY_ID.set(chapter.id, chapter)
+    chapter.steps.forEach((cards, step) => entries.push({ key: start + step, chapter, step, cards }))
   }
-}
+  return entries
+    .map((entry, index) => ({ entry, index }))
+    .sort((a, b) => a.entry.key - b.entry.key || a.index - b.index)
+    .map(({ entry }) => entry)
+})()
 
-/** 发牌状态：进行中的范围篇章窗口，以及本局已落下的范围篇章 */
+/** 牌堆总步数：推演的最大深度 */
+export const TOTAL_STEPS = DECK.length
+
+/** 发牌状态：牌堆中已走到的位置（含被跳过的步骤） */
 export interface DealState {
-  /** 多步范围篇章的进行中窗口：篇章 id 与起始槽位 */
-  window?: { id: string; start: number }
-  /** 已发过的范围篇章 id（同一篇章一局只发一次） */
-  fired?: string[]
+  seq: number
 }
 
 export interface DealResult {
   card: GameEvent | undefined
-  cursor: number
   deal: DealState
-  /** 所发之牌所属的篇章步骤；随机池为 null。单步分组也是篇章，展示层按步骤数过滤 */
+  /** 所发之牌所属的篇章步骤；无牌可发时为 null */
   chapter: { story: StoryChapter; step: number } | null
+  /** 所发之牌的编年键；无牌可发时为 null */
+  key: number | null
 }
 
 /**
- * 发第 index 张牌，次序：
- * 0. 续接范围篇章窗口——窗口内每一步取该步首张符合条件者，全不符合则让位但保留窗口；
- * 1. 定点篇章——该槽候选按字面顺序取首张符合条件者，全不符合即让位；
- * 2. 范围篇章——仅在无进行中窗口、未发过、落在年期区间、整段无定点篇章且首步有牌可发时启动；
- * 3. 本局随机池；越过 SCRIPT_SLOTS 即无牌。
+ * 从 deal.seq 起发下一张：步骤按直排序依次检查，取该步首张符合条件者；
+ * 整步无合格候选即静默跳过——那几议没有事发生，纪年照常翻页。
  */
-export function dealAt(
-  index: number,
+export function dealNext(
   flags: Record<string, number>,
   resources: Record<ResourceKey, number>,
-  pool: GameEvent[],
-  cursor: number,
   deal: DealState,
 ): DealResult {
-  let state = deal
-  if (state.window) {
-    const story = WINDOW_BY_ID.get(state.window.id)!
-    const step = index - state.window.start
-    if (step >= story.steps.length) {
-      state = { fired: state.fired }
-    } else {
-      const card = story.steps[step].find((c) => eligible(c, flags, resources))
-      if (card) return { card, cursor, deal: state, chapter: { story, step } }
-    }
+  for (let seq = deal.seq; seq < DECK.length; seq++) {
+    const entry = DECK[seq]
+    const card = entry.cards.find((c) => eligible(c, flags, resources))
+    if (card) return { card, deal: { seq: seq + 1 }, chapter: { story: entry.chapter, step: entry.step }, key: entry.key }
   }
-  if (index > SCRIPT_SLOTS) return { card: undefined, cursor, deal: state, chapter: null }
-  const point = POINT_BY_SLOT.get(index)
-  if (point) {
-    const card = point.cards.find((c) => eligible(c, flags, resources))
-    if (card) return { card, cursor, deal: state, chapter: { story: point.story, step: point.step } }
-  }
-  if (!state.window) {
-    for (const story of WINDOW_CHAPTERS) {
-      if (state.fired?.includes(story.id)) continue
-      if (index < chapterStart(story.time) || index > chapterEnd(story.time)) continue
-      const end = index + story.steps.length - 1
-      if (end > SCRIPT_SLOTS) continue
-      let free = true
-      for (let slot = index + 1; slot <= end; slot++) {
-        if (POINT_BY_SLOT.has(slot)) {
-          free = false
-          break
-        }
-      }
-      if (!free) continue
-      const card = story.steps[0].find((c) => eligible(c, flags, resources))
-      if (!card) continue
-      const fired = [...(state.fired ?? []), story.id]
-      if (story.steps.length === 1) return { card, cursor, deal: { fired }, chapter: { story, step: 0 } }
-      return { card, cursor, deal: { fired, window: { id: story.id, start: index } }, chapter: { story, step: 0 } }
-    }
-  }
-  return { card: pool[cursor], cursor: cursor + 1, deal: state, chapter: null }
+  return { card: undefined, deal, chapter: null, key: null }
 }
 
-/** 岁耗按年摊销为整数，增加抉择次数不增加年度耗损；终章不再计时 */
-function yearlyTick(turn: number | null): number {
-  if (turn === null) return 0
-  return Math.floor(turn * YEARLY_TICKS / CARDS_PER_YEAR) - Math.floor((turn - 1) * YEARLY_TICKS / CARDS_PER_YEAR)
+/** 跨年岁耗：同一年的首议一次性结算全年三刻；甲申之年不再计时 */
+export function yearTick(year: number, lastYear: number): number {
+  return year !== lastYear && year < FINALE_YEAR ? YEARLY_TICKS : 0
 }
 
 /** 结算一议的指标影响：抉择本身 + 岁耗，民心破线时四象另加失血 */
 export function applyEffects(
   resources: Record<ResourceKey, number>,
   effects: Effects,
-  turn: number | null,
+  tick: number,
   customsFunded: boolean,
   workshopsSupplied: boolean,
 ): Record<ResourceKey, number> {
   const next = { ...resources }
-  const tick = yearlyTick(turn)
   const maintenance: Effects = {
     ...ERA_DRIFT,
     gold: customsFunded ? 0 : ERA_DRIFT.gold,
@@ -185,11 +134,14 @@ export function addFlags(flags: Record<string, number>, sets?: string[]): Record
   return after
 }
 
-/** 推演中的局势快照：手上这张牌、旗标、四象、本局牌序游标与发牌状态 */
+/** 推演中的局势快照：手上这张牌、其编年键、上一议年份、已议数、旗标、四象与牌堆位置 */
 export interface SimState {
-  index: number
   card: GameEvent
-  cursor: number
+  key: number
+  /** 上一议所在年份；-1 = 尚未裁决，故首议即结算第一年的岁耗 */
+  lastYear: number
+  /** 已作出的决策数 */
+  depth: number
   flags: Record<string, number>
   resources: Record<ResourceKey, number>
   deal: DealState
@@ -201,27 +153,35 @@ export type SimStep =
   | { kind: 'end' }
   | { kind: 'next'; state: SimState }
 
+function customsFunded(flags: Record<string, number>): boolean {
+  return (flags['gewu-customs'] ?? 0) > 0 && (flags['gewu-audit'] ?? 0) > 0
+}
+
+function workshopsSupplied(flags: Record<string, number>): boolean {
+  return (flags['gewu-tools'] ?? 0) > 0 && (flags['gewu-denglai'] ?? 0) > 0
+}
+
 /** 落下一子：把该侧的影响与旗标加到当局上，得到尚未翻下一张牌的局势 */
 export function resolveChoice(state: SimState, side: Side): SimState {
   const choice = side === 'left' ? state.card.left : state.card.right
+  const year = yearOf(state.key)
   return {
-    index: state.index + 1,
-    card: state.card,
-    cursor: state.cursor,
+    ...state,
+    depth: state.depth + 1,
+    lastYear: year,
     flags: addFlags(state.flags, choice.sets),
     resources: applyEffects(
       state.resources,
       choice.effects,
-      turnOf(state.index),
-      (state.flags['gewu-customs'] ?? 0) > 0 && (state.flags['gewu-audit'] ?? 0) > 0,
-      (state.flags['gewu-tools'] ?? 0) > 0 && (state.flags['gewu-denglai'] ?? 0) > 0,
+      yearTick(year, state.lastYear),
+      customsFunded(state.flags),
+      workshopsSupplied(state.flags),
     ),
-    deal: state.deal,
   }
 }
 
 /** 照引擎规则推演一议；其它任何结局都归入 end，god 模式只求格物中兴 */
-export function advanceSim(state: SimState, side: Side, pool: GameEvent[]): SimStep {
+export function advanceSim(state: SimState, side: Side): SimStep {
   const card = state.card
   const choice = side === 'left' ? card.left : card.right
   const after = resolveChoice(state, side)
@@ -235,7 +195,7 @@ export function advanceSim(state: SimState, side: Side, pool: GameEvent[]): SimS
   }
   if (after.resources.people <= 0) return { kind: 'end' }
 
-  const dealt = dealAt(after.index, after.flags, after.resources, pool, after.cursor, after.deal)
-  if (!dealt.card) return { kind: 'end' }
-  return { kind: 'next', state: { ...after, card: dealt.card, cursor: dealt.cursor, deal: dealt.deal } }
+  const dealt = dealNext(after.flags, after.resources, after.deal)
+  if (!dealt.card || dealt.key === null) return { kind: 'end' }
+  return { kind: 'next', state: { ...after, card: dealt.card, key: dealt.key, deal: dealt.deal } }
 }

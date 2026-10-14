@@ -1,8 +1,7 @@
 import { computed, ref, watch } from 'vue'
 import { REFORM_REQUIREMENTS } from '../data/reforms'
-import { RANDOM_EVENTS } from '../data/events'
 import { ALL_EVENTS } from '../data/chapters'
-import { AXIS_KEYS, SCRIPT_SLOTS, advanceSim, resolveChoice, type SimState } from './simulation'
+import { AXIS_KEYS, TOTAL_STEPS, advanceSim, resolveChoice, type SimState } from './simulation'
 import type { Game } from './useGame'
 import type { FlagRule, GameEvent, ResourceKey, Side } from '../types'
 
@@ -21,7 +20,7 @@ const LOST = -1e12
 
 const SIDES: Side[] = ['left', 'right']
 
-const ALL_CARDS: GameEvent[] = [...ALL_EVENTS, ...RANDOM_EVENTS]
+const ALL_CARDS: GameEvent[] = ALL_EVENTS
 
 function ruleFlag(rule: FlagRule): string {
   return typeof rule === 'string' ? rule : rule.flag
@@ -91,10 +90,10 @@ function aliveScore(state: SimState): number {
   const progress = flagProgress(state.flags)
   const resources = state.resources
   for (const key of AXIS_KEYS) {
-    if (resources[key] <= 0 || resources[key] >= 100) return DEAD + state.index * 1e5 + progress
+    if (resources[key] <= 0 || resources[key] >= 100) return DEAD + state.depth * 1e5 + progress
   }
-  if (resources.people <= 0) return DEAD + state.index * 1e5 + progress
-  return progress * 1e5 + bandScore(resources) + state.index
+  if (resources.people <= 0) return DEAD + state.depth * 1e5 + progress
+  return progress * 1e5 + bandScore(resources) + state.depth
 }
 
 function lostScore(state: SimState): number {
@@ -108,13 +107,13 @@ interface Branch {
 }
 
 /** 从当前局面出发定宽推演到底，给出首步，以及是否确已算出一条格物中兴之路 */
-function searchFirstStep(state: SimState, pool: GameEvent[]): { side: Side; certain: boolean } {
+function searchFirstStep(state: SimState): { side: Side; certain: boolean } {
   let best = -Infinity
   let bestFirst: Side | null = null
   let beam: Branch[] = []
 
   for (const side of SIDES) {
-    const step = advanceSim(state, side, pool)
+    const step = advanceSim(state, side)
     if (step.kind === 'win') return { side, certain: true }
     if (step.kind === 'end') {
       const score = lostScore(resolveChoice(state, side))
@@ -127,11 +126,11 @@ function searchFirstStep(state: SimState, pool: GameEvent[]): { side: Side; cert
     }
   }
 
-  for (let depth = 0; depth <= SCRIPT_SLOTS && beam.length; depth++) {
+  for (let depth = 0; depth <= TOTAL_STEPS && beam.length; depth++) {
     const next: Branch[] = []
     for (const branch of beam) {
       for (const side of SIDES) {
-        const step = advanceSim(branch.state, side, pool)
+        const step = advanceSim(branch.state, side)
         if (step.kind === 'win') return { side: branch.first, certain: true }
         if (step.kind === 'end') {
           const score = lostScore(resolveChoice(branch.state, side))
@@ -165,8 +164,8 @@ export interface Advice {
 }
 
 /** 上帝视角：算出当前这一议走哪一侧最好 */
-export function advise(state: SimState, pool: GameEvent[]): Advice {
-  return searchFirstStep(state, pool)
+export function advise(state: SimState): Advice {
+  return searchFirstStep(state)
 }
 
 /** god 模式（?god=1）的卡面提示：牌一换就重算，延后到飞牌动画之后以免卡顿 */
@@ -183,7 +182,7 @@ export function useHint(game: Game, enabled: boolean) {
   function compute() {
     timer = null
     const snapshot = game.snapshot()
-    advice.value = snapshot ? advise(snapshot.state, snapshot.pool) : null
+    advice.value = snapshot ? advise(snapshot) : null
     pending.value = false
   }
 

@@ -1,6 +1,9 @@
 import type { GameEvent } from '../types'
 
-/** 随机卡池：不锁年份，开局洗好一副，本局内按序抽取且不重复，补足各槽位之外的空缺 */
+/**
+ * 旧随机卡池：编年直排改造后不再发牌，仅作资料保留
+ * （人物事件登记仍引用其 id；后续如需启用，应改挂进 chapters.ts 的编年篇章）。
+ */
 export const RANDOM_EVENTS: GameEvent[] = [
   {
     id: 'r-hongyi',
@@ -16,22 +19,6 @@ export const RANDOM_EVENTS: GameEvent[] = [
       label: '止令局厂自铸',
       effects: { law: -2, army: -6, gold: 4 },
       response: '廷臣或曰：「祖宗神武，不藉鬼器。」乃止登莱教演之请，不廪夷官，只令军器局与各镇自铸。岁费得省，议者以国体为无损；然铸多不如法，火器之令不复画一，虏得降匠而炮声渐近矣。',
-    },
-  },
-  {
-    id: 'r-lixi',
-    avatar: '✝️',
-    name: '修历之争',
-    text: '龙华民、汤若望等传教士请求设立历局，重新编修历法。钦天监的旧官员联名反对，认为不该让外国人接手此事。',
-    left: {
-      label: '开历局修新历',
-      effects: { gold: -6, court: 4, law: 4, people: 2 },
-      response: '新历对月相和日食的推算更准了。旧历官让出了编历的差事，朝中对西洋算法的争论却没有停。',
-    },
-    right: {
-      label: '守大统历不改',
-      effects: { court: 2, law: -6, people: -2, gold: 2 },
-      response: '旧历推算日食屡差。顺天府救护之鼓，敲错了三刻。',
     },
   },
   {
