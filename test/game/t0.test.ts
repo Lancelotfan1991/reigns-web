@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { REFORM_REQUIREMENTS } from '../../src/data/reforms'
 import { ALL_EVENTS, EVENT_SLOT } from '../../src/data/chapters'
-import { Flag } from '../../src/types'
+import { Flag, type GameEvent } from '../../src/types'
 import { atFinale, seedRandom, slotOf } from './helpers'
 
 beforeEach(() => {
@@ -45,12 +45,26 @@ describe('T0 国用积弊', () => {
 
 describe('T0 革新条件链', () => {
 
-  it('当同一建设有互斥变体时，只能在同一个时点获得，不能延后补考', () => {
+  it('当同一建设有互斥变体时，同一世界线内只能在同一个时点获得，不能延后补考', () => {
+    const requiresOf = (card: GameEvent) =>
+      new Set((card.requires ?? []).map((rule) => (typeof rule === 'string' ? rule : rule.flag)))
+    const excludesOf = (card: GameEvent) => new Set(card.excludes ?? [])
+    // 跨时点产出只许世界线互斥：一侧所需的旗标恰为另一侧所斥（如「东江易帅」有/无）
+    const disjointWorldlines = (a: GameEvent, b: GameEvent) =>
+      [...requiresOf(a)].some((flag) => excludesOf(b).has(flag)) ||
+      [...requiresOf(b)].some((flag) => excludesOf(a).has(flag))
     for (const flag of REFORM_REQUIREMENTS) {
       const producers = ALL_EVENTS.filter((card) =>
         [...(card.left.sets ?? []), ...(card.right.sets ?? [])].includes(flag))
       expect(producers.length, flag).toBeGreaterThan(0)
-      expect(new Set(producers.map((card) => EVENT_SLOT[card.id])).size, flag).toBe(1)
+      for (let i = 0; i < producers.length; i++) {
+        for (let j = i + 1; j < producers.length; j++) {
+          const a = producers[i]
+          const b = producers[j]
+          if (EVENT_SLOT[a.id] === EVENT_SLOT[b.id]) continue
+          expect(disjointWorldlines(a, b), `${flag}: ${a.id} 与 ${b.id} 跨时点产出，且可同处一条世界线`).toBe(true)
+        }
+      }
     }
   })
 

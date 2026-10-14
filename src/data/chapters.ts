@@ -710,12 +710,14 @@ export const CHAPTERS: StoryChapter[] = [
           left: {
             label: "分镇海上，各领粮饷",
             effects: { court: -2, law: 2, army: 4, gold: -8, people: 2 },
-            response: "你把东江镇分作数协，各领粮饷，仍驻海上。岛兵得了安置，海上扰动暂时按下；只是诸协互不统属，此后塘报愈发难得。粮饷仍自登莱出海，一分作数，脚价也添了一分。",
+            response: "你把东江镇分作数协，各领粮饷，仍驻海上。岛兵得了安置，海上扰动暂时按下；只是诸协互不统属，此后塘报愈发难得。粮饷仍自登莱出海，一分作数，脚价也添了一分；诸协兵将自此改隶登莱节制，此后征调入援，皆由登莱调发。",
+            sets: [Flag.东江易帅],
           },
           right: {
             label: "移镇内徙，调离海岛",
             effects: { court: 2, law: 4, army: -6, gold: 4 },
-            response: "你准移镇之议：东江兵民分批内徙登莱，岛上只留哨探。从此海上的牵制少了，内徙人马的粮饷却照旧要发，登莱的粮价涨了一截；皮岛的名字，在兵部的册子上一年比一年轻。",
+            response: "你准移镇之议：东江兵民分批内徙登莱，岛上只留哨探。从此海上的牵制少了，内徙人马的粮饷却照旧要发，登莱的粮价涨了一截；皮岛的名字，在兵部的册子上一年比一年轻。内徙兵将就近编入登莱营伍，此后征调入援，皆由登莱调发。",
+            sets: [Flag.东江易帅],
           },
           requires: [Flag.斩毛文龙],
           people: ["yuanchonghuan", "maowenlong"],
@@ -728,7 +730,8 @@ export const CHAPTERS: StoryChapter[] = [
           left: {
             label: "另简大将，案留狱中",
             effects: { court: 2, law: 4, army: -2, gold: -4 },
-            response: "你另简大将出海接镇，毛文龙的案子留在刑部。新帅到岛先要看册、看人，几个月里军令都出得慢；毛文龙在狱中上书自陈，字句仍以岛帅自居。岸上的人说朝廷明于用法，海上的人却觉得：岛帅是被自己的朝廷关起来的。",
+            response: "你另简大将出海接镇，毛文龙的案子留在刑部。新帅到岛先要看册、看人，几个月里军令都出得慢；旧部改隶登莱的文书陆续发往各协，此后征调入援，皆自登莱调发。毛文龙在狱中上书自陈，字句仍以岛帅自居。岸上的人说朝廷明于用法，海上的人却觉得：岛帅是被自己的朝廷关起来的。",
+            sets: [Flag.东江易帅],
           },
           right: {
             label: "结案免罪，戴罪视事",
@@ -1060,7 +1063,7 @@ export const CHAPTERS: StoryChapter[] = [
           id: "s-wuqiao",
           name: "吴桥兵变的平叛方略",
           avatar: "💣",
-          text: "孔有德部过吴桥起事，登州未失。孙元化请定剿抚之方：一是明发讨逆之令，以登莱道将以下俱听督师节制，兵部但司饷银，不得中制；先以兵封要路，护住炮局与军报，进剿次第由督师自定。二是先遣使赍诏入营招抚，分辨首从，统属之权且未议定。",
+          text: "东江旧部改隶登莱后，孔有德部奉命入援，过吴桥时以粮饷不给鼓噪起事；登州未失。孙元化请定剿抚之方：一是明发讨逆之令，以登莱道将以下俱听督师节制，兵部但司饷银，不得中制；先以兵封要路，护住炮局与军报，进剿次第由督师自定。二是先遣使赍诏入营招抚，分辨首从，统属之权且未议定。",
           left: {
             label: "明发讨逆，节制尽属督师",
             effects: { army: 2, gold: -4, people: -2 },
@@ -1072,6 +1075,7 @@ export const CHAPTERS: StoryChapter[] = [
             effects: { court: -2, gold: -2, people: 2 },
             response: "你从主抚之议，遣使赍诏入营，只许分辨首从，不烦大兵进剿。乱军得粮即散，未受刀兵；然朝廷威令不出宫门，孙元化以招抚自任。要路未曾封锁，救人与炮局须别觅通路。",
           },
+          requires: [Flag.东江易帅],
           people: ["kongyoude", "sunyuanhua", "gongsha"],
         },
       ],
@@ -1092,7 +1096,7 @@ export const CHAPTERS: StoryChapter[] = [
             effects: { army: 4, gold: 2, people: -4 },
             response: "你以军饷成炮为急，船车尽数先运入守营，不另雇民车。库银得省，守军速得有炮之实；工师家口各自避乱，图册量具随之散失，日后修铸只靠少数熟手口述。",
           },
-          requires: [Flag.工匠立契],
+          requires: [Flag.工匠立契, Flag.东江易帅],
           people: ["sunyuanhua", "gongsha"],
         },
         {
@@ -1111,6 +1115,7 @@ export const CHAPTERS: StoryChapter[] = [
             effects: { army: 2, gold: 2, people: -4 },
             response: "你只准按登莱旧册点收入营，不在册的官府一概不管，口粮也无从再发。匠价银留下备作军需，车船得专运炮械。渡口上的家眷没有依倚，散落的工匠一旦被追拿比对，当天就远远藏走。",
           },
+          requires: [Flag.东江易帅],
           people: ["sunyuanhua", "gongsha"],
         },
       ],
@@ -1131,7 +1136,7 @@ export const CHAPTERS: StoryChapter[] = [
             effects: { court: 2, law: -4, army: 2, gold: -2 },
             response: "你把赏银交给旧头领自行分发，不区分首恶与跟随，也不再另设查案的衙门。乱事几天就平，朝廷省下一半开销，众将觉得陛下信得过他们，营里暂时安稳；只是银到了谁手里没有册子可查，日后这支兵成了头领的私产，官府再也没法过问。",
           },
-          requires: [Flag.明发讨逆],
+          requires: [Flag.明发讨逆, Flag.东江易帅],
           people: ["kongyoude", "sunyuanhua"],
         },
         {
@@ -1149,6 +1154,7 @@ export const CHAPTERS: StoryChapter[] = [
             effects: { army: 2, gold: 2, people: -3 },
             response: "你令仓粮非户部复准不得擅支，一体先收入城以备门户。库项不致无着，守城有粮而心稍定；城外饥军无所待命，出乱营归队者由此日少，抢掠者仍杂其间。",
           },
+          requires: [Flag.东江易帅],
           people: ["kongyoude", "sunyuanhua"],
         },
       ],
@@ -1169,7 +1175,7 @@ export const CHAPTERS: StoryChapter[] = [
             effects: { court: 2, army: -4, gold: 2, people: 2 },
             response: "匠人、家眷与图册先安全离开，旧雇约照付。孙元化候查而不因失地定死罪；省下了整军开支，却失了把登莱军工与水师合成体系的机会。",
           },
-          requires: [Flag.工匠立契, Flag.试造容错, Flag.工师专载, Flag.只诛首恶],
+          requires: [Flag.工匠立契, Flag.试造容错, Flag.工师专载, Flag.只诛首恶, Flag.东江易帅],
           people: ["kongyoude", "sunyuanhua", "gongsha"],
         },
         {
@@ -1187,7 +1193,7 @@ export const CHAPTERS: StoryChapter[] = [
             effects: { army: -2, gold: -2, people: 3 },
             response: "你止给路费遣令还乡，更不开局，匠籍仍照世守之例。廪给之费顿省，失所家口得归故土；只是军器一遇损坏，仍须到处访求熟手，登莱以来之炮竟无可修之所。",
           },
-          requires: [Flag.匠户获安],
+          requires: [Flag.匠户获安, Flag.东江易帅],
           people: ["kongyoude", "sunyuanhua", "gongsha"],
         },
         {
@@ -1205,7 +1211,37 @@ export const CHAPTERS: StoryChapter[] = [
             effects: { army: -4, gold: 3, people: -2 },
             response: "孙元化以失守罪被处死，据点撤并后省下一段守费。叛军仍占有炮船，失散匠户也尚未寻回。",
           },
+          requires: [Flag.东江易帅],
           people: ["kongyoude", "sunyuanhua", "gongsha"],
+        },
+      ],
+    ],
+  },
+  {
+    id: "g-denglai-workshop",
+    name: "登莱炮局可常年办否",
+    time: { year: 4, order: 4 },
+    steps: [
+      [
+        {
+          id: "g-denglai-workshop",
+          name: "登莱炮局可常年办否",
+          avatar: "炮",
+          text: "登莱巡抚孙元化自立局以来，募工师、雇匠户，铸炮修器，澳门炮师公沙·德罗等亦在局授艺，海防各营的军器多由此出。如今孙元化请将炮局立为常年之局：岁费于国库确项支给，工料按年预拨；户部则嫌这项开销没有额例，说海疆眼下无事，主裁并省费，只留官匠数人修旧器。",
+          left: {
+            label: "定为常局，岁费确项支给",
+            effects: { court: -2, law: 2, army: 2, gold: -6, people: 2 },
+            response: "你准登莱炮局立为常年之局，岁费于国库工料确项内支给，不许那移；工师雇约照旧，澳匠仍留局授艺。库银自此多一笔岁出，户部颇有难色；然军器有常修之所，登莱一镇器用渐足，水师的船炮也能就地修补。",
+            sets: [Flag.登莱保炮],
+          },
+          right: {
+            label: "裁并省费，只留官匠修器",
+            effects: { court: 2, army: -4, gold: 6, people: -2 },
+            response: "你准裁并炮局，岁费只留官匠数人修旧器，余银解还户部。库藏宽了一时，局中的工师与图册却随之散去；此后军器一有损坏，仍须四处访求熟手。",
+          },
+          requires: [Flag.工匠立契, Flag.试造容错],
+          excludes: [Flag.东江易帅],
+          people: ["sunyuanhua", "gongsha"],
         },
       ],
     ],

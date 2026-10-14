@@ -578,7 +578,7 @@ export const CHARACTERS: Character[] = [
     id: 'kongyoude',
     name: '孔有德',
     avatar: '⛵',
-    role: '入援客兵将领。所部经过吴桥，军粮与军纪皆生隐患',
+    role: '东江旧部，改隶登莱的入援客兵将领。所部经过吴桥，军粮与军纪皆生隐患',
     camp: Camp.Liaodong,
     faction: 'army',
     events: ['s-wuqiao', 'g-wuqiao-rations', 'c-wuqiao-rations-emergency', 'g-wuqiao', 'c-wuqiao-artisans', 'c-wuqiao-losses'],
@@ -600,11 +600,11 @@ export const CHARACTERS: Character[] = [
     camp: Camp.Civil,
     faction: 'army',
     born: 1581,
-    events: ['s-wuqiao', 'g-wuqiao-protect', 'c-wuqiao-protect-scattered', 'g-wuqiao-rations', 'c-wuqiao-rations-emergency', 'g-wuqiao', 'c-wuqiao-artisans', 'c-wuqiao-losses'],
+    events: ['s-wuqiao', 'g-wuqiao-protect', 'c-wuqiao-protect-scattered', 'g-wuqiao-rations', 'c-wuqiao-rations-emergency', 'g-wuqiao', 'c-wuqiao-artisans', 'c-wuqiao-losses', 'g-denglai-workshop'],
     track: [
       { year: 1, status: CharStatus.Alive, note: '史实：主登州炮局，葡匠与红夷炮皆出其招' },
       // 初报进入本章后由收束卡裁定生死；救出部分工匠的旗标本身不赦孙元化。
-      { year: 5, status: CharStatus.Dead, note: '史实：登州失守后被逮论罪，崇祯五年被处死', unlessEvent: ['s-wuqiao'] },
+      { year: 5, status: CharStatus.Dead, note: '史实：登州失守后被逮论罪，崇祯五年被处死', unlessEvent: ['s-wuqiao', 'g-denglai-workshop'] },
     ],
     fates: [
       { event: 's-wuqiao', side: Side.Left, status: CharStatus.Alive, note: '奉命查处吴桥哗变，登莱保匠与补给之议尚待裁定，未被定死罪' },
@@ -615,6 +615,8 @@ export const CHARACTERS: Character[] = [
       { event: 'c-wuqiao-artisans', side: Side.Right, status: CharStatus.Alive, note: '救出的匠户领路费返乡，孙元化交接候查；炮局撤并，其失守责任另案审理' },
       { event: 'c-wuqiao-losses', side: Side.Left, status: CharStatus.Alive, seal: '候', note: '先接济逃散者、查损追责，孙元化交接候审，尚未定死罪；炮局损失仍如实入册' },
       { event: 'c-wuqiao-losses', side: Side.Right, status: CharStatus.Dead, seal: '弃市', note: '登莱失守后被逮论罪，崇祯五年被处死；炮局撤并，逃散工匠尚未寻回' },
+      { event: 'g-denglai-workshop', side: Side.Left, status: CharStatus.Alive, note: '炮局立为常年之局，留任登莱办理；未遭失地之祸' },
+      { event: 'g-denglai-workshop', side: Side.Right, status: CharStatus.Alive, note: '炮局裁并省费，仍抚登莱；未遭失地之祸' },
     ],
     relations: [
       { to: 'xuguangqi', type: RelationType.Friend },
@@ -630,10 +632,10 @@ export const CHARACTERS: Character[] = [
     camp: Camp.Western,
     faction: 'army',
     born: 1580,
-    events: ['s-wuqiao', 'g-wuqiao-protect', 'c-wuqiao-protect-scattered', 'g-wuqiao', 'c-wuqiao-artisans', 'c-wuqiao-losses'],
+    events: ['s-wuqiao', 'g-wuqiao-protect', 'c-wuqiao-protect-scattered', 'g-wuqiao', 'c-wuqiao-artisans', 'c-wuqiao-losses', 'g-denglai-workshop'],
     track: [
       { year: 2, status: CharStatus.Alive, note: '史实：率澳中善炮者应募入京，督造神威' },
-      { year: 6, status: CharStatus.Dead, note: '史实：以炮攻登州，未破而中铳殁于城下', unlessEvent: ['g-wuqiao', 'c-wuqiao-artisans'] },
+      { year: 6, status: CharStatus.Dead, note: '史实：以炮攻登州，未破而中铳殁于城下', unlessEvent: ['g-wuqiao', 'c-wuqiao-artisans', 'g-denglai-workshop'] },
     ],
     fates: [
       { event: 's-wuqiao', side: Side.Left, status: CharStatus.Alive, note: '吴桥乱讯传到炮厂，仍在修炮授艺，保匠与战守尚未定案' },
@@ -642,6 +644,8 @@ export const CHARACTERS: Character[] = [
       { event: 'g-wuqiao', side: Side.Right, status: CharStatus.Alive, note: '随匠人家眷安全撤出，图册一并护送，旧雇约照付。未被驱往城下攻炮送命' },
       { event: 'c-wuqiao-artisans', side: Side.Left, status: CharStatus.Alive, note: '与救出的工师另开小坊修器，图册缺件待补；公沙得以留用，不再被驱往登州城下攻炮' },
       { event: 'c-wuqiao-artisans', side: Side.Right, status: CharStatus.Alive, note: '随救出的匠户领路费离开，炮局暂收但人已保下，未再赴登州城下送命' },
+      { event: 'g-denglai-workshop', side: Side.Left, status: CharStatus.Alive, note: '炮局立为常局，留局授艺铸炮，设施图册皆有所归' },
+      { event: 'g-denglai-workshop', side: Side.Right, status: CharStatus.Alive, note: '炮局裁并，领资自便；未赴登州城下' },
     ],
     relations: [
       { to: 'xuguangqi', type: RelationType.Friend },
