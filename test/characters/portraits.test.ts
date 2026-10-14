@@ -1,14 +1,13 @@
 import { describe, expect, it } from 'vitest'
 import { CHARACTERS, CHAR_MAP } from '../../src/data/characters'
 import { ALL_EVENTS } from '../../src/data/chapters'
-import { RANDOM_EVENTS } from '../../src/data/events'
 import { PORTRAIT_IDS, cardPortrait } from '../../src/data/portraits'
 import type { GameEvent } from '../../src/types'
 
 const IMPERIAL = '👑'
 
-/** 运行时真正会发出的卡：篇章卡 + 随机卡池 */
-const cards: GameEvent[] = [...ALL_EVENTS, ...RANDOM_EVENTS]
+/** 运行时真正会发出的卡（篇章直排牌堆） */
+const cards: GameEvent[] = ALL_EVENTS
 
 function namesOf(id: string): string[] {
   const char = CHAR_MAP[id]
@@ -30,7 +29,7 @@ describe('人物头像', () => {
     const faced = cards
       .map((card) => ({ card, face: cardPortrait(card) }))
       .filter((x): x is { card: GameEvent; face: NonNullable<typeof x.face> } => !!x.face)
-    // 36 人全员有像后实测 44/213 张上像；掉到 40 以下说明点名规则大面积失效
+    // 36 人全员有像后实测 47/165 张上像；掉到 40 以下说明点名规则大面积失效
     expect(faced.length).toBeGreaterThanOrEqual(40)
     for (const { card, face } of faced) {
       if (card.avatar === IMPERIAL) {

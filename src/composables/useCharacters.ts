@@ -1,30 +1,24 @@
 import { computed } from 'vue'
-import { RANDOM_EVENTS } from '../data/events'
 import { CHARACTERS, CHAR_MAP, RELATION_META } from '../data/characters'
-import { ALL_EVENTS as SCRIPT_EVENTS, EVENT_SLOT } from '../data/chapters'
+import { ALL_EVENTS, EVENT_SLOT } from '../data/chapters'
 import type { CharView, Deed } from '../types'
 import { resolveFate } from './fates'
 import type { Fate } from './fates'
 import type { Game } from './useGame'
 import { yearOf } from './slots'
 
-const ALL_EVENTS = [...SCRIPT_EVENTS, ...RANDOM_EVENTS]
-
 interface EventMeta {
   title: string
-  /** 剧本卡的锁年；随机卡为 null */
-  year: number | null
+  /** 卡所属槽位的崇祯纪年 */
+  year: number
   labels: { left: string; right: string }
 }
 
 const EVENT_META: Record<string, EventMeta> = Object.fromEntries(
-  ALL_EVENTS.map((e) => {
-    const slot = EVENT_SLOT[e.id]
-    return [
-      e.id,
-      { title: e.name, year: slot === undefined ? null : yearOf(slot), labels: { left: e.left.label, right: e.right.label } },
-    ]
-  })
+  ALL_EVENTS.map((e) => [
+    e.id,
+    { title: e.name, year: yearOf(EVENT_SLOT[e.id]), labels: { left: e.left.label, right: e.right.label } },
+  ])
 )
 
 /** 崇祯纪年 → 公历年 */
@@ -81,7 +75,7 @@ export function useCharacters(game: Game) {
       list.push({
         eventId,
         title: meta.title,
-        year: d?.year ?? meta.year ?? now.value,
+        year: d?.year ?? meta.year,
         side: d?.side ?? null,
         label: d ? meta.labels[d.side] : '待裁决',
       })

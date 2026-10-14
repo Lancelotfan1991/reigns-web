@@ -3,7 +3,6 @@ import { useCharacters } from '../../src/composables/useCharacters'
 import { useGame, type Game } from '../../src/composables/useGame'
 import { ALL_EVENTS } from '../../src/data/chapters'
 import { CHARACTERS } from '../../src/data/characters'
-import { RANDOM_EVENTS } from '../../src/data/events'
 import type { Side } from '../../src/types'
 import { healthy, reach, seedRandom, slotOf } from './helpers'
 
@@ -22,7 +21,7 @@ afterEach(() => {
 
 describe('T1 玩家文案', () => {
   it('当展示事件与人物近况时，不会混入旗标或发牌实现说明', () => {
-    const cards = [...ALL_EVENTS, ...RANDOM_EVENTS]
+    const cards = ALL_EVENTS
     for (const card of cards) {
       const prose = [card.name, card.text, card.left.label, card.left.response, card.right.label, card.right.response].join(' ')
       expect(prose, card.id).not.toMatch(/旗标|下一张卡|不授予|年度裁决|完整留练成果/)
@@ -33,23 +32,9 @@ describe('T1 玩家文案', () => {
       }
     }
   })
-
-  it('当阅读伤兵抚恤事件时，两侧明确区分拨粮与关卡收费，原有代价不变', () => {
-    const card = RANDOM_EVENTS.find((event) => event.id === 'r-shangbing')!
-    expect(card.text).toContain('向过路商旅收费')
-    expect(card.left.label).toBe('拨粮抚恤伤兵')
-    expect(card.right.label).toBe('派往关卡收费')
-    expect(card.left.effects).toEqual({ gold: -5, army: 5, court: -2 })
-    expect(card.right.effects).toEqual({ gold: 3, army: -4, people: -2, law: 2 })
-  })
 })
 
 describe('T1 改史替换与人物', () => {
-  const replacements = ALL_EVENTS.filter((card) => [
-    'g-wuqiao', 'g-revenue', 'g-recruit', 'g-gucheng', 'g-jinzhou', 'g-epidemic',
-    'g-kaifeng', 'g-capital', 'g-songjin', 'g-guanning', 'g-guanzhong', 'g-peace', 'g-peace-ratify',
-  ].includes(card.id))
-
   it('当尚未翻到改革人物事迹时，面板不会显示未来卡片', () => {
     const game = useGame()
     game.startGame()
@@ -61,7 +46,7 @@ describe('T1 改史替换与人物', () => {
   })
 
   it('当人物登记事件时，所有引用必须存在且无重复', () => {
-    const ids = new Set([...ALL_EVENTS, ...RANDOM_EVENTS].map((event) => event.id))
+    const ids = new Set(ALL_EVENTS.map((event) => event.id))
     for (const character of CHARACTERS) {
       expect(new Set(character.events).size).toBe(character.events.length)
       for (const id of character.events) expect(ids.has(id), `${character.name}: ${id}`).toBe(true)

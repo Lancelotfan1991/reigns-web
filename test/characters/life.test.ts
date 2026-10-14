@@ -1,7 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { CHAR_MAP } from '../../src/data/characters'
 import { ALL_EVENTS, EVENT_SLOT } from '../../src/data/chapters'
-import { RANDOM_EVENTS } from '../../src/data/events'
 import { findLifeVerdict, resolveFate } from '../../src/composables/fates'
 import { addFlags } from '../../src/composables/simulation'
 import { useGame } from '../../src/composables/useGame'
@@ -10,17 +9,16 @@ import type { FateCtx } from '../../src/composables/fates'
 import type { Decision, GameEvent, Side } from '../../src/types'
 import { seedRandom } from '../game/helpers'
 
-/** 运行时真正会发出的卡：篇章卡 + 随机卡池 */
+/** 运行时真正会发出的卡（篇章直排牌堆） */
 const pool = new Map<string, GameEvent>()
-for (const card of [...ALL_EVENTS, ...RANDOM_EVENTS]) {
+for (const card of ALL_EVENTS) {
   pool.set(card.id, card)
 }
 const cards = [...pool.values()]
 
-/** 卡所属槽位的崇祯纪年；随机卡不锁年，按 0 计 */
+/** 卡所属槽位的崇祯纪年 */
 function yearOfCard(card: GameEvent): number {
-  const slot = EVENT_SLOT[card.id]
-  return slot === undefined ? 0 : yearOf(slot)
+  return yearOf(EVENT_SLOT[card.id])
 }
 
 function ctxOf(card: GameEvent, side: Side, flags: Record<string, number> = {}): FateCtx {

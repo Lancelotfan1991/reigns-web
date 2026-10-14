@@ -1,4 +1,3 @@
-import { RANDOM_EVENTS } from './events'
 import { ALL_EVENTS } from './chapters'
 import type { CharStatus, Character, RelationType } from '../types'
 
@@ -20,7 +19,7 @@ export const CHARACTERS: Character[] = [
     born: 1611,
     appearYear: 0,
     /** 皇帝亲裁每一张卡：直接从卡池派生，避免手写清单随卡池腐烂 */
-    events: [...ALL_EVENTS, ...RANDOM_EVENTS].map((e) => e.id),
+    events: ALL_EVENTS.map((e) => e.id),
     fates: [
       { event: 's-finale', side: 'left', status: 'dead', note: '甲申三月十九，崩于煤山寿皇亭东' },
       { event: 's-finale', side: 'right', status: 'alive', note: '雪夜出正阳门，南都之局自此人手重开' },
@@ -230,7 +229,7 @@ export const CHARACTERS: Character[] = [
     camp: '皇清',
     faction: 'army',
     born: 1592,
-    events: ['s-jisi', 's-jisi2', 'c-yuan-rumour-outside', 's-chaoxian', 'c-chaoxian-limited-fleet', 's-daiching', 's-jinzhou', 's-songjin', 's-yuan-songjin', 's-mihe', 's-mihe-leak', 's-htj', 'c-htj-no-treaty', 'r-mashi', 'g-peace', 'g-peace-ratify', 'c-peace-withdraw-talks', 'c-peace-close-deficit'],
+    events: ['s-jisi', 's-jisi2', 'c-yuan-rumour-outside', 's-chaoxian', 'c-chaoxian-limited-fleet', 's-daiching', 's-jinzhou', 's-songjin', 's-yuan-songjin', 's-mihe', 's-mihe-leak', 's-htj', 'c-htj-no-treaty', 'g-peace', 'g-peace-ratify', 'c-peace-withdraw-talks', 'c-peace-close-deficit'],
     track: [
       { year: 0, status: 'alive', note: '嗣建州汗位，方整八旗，未暇西顾' },
       { year: 9, status: 'alive', note: '称帝改元，国号大清，建牙已具天子规模' },
@@ -313,7 +312,7 @@ export const CHARACTERS: Character[] = [
     camp: '义军',
     faction: 'people',
     born: 1606,
-    events: ['s-hanzai', 's-yizhan', 's-licheng-officer', 'c-recruit-no-post', 's-chuangjiang', 's-annei', 'c-kaifeng-emergency-plan', 'c-peace-dividend-flood', 's-chuanti', 'r-daoge', 'g-recruit', 'g-guanzhong', 'c-guanzhong-recruit'],
+    events: ['s-hanzai', 's-yizhan', 's-licheng-officer', 'c-recruit-no-post', 's-chuangjiang', 's-annei', 'c-kaifeng-emergency-plan', 'c-peace-dividend-flood', 's-chuanti', 'g-recruit', 'g-guanzhong', 'c-guanzhong-recruit'],
     track: [
       { year: 2, status: 'alive', note: '塞门一驿之粮，不足以活其家' },
       { year: 9, status: 'alive', note: '继高迎祥之众，号「闯王」，众愈盛而愈流', unlessFlag: ['lz-absorbed'] },
@@ -599,7 +598,7 @@ export const CHARACTERS: Character[] = [
     camp: '文官',
     faction: 'army',
     born: 1581,
-    events: ['r-hongyi', 's-wuqiao', 'g-wuqiao-protect', 'c-wuqiao-protect-scattered', 'g-wuqiao-rations', 'c-wuqiao-rations-emergency', 'g-wuqiao', 'c-wuqiao-artisans', 'c-wuqiao-losses'],
+    events: ['s-wuqiao', 'g-wuqiao-protect', 'c-wuqiao-protect-scattered', 'g-wuqiao-rations', 'c-wuqiao-rations-emergency', 'g-wuqiao', 'c-wuqiao-artisans', 'c-wuqiao-losses'],
     track: [
       { year: 1, status: 'alive', note: '史实：主登州炮局，葡匠与红夷炮皆出其招' },
       // 初报进入本章后由收束卡裁定生死；救出部分工匠的旗标本身不赦孙元化。
@@ -629,7 +628,7 @@ export const CHARACTERS: Character[] = [
     camp: '西学',
     faction: 'army',
     born: 1580,
-    events: ['r-hongyi', 's-wuqiao', 'g-wuqiao-protect', 'c-wuqiao-protect-scattered', 'g-wuqiao', 'c-wuqiao-artisans', 'c-wuqiao-losses'],
+    events: ['s-wuqiao', 'g-wuqiao-protect', 'c-wuqiao-protect-scattered', 'g-wuqiao', 'c-wuqiao-artisans', 'c-wuqiao-losses'],
     track: [
       { year: 2, status: 'alive', note: '史实：率澳中善炮者应募入京，督造神威' },
       { year: 6, status: 'dead', note: '史实：以炮攻登州，未破而中铳殁于城下', unlessEvent: ['g-wuqiao', 'c-wuqiao-artisans'] },
@@ -706,7 +705,7 @@ export const CHARACTERS: Character[] = [
     camp: '宗藩',
     faction: 'gold',
     born: 1586,
-    events: ['s-fuwang', 'r-zonglu'],
+    events: ['s-fuwang'],
     track: [{ year: 14, status: 'dead', note: '史实：洛阳城陷，为闯所戮，并鹿烹之，号「福禄酒」', unlessFlag: ['lz-absorbed'] }],
     fates: [
       { event: 's-fuwang', side: 'left', status: 'alive', note: '割银二十万佐饷，茹痛如剥肤；宗室自此怨上' },
@@ -745,7 +744,7 @@ export const CHARACTERS: Character[] = [
     camp: '宗藩',
     faction: 'law',
     born: 1629,
-    events: ['r-taizi', 'g-succession', 'c-succession-unfinished'],
+    events: ['g-succession', 'c-succession-unfinished'],
     fates: [
       { event: 'g-succession', side: 'left', status: 'alive', note: '讲习新政而不立继承约束，知其用处，日后却仍可一言更改' },
       { event: 'g-succession', side: 'right', status: 'alive', note: '公开承诺继位也守章程，公账、任期、议事与救济不因易君而废' },
@@ -761,7 +760,7 @@ export const CHARACTERS: Character[] = [
     camp: '西学',
     faction: 'law',
     born: 1562,
-    events: ['s-zhaoqi', 's-liju', 'r-hongyi', 'g-institute', 'g-measure', 'g-seeds', 'g-manuals'],
+    events: ['s-zhaoqi', 's-liju', 'g-institute', 'g-measure', 'g-seeds', 'g-manuals'],
     track: [{ year: 6, status: 'dead', note: '史实：崇祯六年卒于官。历书成而身不及见' }],
     relations: [{ to: 'tangruowang', type: 'friend' }],
   },
@@ -774,7 +773,7 @@ export const CHARACTERS: Character[] = [
     camp: '西学',
     faction: 'gold',
     born: 1591,
-    events: ['s-liju', 'r-hongyi'],
+    events: ['s-liju'],
     relations: [{ to: 'longhuamin', type: 'friend' }],
   },
   {
@@ -798,10 +797,9 @@ export const CHARACTERS: Character[] = [
     camp: '海商',
     faction: 'gold',
     born: 1604,
-    events: ['r-cao', 'g-shipping', 'c-shipping-charterless', 'g-customs', 'c-shipping-customs-port', 'c-shipping-audit-receipts', 'g-shipping-dispute', 'c-shipping-dispute-private'],
+    events: ['g-shipping', 'c-shipping-charterless', 'g-customs', 'c-shipping-customs-port', 'c-shipping-audit-receipts', 'g-shipping-dispute', 'c-shipping-dispute-private'],
     track: [{ year: 6, status: 'alive', note: '破红毛夷于料罗湾，海上声势大振' }],
     fates: [
-      { event: 'r-cao', side: 'right', status: 'alive', note: '以闽船承运此批漕粮，风损受责，余粮仍按期抵港。此番只议运输，不改既定航路契约' },
       { event: 'g-shipping', side: 'left', status: 'alive', note: '依约分批承运，按到货结算并分担船损。得运利而无独占权，别家船商仍有份额' },
       { event: 'g-shipping', side: 'right', status: 'alive', note: '以垫款换取整条航路独占，运价与承运人渐由郑家决定，公开竞争止在此处' },
       { event: 'g-customs', side: 'left', status: 'alive', note: '承运契约照行，关税留港养巡船；海路仍许别商承运，朝廷尚难核定关税财源' },
@@ -821,7 +819,7 @@ export const CHARACTERS: Character[] = [
     camp: '文官',
     faction: 'court',
     born: 1593,
-    events: ['r-taizi'],
+    events: [],
     track: [{ year: 15, status: 'alive', note: '督师蓟门，幕中欺罔，师久无功' }],
     relations: [],
   },

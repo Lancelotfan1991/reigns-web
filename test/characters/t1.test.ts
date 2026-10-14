@@ -1,10 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { CHARACTERS, CHAR_MAP } from '../../src/data/characters'
 import { ALL_EVENTS } from '../../src/data/chapters'
-import { RANDOM_EVENTS } from '../../src/data/events'
 import { seedRandom } from '../game/helpers'
 
-const allCards = [...ALL_EVENTS, ...RANDOM_EVENTS]
+const allCards = ALL_EVENTS
 const cards = new Map(allCards.map((card) => [card.id, card]))
 
 beforeEach(() => {
