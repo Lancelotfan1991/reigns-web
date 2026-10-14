@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref } from 'vue'
+import { computed, defineAsyncComponent, onMounted, onUnmounted, ref } from 'vue'
 import CharacterPanel from './components/CharacterPanel.vue'
 import CharSheet from './components/CharSheet.vue'
 import GameCard from './components/GameCard.vue'
@@ -24,6 +24,13 @@ const game = useGame()
 const chars = useCharacters(game)
 /** 上帝模式：只在本地加 ?god=1 时打开，正式玩家看不到任何痕迹 */
 const GOD = new URLSearchParams(window.location.search).get('god') === '1'
+/**
+ * 卡牌图谱：本地加 ?atlas=1 时打开。DEV 常量在构建期折叠为 false，
+ * 整个组件与动态 import 一并被摇树剥离，生产包不留任何入口。
+ */
+const CardAtlas = import.meta.env.DEV && new URLSearchParams(window.location.search).has('atlas')
+  ? defineAsyncComponent(() => import('./components/CardAtlas.vue'))
+  : null
 const { advice, pending: advicePending } = useHint(game, GOD)
 const screen = ref<Screen>('start')
 const cardRef = ref<InstanceType<typeof GameCard> | null>(null)
@@ -126,8 +133,11 @@ onUnmounted(() => window.removeEventListener('keydown', onKey))
 
 <template>
   <div class="app">
+    <!-- 卡牌图谱：?atlas=1 的本地开发页，占满全屏，不叠游戏三屏 -->
+    <CardAtlas v-if="CardAtlas" />
+
     <!-- 开始界面 -->
-    <section v-if="screen === 'start'" class="screen start-screen">
+    <section v-else-if="screen === 'start'" class="screen start-screen">
       <div class="brief">
         <div class="halo">👑</div>
         <h1 class="title">崇祯十七年</h1>
