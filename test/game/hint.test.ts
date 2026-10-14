@@ -3,6 +3,7 @@ import { advise } from '../../src/composables/useHint'
 import type { SimState } from '../../src/composables/simulation'
 import { ALL_EVENTS } from '../../src/data/chapters'
 import { REFORM_REQUIREMENTS } from '../../src/data/reforms'
+import { Side } from '../../src/types'
 import { healthy } from './helpers'
 
 const gewu = ALL_EVENTS.find((card) => card.id === 'g-finale-gewu')!
@@ -32,7 +33,7 @@ afterEach(() => {
 
 describe('God 模式推演', () => {
   it('旗标已齐且四象在档时，终章给出必胜的左印', () => {
-    expect(advise(finaleState(REFORM_REQUIREMENTS), [])).toEqual({ side: 'left', certain: true })
+    expect(advise(finaleState(REFORM_REQUIREMENTS), [])).toEqual({ side: Side.Left, certain: true })
   })
 
   it('旗标未齐时不谎称必胜', () => {

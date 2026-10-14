@@ -3,7 +3,8 @@ import { REFORM_REQUIREMENTS } from '../data/reforms'
 import { ALL_EVENTS } from '../data/chapters'
 import { AXIS_KEYS, TOTAL_STEPS, advanceSim, resolveChoice, type SimState } from './simulation'
 import type { Game } from './useGame'
-import type { FlagRule, GameEvent, ResourceKey, Side } from '../types'
+import { Side } from '../types'
+import type { FlagRule, GameEvent, ResourceKey } from '../types'
 
 /** 终章 g-finale-gewu 对四象的要求区间与民心水位，与卡上的 resourceBounds 一致 */
 const BAND_MIN = 45
@@ -18,7 +19,7 @@ const DEAD = -2e12
 /** 走到终章却未成格物中兴 */
 const LOST = -1e12
 
-const SIDES: Side[] = ['left', 'right']
+const SIDES: Side[] = [Side.Left, Side.Right]
 
 const ALL_CARDS: GameEvent[] = ALL_EVENTS
 
@@ -35,7 +36,7 @@ for (const card of ALL_CARDS) {
     const gate = ruleFlag(rule)
     let targets = UNLOCKS.get(gate)
     if (!targets) UNLOCKS.set(gate, (targets = new Set()))
-    for (const side of SIDES) for (const flag of card[side].sets ?? []) targets.add(flag)
+    for (const choice of [card.left, card.right]) for (const flag of choice.sets ?? []) targets.add(flag)
   }
 }
 
@@ -44,7 +45,7 @@ const FLAG_VALUE = new Map<string, number>()
 {
   const keys = new Set<string>()
   for (const card of ALL_CARDS) {
-    for (const side of SIDES) for (const flag of card[side].sets ?? []) keys.add(flag)
+    for (const choice of [card.left, card.right]) for (const flag of choice.sets ?? []) keys.add(flag)
     for (const rule of card.requires ?? []) keys.add(ruleFlag(rule))
   }
   const reach = new Map<string, Set<string>>()
@@ -153,7 +154,7 @@ function searchFirstStep(state: SimState): { side: Side; certain: boolean } {
       bestFirst = branch.first
     }
   }
-  return { side: bestFirst ?? 'left', certain: false }
+  return { side: bestFirst ?? Side.Left, certain: false }
 }
 
 export interface Advice {

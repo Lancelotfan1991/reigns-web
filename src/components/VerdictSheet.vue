@@ -240,7 +240,7 @@ function onNext() {
   display: block;
 }
 
-.s-dead img {
+.s-死 img {
   filter: grayscale(1);
   opacity: 0.78;
 }

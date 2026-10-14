@@ -1,6 +1,7 @@
 import { computed } from 'vue'
 import { CHARACTERS, CHAR_MAP, RELATION_META } from '../data/characters'
 import { ALL_EVENTS, EVENT_SLOT } from '../data/chapters'
+import { CharStatus, EndingKind, Side } from '../types'
 import type { CharView, Deed } from '../types'
 import { resolveFate } from './fates'
 import type { Fate } from './fates'
@@ -11,13 +12,13 @@ interface EventMeta {
   title: string
   /** 卡所属槽位的崇祯纪年 */
   year: number
-  labels: { left: string; right: string }
+  labels: Record<Side, string>
 }
 
 const EVENT_META: Record<string, EventMeta> = Object.fromEntries(
   ALL_EVENTS.map((e) => [
     e.id,
-    { title: e.name, year: yearOf(EVENT_SLOT[e.id]), labels: { left: e.left.label, right: e.right.label } },
+    { title: e.name, year: yearOf(EVENT_SLOT[e.id]), labels: { [Side.Left]: e.left.label, [Side.Right]: e.right.label } },
   ])
 )
 
@@ -53,9 +54,9 @@ export function useCharacters(game: Game) {
     // 终章或中途横死：皇帝本人即交代于此结局
     if (id === 'emperor' && game.isOver.value) {
       const result = game.ending.value
-      const survived = result?.survived ?? result?.kind === 'glory'
+      const survived = result?.survived ?? result?.kind === EndingKind.Glory
       return {
-        status: survived ? 'alive' : 'dead',
+        status: survived ? CharStatus.Alive : CharStatus.Dead,
         note: result?.title ?? '',
         at: now.value,
         seal: survived ? '生' : '崩',
@@ -89,7 +90,7 @@ export function useCharacters(game: Game) {
       if (appear === null) {
         return {
           char: ch,
-          status: 'hidden',
+          status: CharStatus.Hidden,
           note: '',
           age: null,
           appearYear: null,
@@ -98,8 +99,8 @@ export function useCharacters(game: Game) {
         }
       }
       const { status, note, at } = fateOf(ch.id, appear)
-      const baseYear = status === 'dead' ? at : now.value
-      const age = ch.born === undefined ? null : Math.max(0, adOf(baseYear) - ch.born + 1)
+      const baseYear = status === CharStatus.Dead ? at : now.value
+      const age = ch.born === undefined ? null : Math.max(0, adOf(baseYear) - ch.born)
       const relations = [
         ...ch.relations.map((r) => {
           const meta = RELATION_META[r.type]

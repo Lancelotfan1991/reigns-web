@@ -15,15 +15,10 @@ import {
   yearLabel,
   useGame,
 } from './composables/useGame'
-import type { ResourceKey, Side } from './types'
+import { CharStatus, EndingKind, Side } from './types'
+import type { ResourceKey } from './types'
 
 type Screen = 'start' | 'play' | 'over'
-
-const VERDICT_LABEL: Record<'doom' | 'neutral' | 'glory', string> = {
-  doom: '国祚断送',
-  neutral: '宿命轮回',
-  glory: '续命中兴',
-}
 
 const game = useGame()
 const chars = useCharacters(game)
@@ -39,7 +34,7 @@ const tipOpen = ref(false)
 /** 已识别人物名：卡面正文中匹配到的名字高亮可点 */
 const knownNames = computed(() =>
   chars.views.value
-    .filter((v) => v.status !== 'hidden')
+    .filter((v) => v.status !== CharStatus.Hidden)
     .map((v) => v.char.name),
 )
 
@@ -49,7 +44,9 @@ const sheetView = computed(() => {
 })
 
 function onCharClick(name: string) {
-  const view = chars.views.value.find((v) => v.char.name === name && v.status !== 'hidden')
+  const view = chars.views.value.find(
+    (v) => v.char.name === name && v.status !== CharStatus.Hidden,
+  )
   if (view) sheetCharId.value = view.char.id
 }
 
@@ -57,7 +54,7 @@ function onCharClick(name: string) {
 const dragDx = ref(0)
 const dragSide = computed<Side | null>(() => {
   if (Math.abs(dragDx.value) < 12) return null
-  return dragDx.value > 0 ? 'right' : 'left'
+  return dragDx.value > 0 ? Side.Right : Side.Left
 })
 const hoverEffects = computed(() => (dragSide.value ? game.previewEffects(dragSide.value) : {}))
 
@@ -119,8 +116,8 @@ function onKey(e: KeyboardEvent) {
     }
     return
   }
-  if (e.key === 'ArrowLeft') cardRef.value?.fly('left')
-  if (e.key === 'ArrowRight') cardRef.value?.fly('right')
+  if (e.key === 'ArrowLeft') cardRef.value?.fly(Side.Left)
+  if (e.key === 'ArrowRight') cardRef.value?.fly(Side.Right)
 }
 
 onMounted(() => window.addEventListener('keydown', onKey))
@@ -231,10 +228,10 @@ onUnmounted(() => window.removeEventListener('keydown', onKey))
       </div>
 
       <footer v-if="game.currentCard.value && !verdict" class="actions">
-        <button class="verdict-btn" :class="{ hinted: advice?.side === 'left' }" @click="cardRef?.fly('left')">
+        <button class="verdict-btn" :class="{ hinted: advice?.side === Side.Left }" @click="cardRef?.fly(Side.Left)">
           <span class="arrow">◀</span>{{ game.currentCard.value.left.label }}
         </button>
-        <button class="verdict-btn" :class="{ hinted: advice?.side === 'right' }" @click="cardRef?.fly('right')">
+        <button class="verdict-btn" :class="{ hinted: advice?.side === Side.Right }" @click="cardRef?.fly(Side.Right)">
           {{ game.currentCard.value.right.label }}<span class="arrow">▶</span>
         </button>
       </footer>
@@ -243,8 +240,8 @@ onUnmounted(() => window.removeEventListener('keydown', onKey))
     <!-- 结局界面 -->
     <section v-else class="screen over-screen">
       <div class="halo">{{ game.ending.value?.avatar }}</div>
-      <p class="verdict" :class="`verdict-${game.ending.value?.kind ?? 'doom'}`">
-        {{ game.ending.value?.survived && game.ending.value.kind === 'neutral' ? '国运未定' : VERDICT_LABEL[game.ending.value?.kind ?? 'doom'] }}
+      <p class="verdict" :class="`verdict-${game.ending.value?.kind ?? EndingKind.Doom}`">
+        {{ game.ending.value?.survived && game.ending.value.kind === EndingKind.Neutral ? '国运未定' : game.ending.value?.kind ?? EndingKind.Doom }}
       </p>
       <h2 class="over-title">{{ game.ending.value?.title }}</h2>
       <p class="over-desc">{{ game.ending.value?.description }}</p>
@@ -754,15 +751,15 @@ onUnmounted(() => window.removeEventListener('keydown', onKey))
   letter-spacing: 5px;
 }
 
-.verdict-doom {
+.verdict-国祚断送 {
   color: var(--cinnabar);
 }
 
-.verdict-neutral {
+.verdict-宿命轮回 {
   color: var(--azure);
 }
 
-.verdict-glory {
+.verdict-续命中兴 {
   color: var(--ochre);
 }
 

@@ -3,6 +3,7 @@ import { computed, ref } from 'vue'
 import { RESOURCE_KEYS, RESOURCE_META, yearLabel } from '../composables/useGame'
 import { STATUS_META } from '../data/characters'
 import { portraitOf } from '../data/portraits'
+import { CharStatus } from '../types'
 import type { CharView, ResourceKey } from '../types'
 
 const props = defineProps<{
@@ -132,8 +133,8 @@ function faceOf(id: string) {
               <span v-if="v.char.alias" class="al">{{ v.char.alias }}</span>
             </span>
             <span class="meta">
-              <span class="st" :style="{ color: STATUS_META.hidden.color }">
-                {{ STATUS_META.hidden.label }}
+              <span class="st" :style="{ color: STATUS_META[CharStatus.Hidden].color }">
+                {{ STATUS_META[CharStatus.Hidden].label }}
               </span>
             </span>
           </div>
@@ -309,12 +310,12 @@ function faceOf(id: string) {
   display: block;
 }
 
-.ava.dead {
+.ava.死 {
   filter: grayscale(1);
   opacity: 0.66;
 }
 
-.ava.ill {
+.ava.病 {
   border-color: var(--ochre);
 }
 
@@ -478,11 +479,11 @@ function faceOf(id: string) {
   color: var(--ink-3);
 }
 
-.dl.left {
+.dl.左 {
   color: var(--cinnabar);
 }
 
-.dl.right {
+.dl.右 {
   color: var(--jade);
 }
 

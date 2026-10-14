@@ -1,4 +1,5 @@
-import type { Character, CharStatus, Decision, GameEvent, LifeVerdict, Side } from '../types'
+import { CharStatus, Side } from '../types'
+import type { Character, Decision, GameEvent, LifeVerdict } from '../types'
 import { CHARACTERS } from '../data/characters'
 
 export interface FateCtx {
@@ -19,14 +20,19 @@ export interface Fate {
 }
 
 const SEAL_BY_STATUS: Record<CharStatus, string> = {
-  hidden: '',
-  alive: '生',
-  ill: '病',
-  dead: '死',
+  [CharStatus.Hidden]: '',
+  [CharStatus.Alive]: '生',
+  [CharStatus.Ill]: '病',
+  [CharStatus.Dead]: '死',
 }
 
 /** 生死有大小：比两侧落子之差、挑一页之主都按此序 */
-export const STATUS_RANK: Record<CharStatus, number> = { hidden: -1, alive: 0, ill: 1, dead: 2 }
+export const STATUS_RANK: Record<CharStatus, number> = {
+  [CharStatus.Hidden]: -1,
+  [CharStatus.Alive]: 0,
+  [CharStatus.Ill]: 1,
+  [CharStatus.Dead]: 2,
+}
 
 interface Node {
   year: number
@@ -56,7 +62,9 @@ export function resolveFate(ch: Character, ctx: FateCtx, appear?: number): Fate 
   nodes.sort((a, b) => a.year - b.year || a.rank - b.rank)
 
   const last = nodes[nodes.length - 1]
-  if (!last) return { status: 'alive', note: ch.role, at: appear ?? ctx.now, seal: SEAL_BY_STATUS.alive }
+  if (!last) {
+    return { status: CharStatus.Alive, note: ch.role, at: appear ?? ctx.now, seal: SEAL_BY_STATUS[CharStatus.Alive] }
+  }
   return {
     status: last.status,
     note: last.note,
@@ -74,8 +82,8 @@ function fateAsIf(
   year: number
 ): Fate {
   const flags = { ...ctx.flags }
-  for (const f of (side === 'left' ? card.right : card.left).sets ?? []) flags[f] = Math.max(0, (flags[f] ?? 0) - 1)
-  for (const f of (side === 'left' ? card.left : card.right).sets ?? []) flags[f] = (flags[f] ?? 0) + 1
+  for (const f of (side === Side.Left ? card.right : card.left).sets ?? []) flags[f] = Math.max(0, (flags[f] ?? 0) - 1)
+  for (const f of (side === Side.Left ? card.left : card.right).sets ?? []) flags[f] = (flags[f] ?? 0) + 1
   return resolveFate(ch, {
     now: ctx.now,
     decided: { ...ctx.decided, [card.id]: { eventId: card.id, side, year } },
@@ -99,7 +107,7 @@ const LIFE_HORIZON = CHARACTERS.reduce(
 export function findLifeVerdict(card: GameEvent, ctx: FateCtx): LifeVerdict | null {
   const real = ctx.decided[card.id]
   if (!real) return null
-  const flip: Side = real.side === 'left' ? 'right' : 'left'
+  const flip: Side = real.side === Side.Left ? Side.Right : Side.Left
   const then = { ...ctx, now: LIFE_HORIZON }
   let best: { ch: Character; here: Fate; there: Fate; gap: number } | null = null
 

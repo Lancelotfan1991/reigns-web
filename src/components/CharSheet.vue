@@ -151,8 +151,8 @@ function faceOf(id: string) {
   display: block;
 }
 
-.ava.dead { filter: grayscale(1); opacity: 0.66; }
-.ava.ill { border-color: var(--ochre); }
+.ava.死 { filter: grayscale(1); opacity: 0.66; }
+.ava.病 { border-color: var(--ochre); }
 
 .who {
   flex: 1;
@@ -274,7 +274,7 @@ function faceOf(id: string) {
 .dt { flex: none; color: var(--ink); font-weight: 700; }
 
 .dl { flex: 1; text-align: right; color: var(--ink-3); }
-.dl.left { color: var(--cinnabar); }
-.dl.right { color: var(--jade); }
+.dl.左 { color: var(--cinnabar); }
+.dl.右 { color: var(--jade); }
 .dl.todo { color: var(--ink-3); font-style: italic; }
 </style>

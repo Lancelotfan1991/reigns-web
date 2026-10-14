@@ -7,7 +7,11 @@ export type ResourceKey = AxisKey | 'people'
 /** 一次选择对指标的影响 */
 export type Effects = Partial<Record<ResourceKey, number>>
 
-export type Side = 'left' | 'right'
+/** 抉择方向：左印 / 右印 */
+export enum Side {
+  Left = '左',
+  Right = '右',
+}
 
 /** 本局某张卡上做出的决策 */
 export interface Decision {
@@ -17,10 +21,18 @@ export interface Decision {
   year: number
 }
 
-export type FinaleBranch = 'south' | 'meishan' | 'battle' | 'hold'
-  | 'reform' | 'reform-retreat' | 'reform-hold' | 'reform-battle'
-  /** 宫门之变：即位未久即操切动手，败于禁门之内，当年即入结局 */
-  | 'coup'
+/** 终章分支键：终章落子后按哪一路结算结局 */
+export enum FinaleBranch {
+  South = '南渡',
+  Meishan = '煤山',
+  Battle = '决战',
+  Hold = '固守',
+  Reform = '革新',
+  ReformRetreat = '革新退让',
+  ReformHold = '革新固守',
+  ReformBattle = '革新决战',
+  Coup = '宫门之变',
+}
 
 /**
  * 旗标规则：用于卡牌的出现条件。
@@ -88,7 +100,7 @@ export interface LifeVerdict {
   name: string
   alias?: string
   role: string
-  camp: string
+  camp: Camp
   status: CharStatus
   /** 钤上的印文 */
   seal: string
@@ -119,20 +131,52 @@ export interface Verdict {
   ended: boolean
 }
 
+/** 国运类型：即结局页的题头判词 */
+export enum EndingKind {
+  Doom = '国祚断送',
+  Neutral = '宿命轮回',
+  Glory = '续命中兴',
+}
+
 export interface Ending {
   avatar: string
   title: string
   description: string
-  /** doom=国祚断送 neutral=宿命轮回 glory=续命中兴 */
-  kind: 'doom' | 'neutral' | 'glory'
+  kind: EndingKind
   survived?: boolean
 }
 
-/** 人物状态：尚未登场 / 生 / 病 / 死 */
-export type CharStatus = 'hidden' | 'alive' | 'ill' | 'dead'
+/** 人物状态：随史实轨迹与本局抉择改写而变 */
+export enum CharStatus {
+  Hidden = '尚未登场',
+  Alive = '生',
+  Ill = '病',
+  Dead = '死',
+}
 
-/** 关系类型：敌对 / 友善 / 中立 / 效忠 / 宗亲 / 政争 / 猜忌 */
-export type RelationType = 'enemy' | 'friend' | 'neutral' | 'loyal' | 'kin' | 'rival' | 'suspicion'
+/** 关系类型：以本人视角对对方的态度 */
+export enum RelationType {
+  Enemy = '敌对',
+  Friend = '友善',
+  Neutral = '中立',
+  Loyal = '效忠',
+  Kin = '宗亲',
+  Rival = '政争',
+  Suspicion = '猜忌',
+}
+
+/** 阵营：决定人物服色与人像形制 */
+export enum Camp {
+  InnerCourt = '内廷',
+  Civil = '文官',
+  Liaodong = '辽镇',
+  Maritime = '海商',
+  Rebels = '义军',
+  Qing = '皇清',
+  Steppe = '塞外',
+  ImperialClan = '宗藩',
+  Western = '西学',
+}
 
 export interface Relation {
   /** 对方人物 id */
@@ -172,8 +216,8 @@ export interface Character {
   avatar: string
   /** 身份一句话 */
   role: string
-  /** 阵营：内廷 / 文官 / 辽镇 / 义军 / 皇清 / 宗藩 / 西学 / 塞外 */
-  camp: string
+  /** 阵营 */
+  camp: Camp
   /** 主要牵动的国势 */
   faction: ResourceKey
   /** 生年（公历），不详留空 */
@@ -206,7 +250,7 @@ export interface CharView {
   status: CharStatus
   /** 当前处境 */
   note: string
-  /** 虚岁；生年不详或未生为 null */
+  /** 周岁；生年不详或未生为 null */
   age: number | null
   /** 登场年份（崇祯纪年） */
   appearYear: number | null

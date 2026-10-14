@@ -2,6 +2,7 @@
 import { describe, expect, it } from 'vitest'
 import { mount } from '@vue/test-utils'
 import VerdictSheet from '../../src/components/VerdictSheet.vue'
+import { CharStatus } from '../../src/types'
 import type { LifeVerdict, Verdict } from '../../src/types'
 
 const WEI: LifeVerdict = {
@@ -10,11 +11,11 @@ const WEI: LifeVerdict = {
   alias: '九千岁',
   role: '司礼监秉笔太监、提督东厂。生祠遍天下',
   camp: '内廷',
-  status: 'dead',
+  status: CharStatus.Dead,
   seal: '缢',
   note: '宫门有己人、文书照章程：你先免崔呈秀，逮牌出宫，他夜缢于阜城旅邸',
   pending: false,
-  other: { seal: '留', status: 'alive' },
+  other: { seal: '留', status: CharStatus.Alive },
 }
 
 const XIONG: LifeVerdict = {

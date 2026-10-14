@@ -2,7 +2,8 @@
 import { computed, ref } from 'vue'
 import type { Advice } from '../composables/useHint'
 import { cardPortrait } from '../data/portraits'
-import type { ChapterProgress, GameEvent, Side } from '../types'
+import { Side } from '../types'
+import type { ChapterProgress, GameEvent } from '../types'
 
 const props = defineProps<{
   event: GameEvent
@@ -68,7 +69,7 @@ function onPointerUp() {
   dragging.value = false
   animated.value = true
   if (Math.abs(dx.value) >= THRESHOLD) {
-    fly(dx.value > 0 ? 'right' : 'left')
+    fly(dx.value > 0 ? Side.Right : Side.Left)
   } else {
     dx.value = 0
     emit('drag', 0)
@@ -80,7 +81,7 @@ function fly(side: Side) {
   if (flying.value) return
   flying.value = side
   animated.value = true
-  dx.value = (side === 'right' ? 1 : -1) * window.innerWidth * 1.2
+  dx.value = (side === Side.Right ? 1 : -1) * window.innerWidth * 1.2
   emit('drag', 0)
   window.setTimeout(() => emit('choose', side), 280)
 }
@@ -150,7 +151,7 @@ defineExpose({ fly })
     </div>
 
     <div v-if="advice || advicePending" class="god-mark">
-      <b v-if="advice">宜{{ advice.side === 'left' ? '左' : '右' }}</b>
+      <b v-if="advice">宜{{ advice.side === Side.Left ? '左' : '右' }}</b>
       <b v-else>推演中</b>
       <i v-if="advice">{{ advice.certain ? '可致格物中兴' : '未算到必胜，仅当前最优' }}</i>
     </div>

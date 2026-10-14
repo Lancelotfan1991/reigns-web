@@ -1,6 +1,7 @@
 import { CHAPTERS } from '../data/chapters'
 import { FINALE_YEAR, chapterStart, yearOf } from './slots'
-import type { AxisKey, Effects, FlagRule, GameEvent, ResourceKey, Side, StoryChapter } from '../types'
+import { FinaleBranch, Side } from '../types'
+import type { AxisKey, Effects, FlagRule, GameEvent, ResourceKey, StoryChapter } from '../types'
 export { FINALE_YEAR, YEAR_SLOTS, yearOf, slotOfPosition } from './slots'
 
 /** 四象：归零与满格同样致命 */
@@ -163,7 +164,7 @@ function workshopsSupplied(flags: Record<string, number>): boolean {
 
 /** 落下一子：把该侧的影响与旗标加到当局上，得到尚未翻下一张牌的局势 */
 export function resolveChoice(state: SimState, side: Side): SimState {
-  const choice = side === 'left' ? state.card.left : state.card.right
+  const choice = side === Side.Left ? state.card.left : state.card.right
   const year = yearOf(state.key)
   return {
     ...state,
@@ -183,11 +184,11 @@ export function resolveChoice(state: SimState, side: Side): SimState {
 /** 照引擎规则推演一议；其它任何结局都归入 end，god 模式只求格物中兴 */
 export function advanceSim(state: SimState, side: Side): SimStep {
   const card = state.card
-  const choice = side === 'left' ? card.left : card.right
+  const choice = side === Side.Left ? card.left : card.right
   const after = resolveChoice(state, side)
 
   if (choice.finale) {
-    if (choice.finale !== 'reform') return { kind: 'end' }
+    if (choice.finale !== FinaleBranch.Reform) return { kind: 'end' }
     return eligible(card, after.flags, after.resources) ? { kind: 'win' } : { kind: 'end' }
   }
   for (const key of AXIS_KEYS) {

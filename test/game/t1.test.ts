@@ -3,7 +3,7 @@ import { useCharacters } from '../../src/composables/useCharacters'
 import { useGame, type Game } from '../../src/composables/useGame'
 import { ALL_EVENTS } from '../../src/data/chapters'
 import { CHARACTERS } from '../../src/data/characters'
-import type { Side } from '../../src/types'
+import { CharStatus, Side } from '../../src/types'
 import { healthy, reach, seedRandom, slotOf } from './helpers'
 
 beforeEach(() => {
@@ -65,7 +65,7 @@ describe('T1 批红单页', () => {
     game.startGame()
     reach(game, slotOf('g-institute'))
     game.resources.value = { ...healthy(), gold: 1 }
-    game.choose('left')
+    game.choose(Side.Left)
     const verdict = game.verdict.value!
     expect(game.isOver.value).toBe(true)
     expect(verdict.ended).toBe(true)
@@ -76,7 +76,7 @@ describe('T1 批红单页', () => {
     const game = useGame()
     game.startGame()
     reach(game, slotOf('g-institute'))
-    game.choose('left')
+    game.choose(Side.Left)
     const settled = { ...game.resources.value }
     game.dismissVerdict()
     expect(game.verdict.value).toBeNull()
@@ -87,7 +87,7 @@ describe('T1 批红单页', () => {
     const game = useGame()
     game.startGame()
     reach(game, slotOf('g-institute'))
-    game.choose('left')
+    game.choose(Side.Left)
     expect(game.verdict.value).not.toBeNull()
     game.startGame()
     expect(game.verdict.value).toBeNull()
@@ -101,7 +101,7 @@ describe('T1 宫门定策四档', () => {
     game.startGame()
     game.choose(first)  // Step 0: s-tuogu
     game.choose(second) // Step 1: s-dianjianglu
-    for (const side of mid) game.choose(side === 'L' ? 'left' : 'right') // Step 2-6
+    for (const side of mid) game.choose(side === 'L' ? Side.Left : Side.Right) // Step 2-6
     return game
   }
   const weiView = (game: Game) => {
@@ -109,12 +109,12 @@ describe('T1 宫门定策四档', () => {
     return { status: view?.status, note: view?.note ?? '', deeds: view?.deeds.map((deed) => deed.eventId) ?? [] }
   }
   /** 只把逆案裁在“止坐首恶”，其余各议按需要选 */
-  const narrowVerdict = (id: string): Side => id === 's-ni-an' ? 'left' : 'right'
+  const narrowVerdict = (id: string): Side => id === 's-ni-an' ? Side.Left : Side.Right
 
   it.each([
-    ['left', 'right', 'LRRLL', 's-wei-rash', '玉玺照接、钥匙未换：法度耗到四十以下送不进衙门，只靠京营连夜硬办'],
-    ['left', 'left', 'RLLRL', 's-wei-failed', '受玺即放权、当众焚册也救不回军心：牌票没人肯领，京营当值称病'],
-    ['right', 'left', 'RLLRL', 's-wei-failed', '钥匙虽换，焚册折了京营当值：军心只剩三十余，缇骑出不了城门'],
+    [Side.Left, Side.Right, 'LRRLL', 's-wei-rash', '玉玺照接、钥匙未换：法度耗到四十以下送不进衙门，只靠京营连夜硬办'],
+    [Side.Left, Side.Left, 'RLLRL', 's-wei-failed', '受玺即放权、当众焚册也救不回军心：牌票没人肯领，京营当值称病'],
+    [Side.Right, Side.Left, 'RLLRL', 's-wei-failed', '钥匙虽换，焚册折了京营当值：军心只剩三十余，缇骑出不了城门'],
   ] as const)('当开局依次选%s、%s、中段%s 时，第八步发出%s（%s）', (first, second, mid, id, why) => {
     const game = toArrest(first, second, mid)
     expect(why.length).toBeGreaterThan(0)
@@ -125,56 +125,56 @@ describe('T1 宫门定策四档', () => {
   it('当九门钥匙未换、焚册未行而军心不足四十时，第八步落到中止且仍以未遂收束', () => {
     const game = useGame()
     game.startGame()
-    game.choose('left')  // Step 0: s-tuogu left - no wei-watched
-    game.choose('right') // Step 1: s-dianjianglu right - sets wei-soothed, wei-watched
+    game.choose(Side.Left)  // Step 0: s-tuogu left - no wei-watched
+    game.choose(Side.Right) // Step 1: s-dianjianglu right - sets wei-soothed, wei-watched
     // 清除 wei-watched 以模拟九门钥匙未曾换过、名分却已定的情形
     game.flags.value = { ...game.flags.value, 'wei-watched': undefined }
     game.resources.value = { ...healthy(), law: 41, army: 37 }
-    game.choose('right') // Step 2: s-gongnv
-    game.choose('left')  // Step 3: s-kesi
-    game.choose('left')  // Step 4: s-cui
-    game.choose('right') // Step 5: s-wangtiqian
-    game.choose('right') // Step 6: s-impeach-wei 留中不发，不落逮牌
+    game.choose(Side.Right) // Step 2: s-gongnv
+    game.choose(Side.Left)  // Step 3: s-kesi
+    game.choose(Side.Left)  // Step 4: s-cui
+    game.choose(Side.Right) // Step 5: s-wangtiqian
+    game.choose(Side.Right) // Step 6: s-impeach-wei 留中不发，不落逮牌
     expect(game.flags.value.warned).toBeUndefined()
     expect(game.currentCard.value?.id).toBe('s-wei-stalled')
     const stalled = game.currentCard.value!
     for (const side of ['left', 'right'] as const) expect(stalled[side].sets).toContain('wei-failed')
-    game.choose('left')
+    game.choose(Side.Left)
     expect(game.flags.value['wei-failed']).toBe(2)
     expect(game.flags.value['wei-down']).toBeUndefined()
   })
 
-  it.each(['left', 'right'] as const)('当逮牌未遂并选择%s时，魏忠贤照旧在任，史实一节被改写', (side) => {
-    const game = toArrest('right', 'left')
+  it.each([Side.Left, Side.Right] as const)('当逮牌未遂并选择%s时，魏忠贤照旧在任，史实一节被改写', (side) => {
+    const game = toArrest(Side.Right, Side.Left)
     expect(game.currentCard.value?.id).toBe('s-wei-failed')
     game.choose(side)
     expect(game.flags.value['wei-failed']).toBe(1)
     const wei = weiView(game)
-    expect(wei.status).toBe('alive')
+    expect(wei.status).toBe(CharStatus.Alive)
     expect(wei.note).not.toContain('阜城')
     expect(wei.deeds).toContain('s-wei-failed')
   })
 
   it('当逮牌未遂但军心未至绝境时，崇祯三年不发再举之请', () => {
-    const game = toArrest('right', 'left')
-    game.choose('left')
+    const game = toArrest(Side.Right, Side.Left)
+    game.choose(Side.Left)
     reach(game, slotOf('s-ni-an') - 1, narrowVerdict)
     game.resources.value = { ...healthy(), army: 50 }
-    game.choose('right')
+    game.choose(Side.Right)
     expect(game.decisions.value).toHaveLength(slotOf('s-ni-an'))
     expect(game.currentCard.value?.id).not.toBe('s-wei-coup')
   })
 
   it('当逆案止坐首恶时，崇祯八年没有中官监军之请', () => {
-    const game = toArrest('right', 'right')
-    game.choose('left')
+    const game = toArrest(Side.Right, Side.Right)
+    game.choose(Side.Left)
     reach(game, slotOf('s-ni-an'), narrowVerdict)
     game.resources.value = healthy()
-    game.choose('left')
+    game.choose(Side.Left)
     expect(game.flags.value['ni-an-broad']).toBeUndefined()
     reach(game, slotOf('c-eunuch-marshal-owed') - 1, narrowVerdict)
     game.resources.value = healthy()
-    game.choose('right')
+    game.choose(Side.Right)
     expect(game.currentCard.value?.id).not.toMatch(/^c-eunuch-marshal/)
   })
 

@@ -2,7 +2,8 @@ import { vi } from 'vitest'
 import { useGame, type Game } from '../../src/composables/useGame'
 import { RESOURCE_KEYS, UNREST_LINE, dealNext, yearOf, yearTick } from '../../src/composables/simulation'
 import { EVENT_SLOT } from '../../src/data/chapters'
-import type { GameEvent, ResourceKey, Side } from '../../src/types'
+import { Side } from '../../src/types'
+import type { GameEvent, ResourceKey } from '../../src/types'
 
 /** 按事件 ID 反查当前槽位；找不到时抛错，提醒更新测试 */
 export function slotOf(eventId: string): number {
@@ -21,7 +22,7 @@ export function seedRandom(seed: number) {
   })
 }
 
-export function reach(game: Game, index: number, decide: (id: string) => Side = () => 'right') {
+export function reach(game: Game, index: number, decide: (id: string) => Side = () => Side.Right) {
   while (game.decisions.value.length < index) {
     const card = game.currentCard.value
     if (!card || game.isOver.value) throw new Error('Test setup ended before target slot')
@@ -48,7 +49,7 @@ export function atFinale(flags: Record<string, number>, target = healthy()) {
     const peek = dealNext(snap.flags, snap.resources, snap.deal)
     if (!peek.card || isFinaleCard(peek.card)) break
     game.resources.value = healthy()
-    game.choose('right')
+    game.choose(Side.Right)
   }
   const card = game.currentCard.value
   if (!card || game.isOver.value) throw new Error('atFinale: 未能走到终章前一张')
@@ -63,7 +64,7 @@ export function atFinale(flags: Record<string, number>, target = healthy()) {
     before.law += tick
   }
   game.resources.value = before
-  game.choose('right')
+  game.choose(Side.Right)
   const landed = game.currentCard.value
   if (!landed || !isFinaleCard(landed)) throw new Error('atFinale: 终章未在下一议翻开')
   return game

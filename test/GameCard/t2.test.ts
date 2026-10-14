@@ -3,6 +3,7 @@ import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import { mount } from '@vue/test-utils'
 import GameCard from '../../src/components/GameCard.vue'
 import { ALL_EVENTS } from '../../src/data/chapters'
+import { Side } from '../../src/types'
 
 const card = ALL_EVENTS.find((event) => event.id === 'g-institute')!
 
@@ -23,7 +24,7 @@ it('当水平拖动越过阈值时，会裁决一次而非重复提交', async (
     await wrapper.trigger('pointerup')
     await wrapper.trigger('pointerup')
     await vi.advanceTimersByTimeAsync(300)
-    expect(wrapper.emitted('choose')).toEqual([['left']])
+    expect(wrapper.emitted('choose')).toEqual([[Side.Left]])
   } finally {
     wrapper.unmount()
   }
