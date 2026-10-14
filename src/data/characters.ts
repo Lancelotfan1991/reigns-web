@@ -1,5 +1,5 @@
 import { ALL_EVENTS } from './chapters'
-import { Camp, CharStatus, RelationType, Side } from '../types'
+import { Camp, CharStatus, Flag, RelationType, Side } from '../types'
 import type { Character } from '../types'
 
 /**
@@ -317,9 +317,9 @@ export const CHARACTERS: Character[] = [
     events: ['s-hanzai', 's-yizhan', 's-licheng-officer', 'c-recruit-no-post', 's-chuangjiang', 's-annei', 'c-kaifeng-emergency-plan', 'c-peace-dividend-flood', 's-chuanti', 'g-recruit', 'g-guanzhong', 'c-guanzhong-recruit'],
     track: [
       { year: 2, status: CharStatus.Alive, note: '塞门一驿之粮，不足以活其家' },
-      { year: 9, status: CharStatus.Alive, note: '继高迎祥之众，号「闯王」，众愈盛而愈流', unlessFlag: ['lz-absorbed'] },
-      { year: 15, status: CharStatus.Alive, note: '围攻开封，黄河大水灌城，军民俱遭重灾；决河责任历来有争议', unlessFlag: ['lz-absorbed'] },
-      { year: 17, status: CharStatus.Alive, note: '即皇帝位于西安，国号大顺，改元永昌', unlessFlag: ['lz-absorbed'] },
+      { year: 9, status: CharStatus.Alive, note: '继高迎祥之众，号「闯王」，众愈盛而愈流', unlessFlag: [Flag.招抚流亡] },
+      { year: 15, status: CharStatus.Alive, note: '围攻开封，黄河大水灌城，军民俱遭重灾；决河责任历来有争议', unlessFlag: [Flag.招抚流亡] },
+      { year: 17, status: CharStatus.Alive, note: '即皇帝位于西安，国号大顺，改元永昌', unlessFlag: [Flag.招抚流亡] },
     ],
     fates: [
       { event: 's-yizhan', side: Side.Left, status: CharStatus.Alive, note: '驿站既裁，此辈无所就食，流入流营' },
@@ -370,7 +370,7 @@ export const CHARACTERS: Character[] = [
     track: [
       { year: 3, status: CharStatus.Alive, note: '史实：在米脂起事，转战秦、楚、蜀，官军数剿不能灭' },
       { year: 12, status: CharStatus.Alive, note: '受抚谷城，粮册与营伍有待核实' },
-      { year: 14, status: CharStatus.Alive, note: '复叛，陷襄阳，杀襄王', unlessFlag: ['gewu-settlement'] },
+      { year: 14, status: CharStatus.Alive, note: '复叛，陷襄阳，杀襄王', unlessFlag: [Flag.分户安置] },
     ],
     fates: [
       { event: 's-xianzhong', side: Side.Left, status: CharStatus.Alive, note: '谷城粮册送审，旧部安置尚待核田户与藏械，再定善后' },
@@ -394,7 +394,7 @@ export const CHARACTERS: Character[] = [
     track: [
       { year: 10, status: CharStatus.Alive, note: '史实：受命总理军务，专办招抚，数遣使招抚流营' },
       { year: 12, status: CharStatus.Alive, note: '招抚一方，朝廷倚之' },
-      { year: 13, status: CharStatus.Dead, note: '史实：抚局败露，诏狱鞫治，弃市', unlessFlag: ['gewu-settlement'] },
+      { year: 13, status: CharStatus.Dead, note: '史实：抚局败露，诏狱鞫治，弃市', unlessFlag: [Flag.分户安置] },
     ],
     fates: [
       { event: 'g-gucheng', side: Side.Left, status: CharStatus.Alive, note: '仍按原营交粮，抚局未能逐户核实，头领代领与藏械之患犹在' },
@@ -415,7 +415,7 @@ export const CHARACTERS: Character[] = [
     events: ['s-annei', 'g-gucheng', 'c-gucheng-settlement-incomplete'],
     track: [
       { year: 11, status: CharStatus.Alive, note: '身任剿事，请加赋充饷，曰「安内方可攘外」' },
-      { year: 14, status: CharStatus.Dead, note: '史实：襄阳失陷，退归沙市军中，忧悸而卒', unlessFlag: ['gewu-settlement'] },
+      { year: 14, status: CharStatus.Dead, note: '史实：襄阳失陷，退归沙市军中，忧悸而卒', unlessFlag: [Flag.分户安置] },
     ],
     fates: [
       { event: 's-annei', side: Side.Left, status: CharStatus.Alive, note: '其策得行，加派及于训兵——养虎者饲之以民' },
@@ -708,7 +708,7 @@ export const CHARACTERS: Character[] = [
     faction: 'gold',
     born: 1586,
     events: ['s-fuwang'],
-    track: [{ year: 14, status: CharStatus.Dead, note: '史实：洛阳城陷，为闯所戮，并鹿烹之，号「福禄酒」', unlessFlag: ['lz-absorbed'] }],
+    track: [{ year: 14, status: CharStatus.Dead, note: '史实：洛阳城陷，为闯所戮，并鹿烹之，号「福禄酒」', unlessFlag: [Flag.招抚流亡] }],
     fates: [
       { event: 's-fuwang', side: Side.Left, status: CharStatus.Alive, note: '割银二十万佐饷，茹痛如剥肤；宗室自此怨上' },
       { event: 's-fuwang', side: Side.Right, status: CharStatus.Alive, note: '闭阁谢客，一钱不出' },

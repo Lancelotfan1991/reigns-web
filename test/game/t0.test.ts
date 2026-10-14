@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { REFORM_REQUIREMENTS } from '../../src/data/reforms'
 import { ALL_EVENTS, EVENT_SLOT } from '../../src/data/chapters'
+import { Flag } from '../../src/types'
 import { atFinale, seedRandom, slotOf } from './helpers'
 
 beforeEach(() => {
@@ -26,9 +27,16 @@ describe('T0 国用积弊', () => {
     expect(crisisCards).toHaveLength(12)
     expect([...new Set(crisisCards.map(card => slotOf(card.id)))].sort((a, b) => a - b)).toEqual(slots)
     expect(REFORM_REQUIREMENTS).toHaveLength(42)
+    // 积弊旗标只许留在积弊子系统内：非 k- 卡不得产、也不得消费
+    const outside = new Set<string>()
+    for (const card of ALL_EVENTS) {
+      if (card.id.startsWith('k-')) continue
+      for (const flag of [...(card.left.sets ?? []), ...(card.right.sets ?? [])]) outside.add(flag)
+      for (const rule of card.requires ?? []) outside.add(typeof rule === 'string' ? rule : rule.flag)
+    }
     for (const card of crisisCards) {
       for (const side of ['left', 'right'] as const) {
-        expect(card[side].sets?.every(flag => flag.startsWith('crisis-')) ?? true).toBe(true)
+        expect(card[side].sets?.every(flag => !outside.has(flag)) ?? true).toBe(true)
         expect(card[side].finale).toBeUndefined()
       }
     }
@@ -53,6 +61,6 @@ describe('T0 革新条件链', () => {
   })
 
   it('当存在诛戮旗标时，不能用齐全技术与数值抵消政治失败', () => {
-    expect(atFinale({ ...fullFlags(), exec: 1 }).currentCard.value?.id).not.toBe('g-finale-gewu')
+    expect(atFinale({ ...fullFlags(), [Flag.大臣刑狱]: 1 }).currentCard.value?.id).not.toBe('g-finale-gewu')
   })
 })

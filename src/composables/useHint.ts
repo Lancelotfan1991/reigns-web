@@ -27,7 +27,8 @@ function ruleFlag(rule: FlagRule): string {
   return typeof rule === 'string' ? rule : rule.flag
 }
 
-const REQUIRED = new Set(REFORM_REQUIREMENTS)
+/** 放宽为 string 域：推演中的旗标表是运行期松散存储，此处只作查表 */
+const REQUIRED = new Set<string>(REFORM_REQUIREMENTS)
 
 /** 前置旗标 → 由它放行的、可直接取得的旗标 */
 const UNLOCKS = new Map<string, Set<string>>()

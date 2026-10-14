@@ -13,7 +13,7 @@ import {
   initialResources,
   yearTick,
 } from './simulation'
-import { EndingKind, FinaleBranch, Side } from '../types'
+import { EndingKind, FinaleBranch, Flag, Side } from '../types'
 import type { AxisKey, ChapterProgress, Decision, Ending, Effects, GameEvent, ResourceKey, Verdict } from '../types'
 import type { DealResult, DealState, SimState } from './simulation'
 import { yearOf } from './slots'
@@ -279,8 +279,8 @@ export function useGame() {
     if (y >= FINALE_YEAR) return null
     return 1 + decisions.value.filter((d) => d.year === y).length
   })
-  const customsFunded = computed(() => !!flags.value['gewu-customs'] && !!flags.value['gewu-audit'])
-  const workshopsSupplied = computed(() => !!flags.value['gewu-tools'] && !!flags.value['gewu-denglai'])
+  const customsFunded = computed(() => !!flags.value[Flag.海税入公] && !!flags.value[Flag.交叉验账])
+  const workshopsSupplied = computed(() => !!flags.value[Flag.军器设局] && !!flags.value[Flag.登莱保炮])
 
   /** 事件 id → 该事件上做出的决策 */
   const decisionByEvent = computed(() => {
@@ -328,7 +328,7 @@ export function useGame() {
 
   /** 南渡结算：民心权重最高——不及国本线必败；已密办南迁者（船料册籍先行出京）线更宽、可赦一象 */
   function southEnding(next: Record<ResourceKey, number>): Ending {
-    const prepared = (flags.value['south-prep'] ?? 0) > 0
+    const prepared = (flags.value[Flag.南渡留本] ?? 0) > 0
     if (next.people < SOUTH_PEOPLE_LINE - (prepared ? 7 : 0)) return FINALE_ENDINGS.southNoRoot
     const allowed = (next.people >= SOUTH_WAIVER_LINE ? 1 : 0) + (prepared ? 1 : 0)
     const shortfalls = AXIS_KEYS.filter((key) => next[key] < AXIS_GATE[key]).length

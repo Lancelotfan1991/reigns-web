@@ -3,7 +3,7 @@ import { useCharacters } from '../../src/composables/useCharacters'
 import { useGame, type Game } from '../../src/composables/useGame'
 import { ALL_EVENTS } from '../../src/data/chapters'
 import { CHARACTERS } from '../../src/data/characters'
-import { CharStatus, Side } from '../../src/types'
+import { CharStatus, Flag, Side } from '../../src/types'
 import { healthy, reach, seedRandom, slotOf } from './helpers'
 
 beforeEach(() => {
@@ -126,9 +126,9 @@ describe('T1 宫门定策四档', () => {
     const game = useGame()
     game.startGame()
     game.choose(Side.Left)  // Step 0: s-tuogu left - no wei-watched
-    game.choose(Side.Right) // Step 1: s-dianjianglu right - sets wei-soothed, wei-watched
+    game.choose(Side.Right) // Step 1: s-dianjianglu right - sets wei-watched
     // 清除 wei-watched 以模拟九门钥匙未曾换过、名分却已定的情形
-    game.flags.value = { ...game.flags.value, 'wei-watched': undefined }
+    game.flags.value = { ...game.flags.value, [Flag.密换九门]: undefined }
     game.resources.value = { ...healthy(), law: 41, army: 37 }
     game.choose(Side.Right) // Step 2: s-gongnv
     game.choose(Side.Left)  // Step 3: s-kesi
@@ -138,17 +138,17 @@ describe('T1 宫门定策四档', () => {
     expect(game.flags.value.warned).toBeUndefined()
     expect(game.currentCard.value?.id).toBe('s-wei-stalled')
     const stalled = game.currentCard.value!
-    for (const side of ['left', 'right'] as const) expect(stalled[side].sets).toContain('wei-failed')
+    for (const side of ['left', 'right'] as const) expect(stalled[side].sets).toContain(Flag.逮魏未成)
     game.choose(Side.Left)
-    expect(game.flags.value['wei-failed']).toBe(2)
-    expect(game.flags.value['wei-down']).toBeUndefined()
+    expect(game.flags.value[Flag.逮魏未成]).toBe(2)
+    expect(game.flags.value[Flag.忠贤被逮]).toBeUndefined()
   })
 
   it.each([Side.Left, Side.Right] as const)('当逮牌未遂并选择%s时，魏忠贤照旧在任，史实一节被改写', (side) => {
     const game = toArrest(Side.Right, Side.Left)
     expect(game.currentCard.value?.id).toBe('s-wei-failed')
     game.choose(side)
-    expect(game.flags.value['wei-failed']).toBe(1)
+    expect(game.flags.value[Flag.逮魏未成]).toBe(1)
     const wei = weiView(game)
     expect(wei.status).toBe(CharStatus.Alive)
     expect(wei.note).not.toContain('阜城')
@@ -171,7 +171,7 @@ describe('T1 宫门定策四档', () => {
     reach(game, slotOf('s-ni-an'), narrowVerdict)
     game.resources.value = healthy()
     game.choose(Side.Left)
-    expect(game.flags.value['ni-an-broad']).toBeUndefined()
+    expect(game.flags.value[Flag.逆案尽列]).toBeUndefined()
     reach(game, slotOf('c-eunuch-marshal-owed') - 1, narrowVerdict)
     game.resources.value = healthy()
     game.choose(Side.Right)

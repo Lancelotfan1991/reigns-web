@@ -1,6 +1,6 @@
 import { CHAPTERS } from '../data/chapters'
 import { FINALE_YEAR, chapterStart, yearOf } from './slots'
-import { FinaleBranch, Side } from '../types'
+import { FinaleBranch, Flag, Side } from '../types'
 import type { AxisKey, Effects, FlagRule, GameEvent, ResourceKey, StoryChapter } from '../types'
 export { FINALE_YEAR, YEAR_SLOTS, yearOf, slotOfPosition } from './slots'
 
@@ -155,11 +155,11 @@ export type SimStep =
   | { kind: 'next'; state: SimState }
 
 function customsFunded(flags: Record<string, number>): boolean {
-  return (flags['gewu-customs'] ?? 0) > 0 && (flags['gewu-audit'] ?? 0) > 0
+  return (flags[Flag.海税入公] ?? 0) > 0 && (flags[Flag.交叉验账] ?? 0) > 0
 }
 
 function workshopsSupplied(flags: Record<string, number>): boolean {
-  return (flags['gewu-tools'] ?? 0) > 0 && (flags['gewu-denglai'] ?? 0) > 0
+  return (flags[Flag.军器设局] ?? 0) > 0 && (flags[Flag.登莱保炮] ?? 0) > 0
 }
 
 /** 落下一子：把该侧的影响与旗标加到当局上，得到尚未翻下一张牌的局势 */

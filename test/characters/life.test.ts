@@ -6,7 +6,7 @@ import { addFlags } from '../../src/composables/simulation'
 import { useGame } from '../../src/composables/useGame'
 import { yearOf } from '../../src/composables/slots'
 import type { FateCtx } from '../../src/composables/fates'
-import { CharStatus, Side } from '../../src/types'
+import { CharStatus, Flag, Side } from '../../src/types'
 import type { Decision, GameEvent } from '../../src/types'
 import { seedRandom } from '../game/helpers'
 
@@ -58,7 +58,7 @@ describe('生死之判', () => {
     })
 
     it('安置查到户，抚局败露之罪便追不到督臣头上', () => {
-      const base: FateCtx = { now: 17, decided: {}, flags: { 'gewu-settlement': 1 } }
+      const base: FateCtx = { now: 17, decided: {}, flags: { [Flag.分户安置]: 1 } }
       expect(resolveFate(CHAR_MAP.xiongwenchan, base).status).toBe(CharStatus.Alive)
       expect(resolveFate(CHAR_MAP.xiongwenchan, { ...base, flags: {} }).status).toBe(CharStatus.Dead)
     })
