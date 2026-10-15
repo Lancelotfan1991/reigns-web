@@ -189,6 +189,28 @@ export const CHARACTERS: Character[] = [
     relations: [{ to: 'gaoqiqian', type: RelationType.Rival }],
   },
   {
+    id: 'luxiangsheng',
+    name: '卢象升',
+    alias: '字建斗',
+    avatar: '⚔️',
+    role: '天雄军统帅。忠勇善战，与杨嗣昌议战守不合',
+    camp: Camp.Civil,
+    faction: 'army',
+    born: 1600,
+    events: ['s-luxiangsheng-war', 's-luxiangsheng-martyr'],
+    track: [
+      { year: 9, status: CharStatus.Alive, note: '与杨嗣昌议战守不合，请战' },
+      { year: 11, status: CharStatus.Dead, note: '战死巨鹿贾庄' },
+    ],
+    fates: [
+      { event: 's-luxiangsheng-war', side: Side.Left, status: CharStatus.Alive, note: '请战，朝廷许之' },
+      { event: 's-luxiangsheng-war', side: Side.Right, status: CharStatus.Alive, note: '令其听杨嗣昌节制' },
+      { event: 's-luxiangsheng-martyr', side: Side.Left, status: CharStatus.Dead, note: '战死巨鹿，天下悲之' },
+      { event: 's-luxiangsheng-martyr', side: Side.Right, status: CharStatus.Dead, note: '粮尽援绝，战死' },
+    ],
+    relations: [{ to: 'yangsichang', type: RelationType.Rival }],
+  },
+  {
     id: 'maowenlong',
     name: '毛文龙',
     alias: '字振南',

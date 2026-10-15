@@ -1300,6 +1300,52 @@ export const CHAPTERS: StoryChapter[] = [
       ],
     ],
   },
+  {
+    id: "dalinghe",
+    name: "大凌河之战",
+    time: { year: 4, order: 5 },
+    steps: [
+      [
+        {
+          id: "s-dalinghe-siege",
+          name: "祖大寿大凌河被围",
+          avatar: "🏰",
+          text: "祖大寿筑大凌河城，清兵闻之，决意破之。八月，清兵围大凌河。大寿请援，然援兵不至。城中粮尽，军民相食。",
+          left: {
+            label: "速发援兵",
+            effects: { court: -2, army: -4, gold: -8, people: 2 },
+            response: "你发援兵，然路途遥远，清兵已围城数月。援兵至时，城中已粮尽。",
+          },
+          right: {
+            label: "令其坚守待援",
+            effects: { court: 2, army: -2, people: -2 },
+            response: "大寿坚守数月，粮尽援绝。城中军民相食，死者相枕。",
+          },
+          people: ["zudashou"],
+        },
+      ],
+      [
+        {
+          id: "s-dalinghe-surrender",
+          name: "祖大寿伪降",
+          avatar: "🏰",
+          text: "大寿粮尽，伪降清兵。然心在明，请陛下勿忧。臣当寻机逃归。",
+          left: {
+            label: "信其忠，令其寻机归",
+            effects: { court: 2, army: 4, people: 2 },
+            response: "大寿果寻机逃归锦州。清兵破大凌河，杀城中军民数万。",
+            sets: [Flag.大寿逃归],
+          },
+          right: {
+            label: "疑其降，令其自辩",
+            effects: { court: -2, army: -2, people: -2 },
+            response: "大寿逃归，然朝廷已疑之。此后大寿守锦州，朝廷不复信其忠。",
+          },
+          people: ["zudashou"],
+        },
+      ],
+    ],
+  },
 
   // ── 崇祯五年 ──
   {
@@ -2133,6 +2179,33 @@ export const CHAPTERS: StoryChapter[] = [
       ],
     ],
   },
+  {
+    id: "luxiangsheng-war",
+    name: "卢象升请战",
+    time: { year: 9, order: 6 },
+    steps: [
+      [
+        {
+          id: "s-luxiangsheng-war",
+          name: "卢象升请战",
+          avatar: "⚔️",
+          text: "卢象升请与建虏战。杨嗣昌主抚，象升主战。请陛下决之。",
+          left: {
+            label: "许其战，令其自主",
+            effects: { court: -4, army: 6, people: 4 },
+            response: "你许象升战，令其自主。象升感激涕零，誓与建虏决一死战。",
+            sets: [Flag.象升自主],
+          },
+          right: {
+            label: "令其听杨嗣昌节制",
+            effects: { court: 4, army: -4, people: -2 },
+            response: "你令象升听嗣昌节制。象升愤懑，然不敢违旨。此后战守之议，皆出嗣昌。",
+          },
+          people: ["luxiangsheng", "yangsichang"],
+        },
+      ],
+    ],
+  },
 
   // ── 崇祯十年 ──
   {
@@ -2499,6 +2572,33 @@ export const CHAPTERS: StoryChapter[] = [
             response: "你令有司祭之，不复深究。孙承宗以旧臣殉国，朝廷从优议恤，然边事日非，无人再提当年守通州之事。",
           },
           people: ["sunchengzong"],
+        },
+      ],
+    ],
+  },
+  {
+    id: "luxiangsheng-martyr",
+    name: "卢象升巨鹿殉难",
+    time: { year: 11, order: 7 },
+    steps: [
+      [
+        {
+          id: "s-luxiangsheng-martyr",
+          name: "卢象升巨鹿殉难",
+          avatar: "⚔️",
+          text: "卢象升与建虏战于巨鹿贾庄。粮尽援绝，战死。天下悲之。",
+          left: {
+            label: "追赠太子太师，谥忠烈",
+            effects: { court: 4, army: 4, people: 8 },
+            response: "你追赠象升太子太师，谥忠烈。他一生忠勇，与建虏战，未尝退却。巨鹿之败，非战之罪，乃杨嗣昌不救之罪也。",
+            sets: [Flag.象升殉国],
+          },
+          right: {
+            label: "令有司祭之，不复深究",
+            effects: { court: 2, people: 2 },
+            response: "你令有司祭之，不复深究。象升以忠勇殉国，朝廷从优议恤，然杨嗣昌之罪，无人敢问。",
+          },
+          people: ["luxiangsheng"],
         },
       ],
     ],
