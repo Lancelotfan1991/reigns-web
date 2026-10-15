@@ -316,7 +316,7 @@ export const CHAPTERS: StoryChapter[] = [
             effects: { court: -2, law: -4, army: 6, gold: -10 },
             response: "你照旧额发饷，另加赏赉以慰毛文龙。粮船按时出海，东江上下皆言朝廷信重；只是户部的考成册上，东江一镇永远是一笔对不上的账，每岁转输的钱粮却分毫不能少。毛文龙得旨谢恩，回话愈发硬气——他知道朝廷还离不开这一支海上的人马。",
           },
-          people: ["maowenlong"],
+          people: ["maowenlong", "qianlongxi"],
         },
       ],
     ],
@@ -482,6 +482,33 @@ export const CHAPTERS: StoryChapter[] = [
             response: "你准先付当年军需，暂缓旧欠所省的支出留作周转，账上的欠款并未减少。尚未清理的边镇将士再失一次盼头，朝臣也质疑兑现承诺的期限；旧欠会留到今后，不能当作已经付清。",
             sets: [Flag.旧欠未偿],
           },
+        },
+      ],
+    ],
+  },
+  {
+    id: "s-yuan-dongjiang-memorial",
+    name: "袁崇焕请裁东江饷",
+    time: { year: 2, order: 3 },
+    steps: [
+      [
+        {
+          id: "s-yuan-dongjiang-memorial",
+          name: "袁崇焕请裁东江饷",
+          avatar: "📜",
+          text: "袁崇焕上疏：东江兵数，册报八万，实不过三万。饷岁百余万，多入文龙私囊。请令登莱巡抚核其兵数，饷由登莱核发。文龙不受节制，请赐尚方剑，便宜行事。疏入，户部与兵部皆言：东江饷额确需核查，然毛文龙据岛牵制建州，骤裁其饷，恐失海上之用。是准袁崇焕所请，核饷赐剑；还是暂安毛文龙，待辽东大局定后再议？",
+          left: {
+            label: "准核兵饷，赐尚方剑",
+            effects: { court: -2, law: 2, army: -2, gold: 4 },
+            response: "你准袁崇焕所请，令登莱巡抚核东江兵数，饷由登莱核发，并赐尚方剑，许便宜行事。袁崇焕得旨，巡视海上之议遂定。毛文龙闻之，上疏自辩，谓「海上士马非纸上的数目」，然核饷之令已下，岛帅之势渐孤。",
+            sets: [Flag.赐尚方剑],
+          },
+          right: {
+            label: "暂安岛帅，缓议核饷",
+            effects: { court: 2, law: -2, army: 2, gold: -4 },
+            response: "你令东江饷额照旧，暂不核减，亦不赐剑。毛文龙得旨稍安，然袁崇焕的条陈留在案头，辽东督师与东江岛帅的嫌隙自此更深。户部每岁转输的饷银，仍是一笔对不上的账。",
+          },
+          people: ["yuanchonghuan", "maowenlong"],
         },
       ],
     ],
@@ -1611,6 +1638,33 @@ export const CHAPTERS: StoryChapter[] = [
             sets: [Flag.实学科考],
           },
           requires: [Flag.工艺刊行],
+        },
+      ],
+    ],
+  },
+  {
+    id: "s-kong-defect",
+    name: "孔有德降虏",
+    time: { year: 6, order: 6 },
+    steps: [
+      [
+        {
+          id: "s-kong-defect",
+          name: "孔有德降虏",
+          avatar: "⛵",
+          text: "孔有德自登莱浮海降后金，携红衣大炮与匠人。自吴桥兵变以来，所部或剿或抚，终不能定；孔有德见朝廷不能容，遂渡海投敌。后金自此有火器，军势益张。边报入京，兵部请速定辽东之策。是严海禁、绝其归路；还是遣使招抚、许以自新？",
+          left: {
+            label: "严海禁，绝其归路",
+            effects: { court: 2, law: 2, army: -4, gold: -2 },
+            response: "你严海禁之令，沿海舟船非经官验不得出海，断孔有德归路。后金得炮匠之助，火器之利渐追明军；海上之路既绝，孔有德辈遂为敌国所用。辽东之势，自此益难。",
+            sets: [Flag.孔有德降虏],
+          },
+          right: {
+            label: "遣使招抚，许以自新",
+            effects: { court: -2, law: -2, army: 2, gold: -4 },
+            response: "你遣使赍诏，许孔有德等自新，若能归正，免其前罪。然孔有德已渡海，后金以礼相待，归路渐绝。招抚之使未返，辽东的塘报已言：敌有红衣炮矣。",
+          },
+          people: ["kongyoude"],
         },
       ],
     ],
