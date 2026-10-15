@@ -138,14 +138,24 @@ const query = computed(() => cardQuery.value.trim().toLowerCase())
 
 function matches(card: GameEvent): boolean {
   const q = query.value
-  return !q || card.id.toLowerCase().includes(q) || card.name.includes(q)
+  if (!q) return true
+  if (card.id.toLowerCase().includes(q) || card.name.includes(q)) return true
+  for (const id of card.people ?? []) {
+    if (CHAR_MAP[id]?.name.includes(q)) return true
+  }
+  return false
 }
 
 const visibleYears = computed(() => {
-  if (!query.value) return YEARS
-  return YEARS.map((group) => ({ ...group, entries: group.entries.filter((entry) => entry.cards.some(matches)) })).filter(
-    (group) => group.entries.length > 0,
-  )
+  const index = flagIndex.value
+  return YEARS.map((group) => ({
+    ...group,
+    entries: group.entries.filter((entry) => {
+      if (index) return entryHit(entry)
+      if (!query.value) return true
+      return entry.cards.some(matches)
+    }),
+  })).filter((group) => group.entries.length > 0)
 })
 
 const visibleCount = computed(() => visibleYears.value.reduce((sum, group) => sum + group.entries.length, 0))
@@ -274,7 +284,7 @@ onUnmounted(() => {
       <p class="stats">
         {{ CHAPTERS.length }} 篇章 · {{ DECK.length }} 步 · {{ ALL_EVENTS.length }} 张候选卡 · {{ FLAG_USES.length }} 面旗标
       </p>
-      <input v-model="cardQuery" class="search" type="search" placeholder="搜卡：id 或名字" />
+      <input v-model="cardQuery" class="search" type="search" placeholder="搜卡：id、名字或人物" />
       <button class="back" @click="backToGame">返回游戏</button>
     </header>
 
@@ -325,7 +335,7 @@ onUnmounted(() => {
             v-for="entry in group.entries"
             :key="`${entry.key}-${entry.chapter.id}-${entry.step}`"
             class="entry"
-            :class="{ chaptered: entry.chapter.steps.length > 1, faded: flagIndex && !entryHit(entry), flash: flashKey === entry.key }"
+            :class="{ chaptered: entry.chapter.steps.length > 1, flash: flashKey === entry.key }"
             :data-key="entry.key"
             :style="entry.chapter.steps.length > 1 ? { borderLeftColor: `hsl(${chapterHue(entry.chapter.id)} 42% 45%)` } : undefined"
           >
@@ -748,10 +758,6 @@ onUnmounted(() => {
 
 .entry.chaptered {
   background: rgba(255, 253, 248, 0.86);
-}
-
-.entry.faded {
-  opacity: 0.45;
 }
 
 .entry.flash {
