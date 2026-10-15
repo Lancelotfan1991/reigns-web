@@ -668,6 +668,33 @@ export const CHAPTERS: StoryChapter[] = [
       ],
     ],
   },
+  {
+    id: "sunchengzong-tongzhou",
+    name: "孙承宗守通州",
+    time: { year: 2, order: 5 },
+    steps: [
+      [
+        {
+          id: "s-sunchengzong-tongzhou",
+          name: "孙承宗守通州",
+          avatar: "🏯",
+          text: "己巳之变，后金兵绕道入关。闲住高阳的孙承宗闻警而起，你以原官加太子太保起用他，令守通州。他扶杖登城，调度军民，高阳子弟从者甚众。通州是京师东部门户，守得住则建虏不能久留。",
+          left: {
+            label: "倚重老臣，听其调度",
+            effects: { court: 4, army: 6, gold: -4, people: 4 },
+            response: "孙承宗在通州日夜巡守，调兵遣将皆有章法。高阳子弟从军者数百人，皆愿效死。建虏见通州有备，不敢东进。京师人心稍安。",
+            sets: [Flag.承宗守通州],
+          },
+          right: {
+            label: "令其回高阳办团练",
+            effects: { court: 2, army: -2, people: 2, gold: -2 },
+            response: "孙承宗回高阳办团练，乡勇数千，器械粗备。通州守军少了这位老臣坐镇，士气稍逊。",
+          },
+          people: ["sunchengzong"],
+        },
+      ],
+    ],
+  },
 
   // ── 崇祯三年 ──
   {
@@ -907,6 +934,33 @@ export const CHAPTERS: StoryChapter[] = [
           },
           requires: [Flag.忠贤被逮],
           people: ["wei"],
+        },
+      ],
+    ],
+  },
+  {
+    id: "sunchengzong-dismissed",
+    name: "孙承宗被劾致仕",
+    time: { year: 3, order: 6 },
+    steps: [
+      [
+        {
+          id: "s-sunchengzong-dismissed",
+          name: "孙承宗被劾致仕",
+          avatar: "🏯",
+          text: "永平失守，建虏破关东诸城。孙承宗以督师衔守关，未能挽回局面，言官交章劾之。他本是天启旧臣，起用于危难之际，如今永平一失，朝议皆谓督师无能。他三疏请罢，去意已决。",
+          left: {
+            label: "温旨慰留，令戴罪视事",
+            effects: { court: -4, army: 4, people: -2 },
+            response: "你下温旨慰留，令孙承宗戴罪视事。他不敢再请，然关外诸城已失，防线收缩，老臣心力交瘁。",
+          },
+          right: {
+            label: "准其致仕，赐传车归里",
+            effects: { court: 4, army: -6, people: 2 },
+            response: "你准孙承宗致仕，赐传车归里。他回高阳后，关外再无人能镇得住。辽东防务自此交给新一代将领，然他们资历尚浅，难复老臣当年的威望。",
+            sets: [Flag.承宗致仕],
+          },
+          people: ["sunchengzong"],
         },
       ],
     ],
@@ -1739,32 +1793,6 @@ export const CHAPTERS: StoryChapter[] = [
 
   // ── 崇祯八年 ──
   {
-    id: "s-suncheng",
-    name: "孙承宗辞职",
-    time: { year: 8, order: 1 },
-    steps: [
-      [
-        {
-          id: "s-suncheng",
-          name: "孙承宗辞职",
-          avatar: "🏯",
-          text: "孙承宗被内臣高起潜处处牵制，三次上疏请求退休。辽东千里的防务，就看他这一根拐杖还在不在。",
-          left: {
-            label: "再三挽留不许走",
-            effects: { court: 4, law: 2, army: 8, gold: -6 },
-            response: "孙承宗继续坐镇，辽东各城的守将总算有了主心骨。你明令支持督师，高起潜也不敢再公然掣肘。",
-          },
-          right: {
-            label: "准他回乡",
-            effects: { court: 6, law: -6, army: -12, gold: 4 },
-            response: "孙承宗回乡后，原定的筑城挖壕逐渐停办，防线日益收缩。「承宗去，而辽左日蹙」——这句话你也读过。",
-          },
-          people: ["sunchengzong", "gaoqiqian"],
-        },
-      ],
-    ],
-  },
-  {
     id: "g-payroll",
     name: "饷银发到点名的人",
     time: { year: 8, order: 2 },
@@ -2444,6 +2472,33 @@ export const CHAPTERS: StoryChapter[] = [
             sets: [Flag.分站轮仓],
           },
           requires: [Flag.实兵实饷, Flag.交叉验账, Flag.粮银两便, Flag.工赈常年],
+        },
+      ],
+    ],
+  },
+  {
+    id: "sunchengzong-martyr",
+    name: "孙承宗高阳殉难",
+    time: { year: 11, order: 6 },
+    steps: [
+      [
+        {
+          id: "s-sunchengzong-martyr",
+          name: "孙承宗高阳殉难",
+          avatar: "🏯",
+          text: "清兵破保定，高阳被围。致仕在家的孙承宗率族人守城，城破被执。他骂不绝口，清兵欲降之，不可。最终合族殉难，一门百二十人同死。",
+          left: {
+            label: "追赠太师，谥文忠",
+            effects: { court: 4, army: 2, people: 8 },
+            response: "你追赠孙承宗太师，谥文忠。他一生以边务自任，起于危难，终于殉国。高阳一门忠烈，天下闻之动容。",
+            sets: [Flag.承宗殉国],
+          },
+          right: {
+            label: "令有司祭之，不复深究",
+            effects: { court: 2, people: 2 },
+            response: "你令有司祭之，不复深究。孙承宗以旧臣殉国，朝廷从优议恤，然边事日非，无人再提当年守通州之事。",
+          },
+          people: ["sunchengzong"],
         },
       ],
     ],
