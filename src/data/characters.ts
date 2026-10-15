@@ -26,16 +26,16 @@ export const CHARACTERS: Character[] = [
       { event: 's-finale', side: Side.Right, status: CharStatus.Alive, note: '雪夜出正阳门，南都之局自此人手重开' },
     ],
     relations: [
-      { to: 'huangtaiji', type: RelationType.Enemy },
-      { to: 'licheng', type: RelationType.Enemy },
-      { to: 'wei', type: RelationType.Suspicion },
-      { to: 'kesi', type: RelationType.Suspicion },
-      { to: 'cui', type: RelationType.Suspicion },
-      { to: 'yuanchonghuan', type: RelationType.Suspicion },
-      { to: 'sunchengzong', type: RelationType.Suspicion },
-      { to: 'sunchuanting', type: RelationType.Suspicion },
-      { to: 'zuolangyu', type: RelationType.Suspicion },
-      { to: 'taizi', type: RelationType.Kin },
+      { to: '皇太极', type: RelationType.Enemy },
+      { to: '李自成', type: RelationType.Enemy },
+      { to: '魏忠贤', type: RelationType.Suspicion },
+      { to: '客氏', type: RelationType.Suspicion },
+      { to: '崔呈秀', type: RelationType.Suspicion },
+      { to: '袁崇焕', type: RelationType.Suspicion },
+      { to: '孙承宗', type: RelationType.Suspicion },
+      { to: '孙传庭', type: RelationType.Suspicion },
+      { to: '左良玉', type: RelationType.Suspicion },
+      { to: '朱慈烺', type: RelationType.Kin },
     ],
   },
   {
@@ -50,7 +50,7 @@ export const CHARACTERS: Character[] = [
     appearYear: 0,
     events: ['s-tuogu'],
     track: [{ year: 0, status: CharStatus.Dead, note: '天启七年八月崩于乾清宫，无嗣' }],
-    relations: [{ to: 'wei', type: RelationType.Friend }],
+    relations: [{ to: '魏忠贤', type: RelationType.Friend }],
   },
   {
     id: 'wei',
@@ -76,10 +76,10 @@ export const CHARACTERS: Character[] = [
       { event: 's-ni-an', side: Side.Right, status: CharStatus.Dead, seal: '磔', note: '逆案定二百五十余人，追赃及于家产，磔尸之诏写在榜首' },
     ],
     relations: [
-      { to: 'kesi', type: RelationType.Friend },
-      { to: 'cui', type: RelationType.Loyal },
-      { to: 'sunchengzong', type: RelationType.Enemy },
-      { to: 'yuanchonghuan', type: RelationType.Enemy },
+      { to: '客氏', type: RelationType.Friend },
+      { to: '崔呈秀', type: RelationType.Loyal },
+      { to: '孙承宗', type: RelationType.Enemy },
+      { to: '袁崇焕', type: RelationType.Enemy },
     ],
   },
   {
@@ -101,8 +101,8 @@ export const CHARACTERS: Character[] = [
       { event: 's-kesi', side: Side.Right, status: CharStatus.Alive, note: '仍准定期出入宫禁，魏忠贤在宫内的耳目未断' },
     ],
     relations: [
-      { to: 'wei', type: RelationType.Friend },
-      { to: 'tiangqi', type: RelationType.Loyal },
+      { to: '魏忠贤', type: RelationType.Friend },
+      { to: '朱由校', type: RelationType.Loyal },
     ],
   },
   {
@@ -123,7 +123,7 @@ export const CHARACTERS: Character[] = [
       { event: 's-cui', side: Side.Right, status: CharStatus.Alive, seal: '去', note: '准其自陈致仕，体面退出；携兵部案卷而去，新任面对空架' },
     ],
     relations: [
-      { to: 'wei', type: RelationType.Loyal },
+      { to: '魏忠贤', type: RelationType.Loyal },
     ],
   },
   {
@@ -156,10 +156,10 @@ export const CHARACTERS: Character[] = [
       { event: 's-yuan-songjin', side: Side.Right, status: CharStatus.Alive, note: '主张持重接济，驻塔山筹划援守；战局尚未收束' },
     ],
     relations: [
-      { to: 'sunchengzong', type: RelationType.Friend },
-      { to: 'zadashou', type: RelationType.Friend },
-      { to: 'nuerhachi', type: RelationType.Enemy },
-      { to: 'gaoqiqian', type: RelationType.Rival },
+      { to: '孙承宗', type: RelationType.Friend },
+      { to: '祖大寿', type: RelationType.Friend },
+      { to: '努尔哈赤', type: RelationType.Enemy },
+      { to: '高起潜', type: RelationType.Rival },
     ],
   },
   {
@@ -186,7 +186,7 @@ export const CHARACTERS: Character[] = [
       { event: 's-sunchengzong-martyr', side: Side.Left, status: CharStatus.Dead, note: '追赠太师，谥文忠' },
       { event: 's-sunchengzong-martyr', side: Side.Right, status: CharStatus.Dead, note: '令有司祭之' },
     ],
-    relations: [{ to: 'gaoqiqian', type: RelationType.Rival }],
+    relations: [{ to: '高起潜', type: RelationType.Rival }],
   },
   {
     id: 'luxiangsheng',
@@ -208,7 +208,7 @@ export const CHARACTERS: Character[] = [
       { event: 's-luxiangsheng-martyr', side: Side.Left, status: CharStatus.Dead, note: '战死巨鹿，天下悲之' },
       { event: 's-luxiangsheng-martyr', side: Side.Right, status: CharStatus.Dead, note: '粮尽援绝，战死' },
     ],
-    relations: [{ to: 'yangsichang', type: RelationType.Rival }],
+    relations: [{ to: '杨嗣昌', type: RelationType.Rival }],
   },
   {
     id: 'maowenlong',
@@ -234,7 +234,7 @@ export const CHARACTERS: Character[] = [
       { event: 'c-shanhou', side: Side.Left, status: CharStatus.Alive, note: '粮饷改由登莱代发、逐年减额；欠饷渐成他自己的事' },
       { event: 'c-shanhou', side: Side.Right, status: CharStatus.Alive, note: '旧额照发，专看牵制之功；海上经营愈发自如，而饷道只剩朝廷一条' },
     ],
-    relations: [{ to: 'yuanchonghuan', type: RelationType.Enemy }],
+    relations: [{ to: '袁崇焕', type: RelationType.Enemy }],
   },
   {
     id: 'nuerhachi',
@@ -248,7 +248,7 @@ export const CHARACTERS: Character[] = [
     appearYear: 0,
     events: [],
     track: [{ year: -1, status: CharStatus.Dead, note: '史实：天命十一年八月崩于叆鸡堡——你接手时，这个对手已经不在了' }],
-    relations: [{ to: 'huangtaiji', type: RelationType.Kin }],
+    relations: [{ to: '皇太极', type: RelationType.Kin }],
   },
   {
     id: 'huangtaiji',
@@ -276,11 +276,11 @@ export const CHARACTERS: Character[] = [
       { event: 'g-peace-ratify', side: Side.Right, status: CharStatus.Alive, note: '明廷按章撤谈，清方仍与明军对峙，未有停战成约' },
     ],
     relations: [
-      { to: 'duoerhun', type: RelationType.Kin },
-      { to: 'haoge', type: RelationType.Kin },
-      { to: 'zadashou', type: RelationType.Friend },
-      { to: 'kongyoude', type: RelationType.Friend },
-      { to: 'lindenhan', type: RelationType.Enemy },
+      { to: '多尔衮', type: RelationType.Kin },
+      { to: '豪格', type: RelationType.Kin },
+      { to: '祖大寿', type: RelationType.Friend },
+      { to: '孔有德', type: RelationType.Friend },
+      { to: '林丹汗', type: RelationType.Enemy },
     ],
   },
   {
@@ -299,8 +299,8 @@ export const CHARACTERS: Character[] = [
       { event: 's-htj', side: Side.Right, status: CharStatus.Alive, note: '外衅方殷，诸部归心于能战者' },
     ],
     relations: [
-      { to: 'haoge', type: RelationType.Rival },
-      { to: 'wusanggui', type: RelationType.Friend },
+      { to: '豪格', type: RelationType.Rival },
+      { to: '吴三桂', type: RelationType.Friend },
     ],
   },
   {
@@ -363,10 +363,10 @@ export const CHARACTERS: Character[] = [
       { event: 'g-guanzhong', side: Side.Right, status: CharStatus.Alive, note: '仍隶公册军籍，未再自领流营。各县恢复催征旧欠，复业之家负担加重，收编与安置并未撤销' },
     ],
     relations: [
-      { to: 'gaoyingsiang', type: RelationType.Kin },
-      { to: 'zhangxianzhong', type: RelationType.Rival },
-      { to: 'sunchuanting', type: RelationType.Enemy },
-      { to: 'wusanggui', type: RelationType.Enemy },
+      { to: '高迎祥', type: RelationType.Kin },
+      { to: '张献忠', type: RelationType.Rival },
+      { to: '孙传庭', type: RelationType.Enemy },
+      { to: '吴三桂', type: RelationType.Enemy },
     ],
   },
   {
@@ -406,7 +406,7 @@ export const CHARACTERS: Character[] = [
       { event: 'g-gucheng', side: Side.Left, status: CharStatus.Alive, note: '仍由旧营头领代领粮食，藏械与空名未拆。受抚之众仍系一人，复叛之患未除' },
       { event: 'g-gucheng', side: Side.Right, status: CharStatus.Alive, note: '旧部分户核田粮，愿役者入公册，藏械者另案查办。不能再把受抚之众全作自己的旧营' },
     ],
-    relations: [{ to: 'xiongwenchan', type: RelationType.Neutral }],
+    relations: [{ to: '熊文灿', type: RelationType.Neutral }],
   },
   {
     id: 'xiongwenchan',
@@ -434,28 +434,33 @@ export const CHARACTERS: Character[] = [
   {
     id: 'yangsichang',
     name: '杨嗣昌',
-    alias: '字复古',
+    alias: '字文弱',
     avatar: '📚',
-    role: '兵部尚书入阁，条上「四正六隅」十面之网',
+    role: '兵部尚书入阁，条上「四正六隅」十面之网；后自请督师襄阳，忧死沙市',
     camp: Camp.Civil,
     faction: 'gold',
     born: 1588,
-    events: ['s-annei', 'g-gucheng', 'c-gucheng-settlement-incomplete'],
+    events: ['s-annei', 'g-gucheng', 'c-gucheng-settlement-incomplete', 's-yang-dushi', 's-xiangyang-fall'],
     track: [
       { year: 11, status: CharStatus.Alive, note: '身任剿事，请加赋充饷，曰「安内方可攘外」' },
+      { year: 12, status: CharStatus.Alive, note: '自请督师出京，赐尚方剑，出镇襄阳，积军资于行营' },
       { year: 14, status: CharStatus.Dead, note: '史实：襄阳失陷，退归沙市军中，忧悸而卒', unlessFlag: [Flag.分户安置] },
     ],
     fates: [
       { event: 's-annei', side: Side.Left, status: CharStatus.Alive, note: '其策得行，加派及于训兵——养虎者饲之以民' },
       { event: 's-annei', side: Side.Right, status: CharStatus.Alive, note: '边备先于内剿，十面之网不全布' },
+      { event: 's-yang-dushi', side: Side.Left, status: CharStatus.Alive, note: '亲督诸军蹙贼入川，穷追张献忠，军资尽集襄阳行营' },
+      { event: 's-yang-dushi', side: Side.Right, status: CharStatus.Alive, note: '持重驻襄阳护饷道，遣将分剿，未亲入险地' },
       { event: 'g-gucheng', side: Side.Left, status: CharStatus.Alive, note: '谷城仍按营交粮，旧营未拆，督抚仍须面对受抚诸部再起的隐患' },
       { event: 'g-gucheng', side: Side.Left, status: CharStatus.Dead, seal: '忧', year: 14, note: '襄阳失陷，围师之罪并及本兵：退归沙市军中，忧悸而卒' },
       { event: 'g-gucheng', side: Side.Right, status: CharStatus.Alive, seal: '留', note: '谷城按户分散安置，藏械另案查问，剿抚不再只凭头领承诺' },
+      { event: 's-xiangyang-fall', side: Side.Left, status: CharStatus.Dead, seal: '恤', year: 14, note: '襄阳陷、襄王死，忧惧卒于沙市；仍得祭葬赠官，朝论未息' },
+      { event: 's-xiangyang-fall', side: Side.Right, status: CharStatus.Dead, seal: '追', year: 14, note: '襄阳陷、襄王死，忧惧卒于沙市；追夺其官，不许恤典' },
     ],
     relations: [
-      { to: 'licheng', type: RelationType.Enemy },
-      { to: 'zhangxianzhong', type: RelationType.Enemy },
-      { to: 'zuolangyu', type: RelationType.Rival },
+      { to: '李自成', type: RelationType.Enemy },
+      { to: '张献忠', type: RelationType.Enemy },
+      { to: '左良玉', type: RelationType.Rival },
     ],
   },
   {
@@ -476,7 +481,7 @@ export const CHARACTERS: Character[] = [
       { event: 's-liangyu', side: Side.Left, status: CharStatus.Alive, note: '饷至则战，胜则复索赏' },
       { event: 's-liangyu', side: Side.Right, status: CharStatus.Alive, note: '不复受节制，移镇如迁徙' },
     ],
-    relations: [{ to: 'licheng', type: RelationType.Enemy }],
+    relations: [{ to: '李自成', type: RelationType.Enemy }],
   },
   {
     id: 'qianlongxi',
@@ -495,7 +500,7 @@ export const CHARACTERS: Character[] = [
       { event: 's-dongjiang', side: Side.Left, status: CharStatus.Alive, note: '核饷之议得行，登莱巡抚得核兵数' },
       { event: 's-dongjiang', side: Side.Right, status: CharStatus.Alive, note: '核饷之议未行，东江照旧额发饷' },
     ],
-    relations: [{ to: 'maowenlong', type: RelationType.Suspicion }],
+    relations: [{ to: '毛文龙', type: RelationType.Suspicion }],
   },
   {
     id: 'sunchuanting',
@@ -528,7 +533,7 @@ export const CHARACTERS: Character[] = [
       { event: 'c-chuanting-still-imprisoned', side: Side.Left, status: CharStatus.Alive, note: '仍在诏狱；朝廷退回虚报练兵有成的册子，责令地方查清实际兵粮' },
       { event: 'c-chuanting-still-imprisoned', side: Side.Right, status: CharStatus.Alive, note: '仍在诏狱；地方按现有驻军安排守备，朝廷暂不另筹整军经费' },
     ],
-    relations: [{ to: 'licheng', type: RelationType.Enemy }],
+    relations: [{ to: '李自成', type: RelationType.Enemy }],
   },
   {
     id: 'hongchou',
@@ -551,7 +556,7 @@ export const CHARACTERS: Character[] = [
       { event: 'c-songjin-withdrawal', side: Side.Left, status: CharStatus.Alive, note: '松锦援军接济未成，外围失地、部分援军撤整，围内仍困；未报作全军保全或已经降清' },
       { event: 'c-songjin-withdrawal', side: Side.Right, status: CharStatus.Alive, note: '余粮仅接出部分守兵，各镇折损入册；洪承畴所部仍受围困，尚未有城陷降清定报' },
     ],
-    relations: [{ to: 'zadashou', type: RelationType.Friend }],
+    relations: [{ to: '祖大寿', type: RelationType.Friend }],
   },
   {
     id: 'chenxinjia',
@@ -574,8 +579,8 @@ export const CHARACTERS: Character[] = [
       { event: 'c-peace-withdraw-talks', side: Side.Right, status: CharStatus.Alive, note: '只留联络渠道，按未成约交接军费；陈新甲未因公开拒谈而获死罪' },
     ],
     relations: [
-      { to: 'yangsichang', type: RelationType.Friend },
-      { to: 'emperor', type: RelationType.Loyal },
+      { to: '杨嗣昌', type: RelationType.Friend },
+      { to: '朱由检', type: RelationType.Loyal },
     ],
   },
   {
@@ -600,7 +605,7 @@ export const CHARACTERS: Character[] = [
       { event: 'c-songjin-withdrawal', side: Side.Left, status: CharStatus.Alive, note: '外围援军撤整，锦州接济仍不足，祖大寿继续困守；未将撤回部分人报为解围' },
       { event: 'c-songjin-withdrawal', side: Side.Right, status: CharStatus.Alive, note: '突援只接出部分守兵，锦州围困未解，军械折损如实记；此时尚未以残甲降清' },
     ],
-    relations: [{ to: 'wusanggui', type: RelationType.Kin }],
+    relations: [{ to: '吴三桂', type: RelationType.Kin }],
   },
   {
     id: 'wusanggui',
@@ -619,7 +624,7 @@ export const CHARACTERS: Character[] = [
       { event: 'g-guanning', side: Side.Left, status: CharStatus.Alive, note: '分段受任，军籍军饷仍归公册。得一段防务，不得将关宁兵众据为私产' },
       { event: 'g-guanning', side: Side.Right, status: CharStatus.Alive, note: '轮调暂缓，各营原班守备，仍按公册领实饷。无论新将旧将，均不得私占兵权' },
     ],
-    relations: [{ to: 'licheng', type: RelationType.Enemy }],
+    relations: [{ to: '李自成', type: RelationType.Enemy }],
   },
   {
     id: 'kongyoude',
@@ -638,7 +643,7 @@ export const CHARACTERS: Character[] = [
       { event: 's-kong-defect', side: Side.Left, status: CharStatus.Alive, note: '浮海降后金，携红衣大炮与匠人；后金自此有火器' },
       { event: 's-kong-defect', side: Side.Right, status: CharStatus.Alive, note: '朝廷遣使招抚，然已渡海，归路渐绝' },
     ],
-    relations: [{ to: 'maowenlong', type: RelationType.Loyal }],
+    relations: [{ to: '毛文龙', type: RelationType.Loyal }],
   },
   {
     id: 'sunyuanhua',
@@ -668,8 +673,8 @@ export const CHARACTERS: Character[] = [
       { event: 'g-denglai-workshop', side: Side.Right, status: CharStatus.Alive, note: '炮局裁并省费，仍抚登莱；未遭失地之祸' },
     ],
     relations: [
-      { to: 'xuguangqi', type: RelationType.Friend },
-      { to: 'kongyoude', type: RelationType.Enemy },
+      { to: '徐光启', type: RelationType.Friend },
+      { to: '孔有德', type: RelationType.Enemy },
     ],
   },
   {
@@ -697,9 +702,9 @@ export const CHARACTERS: Character[] = [
       { event: 'g-denglai-workshop', side: Side.Right, status: CharStatus.Alive, note: '炮局裁并，领资自便；未赴登州城下' },
     ],
     relations: [
-      { to: 'xuguangqi', type: RelationType.Friend },
-      { to: 'tangruowang', type: RelationType.Friend },
-      { to: 'kongyoude', type: RelationType.Enemy },
+      { to: '徐光启', type: RelationType.Friend },
+      { to: '汤若望', type: RelationType.Friend },
+      { to: '孔有德', type: RelationType.Enemy },
     ],
   },
   {
@@ -766,7 +771,7 @@ export const CHARACTERS: Character[] = [
       { event: 's-fuwang', side: Side.Left, status: CharStatus.Alive, note: '割银二十万佐饷，茹痛如剥肤；宗室自此怨上' },
       { event: 's-fuwang', side: Side.Right, status: CharStatus.Alive, note: '闭阁谢客，一钱不出' },
     ],
-    relations: [{ to: 'licheng', type: RelationType.Enemy }],
+    relations: [{ to: '李自成', type: RelationType.Enemy }],
   },
   {
     id: 'wangduo',
@@ -778,7 +783,7 @@ export const CHARACTERS: Character[] = [
     faction: 'law',
     born: 1592,
     events: ['s-fuwang'],
-    relations: [{ to: 'fuwang', type: RelationType.Enemy }],
+    relations: [{ to: '朱常洵', type: RelationType.Enemy }],
   },
   {
     id: 'liumao',
@@ -817,7 +822,7 @@ export const CHARACTERS: Character[] = [
     born: 1562,
     events: ['s-zhaoqi', 's-liju', 'g-institute', 'g-measure', 'g-seeds', 'g-manuals'],
     track: [{ year: 6, status: CharStatus.Dead, note: '史实：崇祯六年卒于官。历书成而身不及见' }],
-    relations: [{ to: 'tangruowang', type: RelationType.Friend }],
+    relations: [{ to: '汤若望', type: RelationType.Friend }],
   },
   {
     id: 'tangruowang',
@@ -829,7 +834,7 @@ export const CHARACTERS: Character[] = [
     faction: 'gold',
     born: 1591,
     events: ['s-liju'],
-    relations: [{ to: 'longhuamin', type: RelationType.Friend }],
+    relations: [{ to: '龙华民', type: RelationType.Friend }],
   },
   {
     id: 'longhuamin',
@@ -861,8 +866,8 @@ export const CHARACTERS: Character[] = [
       { event: 'g-customs', side: Side.Right, status: CharStatus.Alive, note: '按公开税率缴纳海税，巡防费核定后余款入公库，仍按非独占契约承运' },
     ],
     relations: [
-      { to: 'xiongwenchan', type: RelationType.Friend },
-      { to: 'emperor', type: RelationType.Neutral },
+      { to: '熊文灿', type: RelationType.Friend },
+      { to: '朱由检', type: RelationType.Neutral },
     ],
   },
   {
@@ -882,6 +887,11 @@ export const CHARACTERS: Character[] = [
 
 export const CHAR_MAP: Record<string, Character> = Object.fromEntries(
   CHARACTERS.map((c) => [c.id, c])
+)
+
+/** 按人物正名索引：关系等以中文引用人物时由此解析 */
+export const CHAR_BY_NAME: Record<string, Character> = Object.fromEntries(
+  CHARACTERS.map((c) => [c.name, c])
 )
 
 export const STATUS_META: Record<CharStatus, { label: string; color: string }> = {

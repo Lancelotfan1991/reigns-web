@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { ALL_EVENTS, CHAPTERS } from '../data/chapters'
-import { CHAR_MAP } from '../data/characters'
 import { REFORM_REQUIREMENTS } from '../data/reforms'
 import { DECK } from '../composables/simulation'
 import { yearOf } from '../composables/slots'
@@ -140,8 +139,8 @@ function matches(card: GameEvent): boolean {
   const q = query.value
   if (!q) return true
   if (card.id.toLowerCase().includes(q) || card.name.includes(q)) return true
-  for (const id of card.people ?? []) {
-    if (CHAR_MAP[id]?.name.includes(q)) return true
+  for (const name of card.people ?? []) {
+    if (name.includes(q)) return true
   }
   return false
 }
@@ -249,10 +248,6 @@ function effectLines(effects: Effects): string[] {
     if (!value) return []
     return [`${RESOURCE_META[key].icon}${RESOURCE_META[key].name} ${value > 0 ? '+' : ''}${value}`]
   })
-}
-
-function peopleNames(card: GameEvent): string[] {
-  return (card.people ?? []).map((id) => CHAR_MAP[id]?.name ?? id)
 }
 
 function backToGame() {
@@ -396,8 +391,8 @@ onUnmounted(() => {
         <template v-if="detail.entry.cards.length > 1"> · 候选第 {{ detail.index + 1 }}/{{ detail.entry.cards.length }}</template>
       </p>
 
-      <section v-if="peopleNames(detail.card).length" class="dsec people">
-        牵涉：{{ peopleNames(detail.card).join('、') }}
+      <section v-if="detail.card.people?.length" class="dsec people">
+        牵涉：{{ detail.card.people.join('、') }}
       </section>
 
       <section v-if="detail.card.requires?.length || detail.card.excludes?.length || detail.card.resourceBounds" class="dsec cond">

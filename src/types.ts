@@ -160,7 +160,7 @@ export interface GameEvent {
   requires?: FlagRule[]
   excludes?: Flag[]
   resourceBounds?: Partial<Record<ResourceKey, { min?: number; max?: number }>>
-  /** 牵涉的人物 id（单人或多人）；御卡的主人是皇帝本人，不入此表 */
+  /** 牵涉的人物姓名（单人或多人，与人物谱 name 一致）；御卡的主人是皇帝本人，不入此表 */
   people?: string[]
 }
 
@@ -273,7 +273,7 @@ export enum Camp {
 }
 
 export interface Relation {
-  /** 对方人物 id */
+  /** 对方人物姓名（与人物谱 name 一致） */
   to: string
   type: RelationType
 }

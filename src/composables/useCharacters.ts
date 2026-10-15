@@ -1,5 +1,5 @@
 import { computed } from 'vue'
-import { CHARACTERS, CHAR_MAP, RELATION_META } from '../data/characters'
+import { CHARACTERS, CHAR_BY_NAME, CHAR_MAP, RELATION_META } from '../data/characters'
 import { ALL_EVENTS, EVENT_SLOT } from '../data/chapters'
 import { CharStatus, EndingKind, Side } from '../types'
 import type { CharView, Deed } from '../types'
@@ -104,11 +104,11 @@ export function useCharacters(game: Game) {
       const relations = [
         ...ch.relations.map((r) => {
           const meta = RELATION_META[r.type]
-          return { target: CHAR_MAP[r.to], label: meta.label, color: meta.color }
+          return { target: CHAR_BY_NAME[r.to], label: meta.label, color: meta.color }
         }),
         ...CHARACTERS.filter((other) => other !== ch).flatMap((other) =>
           other.relations
-            .filter((r) => r.to === ch.id)
+            .filter((r) => r.to === ch.name)
             .map((r) => {
               const meta = RELATION_META[r.type]
               return { target: other, label: meta.inverse, color: meta.color }
