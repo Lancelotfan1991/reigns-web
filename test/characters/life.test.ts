@@ -46,6 +46,7 @@ const LIFE_CARDS = [
   's-chuanti-ready',
   's-finale',
   'g-gucheng',
+  's-yanghe-fuju',
 ]
 
 describe('生死之判', () => {
@@ -103,7 +104,7 @@ describe('生死之判', () => {
   })
 
   describe('覆盖面', () => {
-    it('锁年诸议里至少十议能出生死页，掉了就是改史断线', () => {
+    it('锁年诸议里至少十一议能出生死页，掉了就是改史断线', () => {
       const firing = cards
         .filter((c) => EVENT_SLOT[c.id] !== undefined)
         .filter((c) => lifeOf(c.id, Side.Left) || lifeOf(c.id, Side.Right))

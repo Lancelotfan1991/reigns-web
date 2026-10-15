@@ -448,7 +448,7 @@ export const CHARACTERS: Character[] = [
     camp: Camp.Civil,
     faction: 'gold',
     born: 1588,
-    events: ['s-annei', 'g-gucheng', 'c-gucheng-settlement-incomplete', 's-yang-dushi', 's-xiangyang-fall'],
+    events: ['s-annei', 'g-gucheng', 'c-gucheng-settlement-incomplete', 's-yang-dushi', 's-xiangyang-fall', 's-yanghe-xudian'],
     track: [
       { year: 11, status: CharStatus.Alive, note: '身任剿事，请加赋充饷，曰「安内方可攘外」' },
       { year: 12, status: CharStatus.Alive, note: '自请督师出京，赐尚方剑，出镇襄阳，积军资于行营' },
@@ -469,6 +469,30 @@ export const CHARACTERS: Character[] = [
       { to: '李自成', type: RelationType.Enemy },
       { to: '张献忠', type: RelationType.Enemy },
       { to: '左良玉', type: RelationType.Rival },
+    ],
+  },
+  {
+    id: 'yanghe',
+    name: '杨鹤',
+    alias: '字修龄',
+    avatar: '🕊️',
+    role: '陕西三边总督。主抚绥，赈饥招亡；抚局溃败，被逮谪戍',
+    camp: Camp.Civil,
+    faction: 'people',
+    born: 1570,
+    events: ['s-yanghe-dushan', 's-yanghe-zhenfu', 's-yanghe-fuju', 's-yanghe-xudian'],
+    track: [
+      { year: 2, status: CharStatus.Alive, note: '史实：拜兵部右侍郎，总督陕西三边，主抚绥赈饥' },
+      { year: 8, status: CharStatus.Dead, note: '史实：谪戍袁州，卒于戍所；复其官而不予恤典' },
+    ],
+    fates: [
+      { event: 's-yanghe-fuju', side: Side.Left, status: CharStatus.Ill, year: 4, note: '抚局溃于杀降之衅：逮下诏狱，论死减戍' },
+      { event: 's-yanghe-fuju', side: Side.Left, status: CharStatus.Dead, seal: '戍', year: 8, note: '谪戍袁州，卒于戍所；帝复其官，不予恤典' },
+      { event: 's-yanghe-fuju', side: Side.Right, status: CharStatus.Alive, seal: '留', year: 8, note: '姑留原任，戴罪收拾抚局；久之以老病乞归' },
+    ],
+    relations: [
+      { to: '杨嗣昌', type: RelationType.Kin },
+      { to: '洪承畴', type: RelationType.Rival },
     ],
   },
   {
