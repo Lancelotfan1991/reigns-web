@@ -31,4 +31,13 @@ describe('T1 人物改革事迹与登场', () => {
       for (const fate of char.fates ?? []) expect(char.events).toContain(fate.event)
     }
   })
+
+  it('当加载人物谱时，各人小传齐备且互不重复', () => {
+    const bios = CHARACTERS.map((char) => char.bio)
+    for (const char of CHARACTERS) {
+      expect(char.bio.length, `${char.id} 小传过短`).toBeGreaterThanOrEqual(50)
+      expect(char.bio.length, `${char.id} 小传过长`).toBeLessThanOrEqual(200)
+    }
+    expect(new Set(bios).size).toBe(CHARACTERS.length)
+  })
 })

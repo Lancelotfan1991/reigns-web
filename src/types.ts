@@ -311,6 +311,8 @@ export interface Character {
   avatar: string
   /** 身份一句话 */
   role: string
+  /** 小传：按最早登场时点写来历、立场、所恃，一段百字，不预告结局 */
+  bio: string
   /** 阵营 */
   camp: Camp
   /** 主要牵动的国势 */

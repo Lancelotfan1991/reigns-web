@@ -99,6 +99,11 @@ function faceOf(id: string) {
           </p>
 
           <div v-if="openId === v.char.id" class="detail">
+            <div class="block">
+              <h3>小传</h3>
+              <p class="bio">{{ v.char.bio }}</p>
+            </div>
+
             <p v-if="v.note" class="note">{{ v.note }}</p>
 
             <div v-if="v.relations.length" class="block">
@@ -393,6 +398,13 @@ function faceOf(id: string) {
   border-radius: 3px;
 }
 
+.bio {
+  font-family: var(--font-kai);
+  font-size: 13.5px;
+  line-height: 1.85;
+  color: var(--ink-2);
+}
+
 .note {
   font-family: var(--font-kai);
   font-size: 13.5px;
@@ -405,6 +417,10 @@ function faceOf(id: string) {
 }
 
 .note + .block {
+  margin-top: 12px;
+}
+
+.block + .note {
   margin-top: 12px;
 }
 

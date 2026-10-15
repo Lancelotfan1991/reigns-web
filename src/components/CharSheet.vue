@@ -42,6 +42,11 @@ function faceOf(id: string) {
 
       <p class="role">{{ view.char.role }}</p>
 
+      <div class="block">
+        <h3>小传</h3>
+        <p class="bio">{{ view.char.bio }}</p>
+      </div>
+
       <p v-if="view.note" class="note">{{ view.note }}</p>
 
       <div v-if="view.relations.length" class="block">
@@ -216,6 +221,13 @@ function faceOf(id: string) {
   color: var(--ink);
   border-top: 1px solid var(--line-soft);
   border-bottom: 1px solid var(--line-soft);
+}
+
+.bio {
+  font-family: var(--font-kai);
+  font-size: 13.5px;
+  line-height: 1.85;
+  color: var(--ink-2);
 }
 
 .block {
