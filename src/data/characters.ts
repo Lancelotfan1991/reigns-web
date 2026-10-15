@@ -293,7 +293,10 @@ export const CHARACTERS: Character[] = [
     faction: 'army',
     born: 1612,
     events: ['s-htj', 'c-htj-no-treaty'],
-    track: [{ year: 16, status: CharStatus.Alive, note: '与豪格相持不下，旋立幼子福临，自称摄政王' }],
+    track: [
+      { year: 16, status: CharStatus.Alive, note: '与豪格相持不下，旋立幼子福临，自称摄政王' },
+      { year: 23, status: CharStatus.Dead, note: '史实：顺治七年十二月，猎于喀喇城，坠马而卒' },
+    ],
     fates: [
       { event: 's-htj', side: Side.Left, status: CharStatus.Alive, note: '受抚赏而内顾未暇，摄政之位渐固' },
       { event: 's-htj', side: Side.Right, status: CharStatus.Alive, note: '外衅方殷，诸部归心于能战者' },
@@ -313,7 +316,10 @@ export const CHARACTERS: Character[] = [
     faction: 'army',
     born: 1609,
     events: ['s-htj', 'c-htj-no-treaty'],
-    track: [{ year: 16, status: CharStatus.Alive, note: '与睿亲王按剑相持，卒让大位' }],
+    track: [
+      { year: 16, status: CharStatus.Alive, note: '与睿亲王按剑相持，卒让大位' },
+      { year: 21, status: CharStatus.Dead, note: '史实：西征还师，为睿亲王所构；幽系而卒' },
+    ],
     fates: [
       { event: 's-htj', side: Side.Left, status: CharStatus.Alive, note: '让位于幼弟，郁郁居此' },
       { event: 's-htj', side: Side.Right, status: CharStatus.Alive, note: '兵争既起，其党益坚' },
@@ -348,6 +354,7 @@ export const CHARACTERS: Character[] = [
       { year: 9, status: CharStatus.Alive, note: '继高迎祥之众，号「闯王」，众愈盛而愈流', unlessFlag: [Flag.招抚流亡] },
       { year: 15, status: CharStatus.Alive, note: '围攻开封，黄河大水灌城，军民俱遭重灾；决河责任历来有争议', unlessFlag: [Flag.招抚流亡] },
       { year: 17, status: CharStatus.Alive, note: '即皇帝位于西安，国号大顺，改元永昌', unlessFlag: [Flag.招抚流亡] },
+      { year: 18, status: CharStatus.Dead, note: '史实：兵败西走，转战湖广；殁于通山九宫山，或云遁去为僧' },
     ],
     fates: [
       { event: 's-yizhan', side: Side.Left, status: CharStatus.Alive, note: '驿站既裁，此辈无所就食，流入流营' },
@@ -399,6 +406,7 @@ export const CHARACTERS: Character[] = [
       { year: 3, status: CharStatus.Alive, note: '史实：在米脂起事，转战秦、楚、蜀，官军数剿不能灭' },
       { year: 12, status: CharStatus.Alive, note: '受抚谷城，粮册与营伍有待核实' },
       { year: 14, status: CharStatus.Alive, note: '复叛，陷襄阳，杀襄王', unlessFlag: [Flag.分户安置] },
+      { year: 20, status: CharStatus.Dead, note: '史实：北上御清；至西充凤凰山，为清兵所射而死' },
     ],
     fates: [
       { event: 's-xianzhong', side: Side.Left, status: CharStatus.Alive, note: '谷城粮册送审，旧部安置尚待核田户与藏械，再定善后' },
@@ -476,6 +484,7 @@ export const CHARACTERS: Character[] = [
     track: [
       { year: 10, status: CharStatus.Alive, note: '冠诸镇之兵，养寇以自重，饷取足民间' },
       { year: 16, status: CharStatus.Ill, note: '痼疾在床，军知其情；东下之议自此而起' },
+      { year: 18, status: CharStatus.Dead, note: '史实：以清君侧举兵东下；至九江呕血，卒于军中' },
     ],
     fates: [
       { event: 's-liangyu', side: Side.Left, status: CharStatus.Alive, note: '饷至则战，胜则复索赏' },
@@ -495,6 +504,10 @@ export const CHARACTERS: Character[] = [
     events: ['s-dongjiang'],
     track: [
       { year: 1, status: CharStatus.Alive, note: '请核东江兵饷，谓毛文龙据岛自专，文臣不得过问' },
+      { year: 3, status: CharStatus.Alive, note: '史实：袁崇焕案起，被讦通款边臣；逮下诏狱，论死' },
+      { year: 4, status: CharStatus.Alive, note: '史实：减死论戍，谪戍定海卫' },
+      { year: 17, status: CharStatus.Alive, note: '史实：福王立于江南，诏复其官，放还归里' },
+      { year: 18, status: CharStatus.Dead, note: '史实：归里未几，卒于家' },
     ],
     fates: [
       { event: 's-dongjiang', side: Side.Left, status: CharStatus.Alive, note: '核饷之议得行，登莱巡抚得核兵数' },
@@ -545,7 +558,10 @@ export const CHARACTERS: Character[] = [
     faction: 'army',
     born: 1593,
     events: ['s-jinzhou', 's-songjin', 's-yuan-songjin', 'g-jinzhou', 'c-jinzhou-supply-broken', 'g-songjin', 'c-songjin-withdrawal'],
-    track: [{ year: 15, status: CharStatus.Alive, note: '史实：松山粮尽城陷，遂降。于明为罪人，于清为佐命', unlessEvent: ['g-songjin'] }],
+    track: [
+      { year: 15, status: CharStatus.Alive, note: '史实：松山粮尽城陷，遂降。于明为罪人，于清为佐命', unlessEvent: ['g-songjin'] },
+      { year: 38, status: CharStatus.Dead, note: '史实：佐清定江南、湖广、云贵；康熙四年卒' },
+    ],
     fates: [
       { event: 's-jinzhou', side: Side.Left, status: CharStatus.Alive, note: '奉命先定解围期限，诸营集结而粮数未齐；下一步用兵尚待军议，不先报作出垒败亡' },
       { event: 's-jinzhou', side: Side.Right, status: CharStatus.Alive, note: '先核各营实粮与退路，不以限日催战；洪承畴仍在筹集援军，战守未决' },
@@ -596,6 +612,7 @@ export const CHARACTERS: Character[] = [
     track: [
       { year: 13, status: CharStatus.Alive, note: '困守锦州，月五疏乞援' },
       { year: 15, status: CharStatus.Alive, note: '史实：以锦州残甲降，关宁兵权自此易主', unlessEvent: ['g-songjin'] },
+      { year: 29, status: CharStatus.Dead, note: '史实：降清后居京师；顺治十三年卒' },
     ],
     fates: [
       { event: 'g-jinzhou', side: Side.Left, status: CharStatus.Alive, note: '锦州围困未解，守军得分批接济与轮换，工师修炮，城中不必坐待粮绝' },
@@ -617,7 +634,10 @@ export const CHARACTERS: Character[] = [
     faction: 'army',
     born: 1612,
     events: ['g-guanning', 'c-guanning-escort-only'],
-    track: [{ year: 15, status: CharStatus.Alive, note: '年方三十余，尽得关宁之众，为朝廷所倚、为敌国所招', unlessEvent: ['g-guanning'] }],
+    track: [
+      { year: 15, status: CharStatus.Alive, note: '年方三十余，尽得关宁之众，为朝廷所倚、为敌国所招', unlessEvent: ['g-guanning'] },
+      { year: 51, status: CharStatus.Dead, note: '史实：晚年起兵反清，称帝衡州；未几病殂' },
+    ],
     fates: [
       { event: 'c-guanning-escort-only', side: Side.Left, status: CharStatus.Alive, note: '公册交接未齐，现粮雇护队只通一段粮路；未把关宁诸军私授一将' },
       { event: 'c-guanning-escort-only', side: Side.Right, status: CharStatus.Alive, note: '原营续守、暂缓换防，欠饷与军籍交接仍待核实，不冒报轮调已成' },
@@ -634,7 +654,10 @@ export const CHARACTERS: Character[] = [
     camp: Camp.Liaodong,
     faction: 'army',
     events: ['s-wuqiao', 'g-wuqiao-rations', 'c-wuqiao-rations-emergency', 'g-wuqiao', 'c-wuqiao-artisans', 'c-wuqiao-losses', 's-kong-defect'],
-    track: [{ year: 6, status: CharStatus.Alive, note: '史实：浮海投后金，随行炮队与水师为其所用', unlessEvent: ['g-wuqiao'] }],
+    track: [
+      { year: 6, status: CharStatus.Alive, note: '史实：浮海投后金，随行炮队与水师为其所用', unlessEvent: ['g-wuqiao'] },
+      { year: 25, status: CharStatus.Dead, note: '史实：为清定南王，镇广西；桂林城破，自焚死' },
+    ],
     fates: [
       { event: 's-wuqiao', side: Side.Left, status: CharStatus.Alive, note: '吴桥哗变初报入京，所部待查军粮军纪，尚未浮海投金' },
       { event: 's-wuqiao', side: Side.Right, status: CharStatus.Alive, note: '朝廷暂议招抚，乱兵仍在登莱，补给与军纪有待后续处置' },
@@ -689,17 +712,17 @@ export const CHARACTERS: Character[] = [
     events: ['s-wuqiao', 'g-wuqiao-protect', 'c-wuqiao-protect-scattered', 'g-wuqiao', 'c-wuqiao-artisans', 'c-wuqiao-losses', 'g-denglai-workshop'],
     track: [
       { year: 2, status: CharStatus.Alive, note: '史实：率澳中善炮者应募入京，督造神威' },
-      { year: 6, status: CharStatus.Dead, note: '史实：以炮攻登州，未破而中铳殁于城下', unlessEvent: ['g-wuqiao', 'c-wuqiao-artisans', 'g-denglai-workshop'] },
+      { year: 5, status: CharStatus.Dead, note: '史实：吴桥乱兵回攻登州，随守军登城发炮拒之，中铳而殁', unlessEvent: ['g-wuqiao', 'c-wuqiao-artisans', 'g-denglai-workshop'] },
     ],
     fates: [
       { event: 's-wuqiao', side: Side.Left, status: CharStatus.Alive, note: '吴桥乱讯传到炮厂，仍在修炮授艺，保匠与战守尚未定案' },
       { event: 's-wuqiao', side: Side.Right, status: CharStatus.Alive, note: '暂候登莱招抚消息，工师、家眷与图册仍待安置' },
       { event: 'g-wuqiao', side: Side.Left, status: CharStatus.Alive, note: '工师与炮厂先受保护，按雇约留厂修造，技艺图册未随乱兵流失' },
-      { event: 'g-wuqiao', side: Side.Right, status: CharStatus.Alive, note: '随匠人家眷安全撤出，图册一并护送，旧雇约照付。未被驱往城下攻炮送命' },
-      { event: 'c-wuqiao-artisans', side: Side.Left, status: CharStatus.Alive, note: '与救出的工师另开小坊修器，图册缺件待补；公沙得以留用，不再被驱往登州城下攻炮' },
-      { event: 'c-wuqiao-artisans', side: Side.Right, status: CharStatus.Alive, note: '随救出的匠户领路费离开，炮局暂收但人已保下，未再赴登州城下送命' },
+      { event: 'g-wuqiao', side: Side.Right, status: CharStatus.Alive, note: '随匠人家眷安全撤出，图册一并护送，旧雇约照付。未被驱往城头发炮送命' },
+      { event: 'c-wuqiao-artisans', side: Side.Left, status: CharStatus.Alive, note: '与救出的工师另开小坊修器，图册缺件待补；公沙得以留用，不再被驱往登州城头发炮' },
+      { event: 'c-wuqiao-artisans', side: Side.Right, status: CharStatus.Alive, note: '随救出的匠户领路费离开，炮局暂收但人已保下，未再赴登州城头送命' },
       { event: 'g-denglai-workshop', side: Side.Left, status: CharStatus.Alive, note: '炮局立为常局，留局授艺铸炮，设施图册皆有所归' },
-      { event: 'g-denglai-workshop', side: Side.Right, status: CharStatus.Alive, note: '炮局裁并，领资自便；未赴登州城下' },
+      { event: 'g-denglai-workshop', side: Side.Right, status: CharStatus.Alive, note: '炮局裁并，领资自便；未赴登州城头' },
     ],
     relations: [
       { to: '徐光启', type: RelationType.Friend },
@@ -714,8 +737,13 @@ export const CHARACTERS: Character[] = [
     role: '总监军。中官在军，节镇皆出其下',
     camp: Camp.InnerCourt,
     faction: 'army',
+    appearYear: 5,
     events: [],
-    track: [{ year: 5, status: CharStatus.Alive, note: '监诸镇兵，进退由其意；督师多为所掣' }],
+    track: [
+      { year: 5, status: CharStatus.Alive, note: '监诸镇兵，进退由其意；督师多为所掣' },
+      { year: 17, status: CharStatus.Alive, note: '史实：受命监宁前诸军，中道弃关而走；福王立于江南，又召为京营提督' },
+      { year: 18, status: CharStatus.Alive, note: '史实：清兵下江南后降清；卒年失载' },
+    ],
     relations: [],
   },
   {
@@ -783,6 +811,7 @@ export const CHARACTERS: Character[] = [
     faction: 'law',
     born: 1592,
     events: ['s-fuwang'],
+    track: [{ year: 25, status: CharStatus.Dead, note: '史实：南都倾覆后归清，官至礼部尚书；顺治九年卒' }],
     relations: [{ to: '朱常洵', type: RelationType.Enemy }],
   },
   {
@@ -793,6 +822,7 @@ export const CHARACTERS: Character[] = [
     camp: Camp.Civil,
     faction: 'law',
     events: ['s-yizhan'],
+    track: [{ year: 4, status: CharStatus.Dead, note: '史实：裁驿招怨，攻者不已；未几，忧愤而卒' }],
     relations: [],
   },
   {
@@ -804,10 +834,13 @@ export const CHARACTERS: Character[] = [
     camp: Camp.ImperialClan,
     faction: 'law',
     born: 1629,
-    events: ['g-succession', 'c-succession-unfinished'],
+    events: ['g-succession', 'c-succession-unfinished', 's-nanqian-taizi', 's-finale'],
     fates: [
       { event: 'g-succession', side: Side.Left, status: CharStatus.Alive, note: '讲习新政而不立继承约束，知其用处，日后却仍可一言更改' },
       { event: 'g-succession', side: Side.Right, status: CharStatus.Alive, note: '公开承诺继位也守章程，公账、任期、议事与救济不因易君而废' },
+      { event: 's-finale', side: Side.Left, status: CharStatus.Alive, note: '城破被执，为闯所封宋王；随军东出山海关，兵败西撤，此后不知所终' },
+      { event: 's-finale', side: Side.Right, status: CharStatus.Alive, note: '随驾突围南渡，储君得脱于难' },
+      { event: 's-nanqian-taizi', side: Side.Left, status: CharStatus.Alive, note: '先期奉旨抚军江南；京师陷时，已在南中' },
     ],
     relations: [],
   },
@@ -834,6 +867,7 @@ export const CHARACTERS: Character[] = [
     faction: 'gold',
     born: 1591,
     events: ['s-liju'],
+    track: [{ year: 39, status: CharStatus.Dead, note: '史实：易代后仍居京师，掌钦天监；康熙五年卒' }],
     relations: [{ to: '龙华民', type: RelationType.Friend }],
   },
   {
@@ -846,6 +880,7 @@ export const CHARACTERS: Character[] = [
     faction: 'law',
     born: 1559,
     events: ['s-liju'],
+    track: [{ year: 27, status: CharStatus.Dead, note: '史实：居中国逾五十年；顺治十一年卒于北京' }],
     relations: [],
   },
   {
@@ -858,7 +893,10 @@ export const CHARACTERS: Character[] = [
     faction: 'gold',
     born: 1604,
     events: ['g-shipping', 'c-shipping-charterless', 'g-customs', 'c-shipping-customs-port', 'c-shipping-audit-receipts', 'g-shipping-dispute', 'c-shipping-dispute-private'],
-    track: [{ year: 6, status: CharStatus.Alive, note: '破红毛夷于料罗湾，海上声势大振' }],
+    track: [
+      { year: 6, status: CharStatus.Alive, note: '破红毛夷于料罗湾，海上声势大振' },
+      { year: 34, status: CharStatus.Dead, note: '史实：降清后久羁京师；顺治十八年为清廷所杀' },
+    ],
     fates: [
       { event: 'g-shipping', side: Side.Left, status: CharStatus.Alive, note: '依约分批承运，按到货结算并分担船损。得运利而无独占权，别家船商仍有份额' },
       { event: 'g-shipping', side: Side.Right, status: CharStatus.Alive, note: '以垫款换取整条航路独占，运价与承运人渐由郑家决定，公开竞争止在此处' },
@@ -879,8 +917,13 @@ export const CHARACTERS: Character[] = [
     camp: Camp.Civil,
     faction: 'court',
     born: 1593,
+    appearYear: 14,
     events: [],
-    track: [{ year: 15, status: CharStatus.Alive, note: '督师蓟门，幕中欺罔，师久无功' }],
+    track: [
+      { year: 14, status: CharStatus.Alive, note: '史实：十四年再起，入阁为首辅' },
+      { year: 15, status: CharStatus.Alive, note: '督师蓟门，幕中欺罔，师久无功' },
+      { year: 16, status: CharStatus.Dead, note: '史实：兵退论罪，逮至京师，赐自尽，籍没其家' },
+    ],
     relations: [],
   },
 ]

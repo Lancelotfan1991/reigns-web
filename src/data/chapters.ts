@@ -3801,6 +3801,7 @@ export const CHAPTERS: StoryChapter[] = [
             effects: { court: 3, law: -2, people: -3 },
             response: "你以「国君死社稷，义也」驳回太子南行，斥光时亨所引灵武故事为不祥，拂袖而入。太子南迁之议自此罢，朝堂上再没有人敢提南渡二字；诸臣各自回家收拾细软，京城里肯守的人一日少似一日。",
           },
+          people: ["朱慈烺"],
         },
       ],
     ],
