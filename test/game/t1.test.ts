@@ -3,6 +3,7 @@ import { useCharacters } from '../../src/composables/useCharacters'
 import { useGame, type Game } from '../../src/composables/useGame'
 import { ALL_EVENTS } from '../../src/data/chapters'
 import { CHARACTERS } from '../../src/data/characters'
+import { cardPortrait } from '../../src/data/portraits'
 import { CharStatus, Flag, Side, type GameEvent } from '../../src/types'
 import { healthy, reach, seedRandom, slotOf } from './helpers'
 
@@ -462,5 +463,64 @@ describe('T1 商洛山中分支', () => {
     expect((licheng.track ?? []).find((t) => t.year === 18)!.unlessEvent).toContain('s-shangluo-hunt')
     const sunchuan = CHARACTERS.find((char) => char.id === 'sunchuanting')!
     expect((sunchuan.fates ?? []).some((f) => f.event === 's-qinbing-ruwei' && f.side === Side.Left)).toBe(true)
+  })
+})
+
+describe('T1 本兵虚悬分支', () => {
+  const byId = new Map(ALL_EVENTS.map((event) => [event.id, event]))
+
+  /** 从开局直走到指定卡；沿途补满国势，可按卡逐个决定走向 */
+  function toCard(id: string, decide?: (card: GameEvent) => Side) {
+    const game = useGame()
+    game.startGame()
+    for (let guard = 0; guard < 300; guard++) {
+      const card = game.currentCard.value
+      if (!card || game.isOver.value) break
+      if (card.id === id) return game
+      game.resources.value = healthy()
+      game.choose(decide?.(card) ?? Side.Right)
+    }
+    throw new Error(`未走到 ${id}`)
+  }
+
+  it('当杨鹤逮问谪戍时，起复以夺情入，出卡即接卢象升请战', () => {
+    const game = toCard('s-duoqing', (card) => (card.id === 's-yanghe-fuju' ? Side.Left : Side.Right))
+    expect(game.flags.value[Flag.杨鹤谪戍]).toBe(1)
+    game.choose(Side.Right)
+    expect(game.verdict.value?.life ?? null).toBeNull()
+    expect(game.currentCard.value?.id).toBe('s-luxiangsheng-war')
+  })
+
+  it('当杨鹤姑留原任时，换成本兵授任一卡，卡面不设夺情之问', () => {
+    const game = toCard('c-bingbu-xuren')
+    expect(game.flags.value[Flag.杨鹤谪戍]).toBeUndefined()
+    const card = game.currentCard.value!
+    expect(card.text).not.toContain('夺情')
+    expect(card.text).not.toContain('居丧')
+    game.choose(Side.Left)
+    expect(game.currentCard.value?.id).toBe('s-luxiangsheng-war')
+  })
+
+  it('两卡各自点名杨嗣昌且只挂他一张脸，其后卢象升请战不再提居丧', () => {
+    for (const id of ['s-duoqing', 'c-bingbu-xuren']) {
+      const card = byId.get(id)!
+      expect(card.text).toContain('杨嗣昌')
+      expect(card.text).not.toContain('杨鹤')
+      expect(card.people).toEqual(['杨嗣昌'])
+      expect(cardPortrait(card)?.char.id).toBe('yangsichang')
+    }
+    expect(byId.get('s-luxiangsheng-war')!.text).not.toContain('居丧')
+  })
+
+  it('两面各留一条判词，出议不见生死', () => {
+    const yang = CHARACTERS.find((char) => char.id === 'yangsichang')!
+    for (const id of ['s-duoqing', 'c-bingbu-xuren']) {
+      expect(yang.events).toContain(id)
+      for (const side of [Side.Left, Side.Right]) {
+        const fate = (yang.fates ?? []).find((f) => f.event === id && f.side === side)
+        expect(fate, `${id} ${side}`).toBeDefined()
+        expect(fate!.status).toBe(CharStatus.Alive)
+      }
+    }
   })
 })
