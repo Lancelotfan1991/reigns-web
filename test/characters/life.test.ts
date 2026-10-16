@@ -47,6 +47,8 @@ const LIFE_CARDS = [
   's-finale',
   'g-gucheng',
   's-yanghe-fuju',
+  's-luoyang',
+  's-shangluo-hunt',
 ]
 
 describe('生死之判', () => {
