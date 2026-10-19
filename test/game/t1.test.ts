@@ -96,13 +96,14 @@ describe('T1 批红单页', () => {
 })
 
 describe('T1 宫门定策四档', () => {
-  /** 走完魏忠贤篇章前六步（中段默认 RLLL），第七步即「发落司礼监」 */
-  const toArrest = (first: Side, second: Side, mid = 'RLLL') => {
+  /** 走完魏忠贤篇章前六步：进献美女固定收下，捧玺与请辞两步决定四档归属，中段默认 LLL */
+  const toArrest = (first: Side, qingci: Side, mid = 'LLL') => {
     const game = useGame()
     game.startGame()
-    game.choose(first)  // Step 0: s-tuogu
-    game.choose(second) // Step 1: s-qingci-dongchang
-    for (const side of mid) game.choose(side === 'L' ? Side.Left : Side.Right) // Step 2-5
+    game.choose(first)      // Step 0: s-tuogu
+    game.choose(Side.Right) // Step 1: s-gongnv（收下，不影响四档归属）
+    game.choose(qingci)     // Step 2: s-qingci-dongchang
+    for (const side of mid) game.choose(side === 'L' ? Side.Left : Side.Right) // Step 3-5
     return game
   }
   const weiView = (game: Game) => {
@@ -113,11 +114,11 @@ describe('T1 宫门定策四档', () => {
   const narrowVerdict = (id: string): Side => id === 's-ni-an' ? Side.Left : Side.Right
 
   it.each([
-    [Side.Left, Side.Right, 'LRRL', 's-wei-rash', '玉玺照接、温旨慰留换防：法度耗到四十以下送不进衙门，只靠京营连夜硬办'],
-    [Side.Left, Side.Left, 'RLLL', 's-wei-failed', '受玺即放权、准辞东厂后军心不足：牌票没人肯领，京营当值称病'],
-    [Side.Right, Side.Left, 'RLLL', 's-wei-failed', '钥匙虽换，准辞东厂后军心只剩三十余，缇骑出不了城门'],
-  ] as const)('当开局依次选%s、%s、中段%s 时，第七步发出%s（%s）', (first, second, mid, id, why) => {
-    const game = toArrest(first, second, mid)
+    [Side.Left, Side.Right, 'RRL', 's-wei-rash', '玉玺照接、温旨慰留换防：法度耗到四十以下送不进衙门，只靠京营连夜硬办'],
+    [Side.Left, Side.Left, 'LLL', 's-wei-failed', '受玺即放权、准辞东厂后军心不足：牌票没人肯领，京营当值称病'],
+    [Side.Right, Side.Left, 'LLL', 's-wei-failed', '钥匙虽换，准辞东厂后军心只剩三十余，缇骑出不了城门'],
+  ] as const)('当开局依次选%s、请辞东厂选%s、中段%s 时，第七步发出%s（%s）', (first, qingci, mid, id, why) => {
+    const game = toArrest(first, qingci, mid)
     expect(why.length).toBeGreaterThan(0)
     expect(game.chapter.value).toEqual({ id: 'wei', name: '宫门定策', step: 7, total: 7 })
     expect(game.currentCard.value?.id).toBe(id)
@@ -127,11 +128,11 @@ describe('T1 宫门定策四档', () => {
     const game = useGame()
     game.startGame()
     game.choose(Side.Left)  // Step 0: s-tuogu left - no 密换九门
-    game.choose(Side.Right) // Step 1: s-qingci-dongchang right - 温旨慰留，sets 密换九门
+    game.choose(Side.Right) // Step 1: s-gongnv 收下
+    game.choose(Side.Right) // Step 2: s-qingci-dongchang right - 温旨慰留，sets 密换九门
     // 清除密换九门以模拟九门钥匙未曾换过、名分却已定的情形
     game.flags.value = { ...game.flags.value, [Flag.密换九门]: undefined }
     game.resources.value = { ...healthy(), law: 41, army: 37 }
-    game.choose(Side.Right) // Step 2: s-gongnv
     game.choose(Side.Left)  // Step 3: s-kesi
     game.choose(Side.Left)  // Step 4: s-cui
     game.choose(Side.Right) // Step 5: s-impeach-wei 留中不发，不落逮牌
