@@ -101,7 +101,7 @@ describe('T1 宫门定策四档', () => {
     const game = useGame()
     game.startGame()
     game.choose(first)  // Step 0: s-tuogu
-    game.choose(second) // Step 1: s-dianjianglu
+    game.choose(second) // Step 1: s-qingci-dongchang
     for (const side of mid) game.choose(side === 'L' ? Side.Left : Side.Right) // Step 2-5
     return game
   }
@@ -113,9 +113,9 @@ describe('T1 宫门定策四档', () => {
   const narrowVerdict = (id: string): Side => id === 's-ni-an' ? Side.Left : Side.Right
 
   it.each([
-    [Side.Left, Side.Right, 'LRRL', 's-wei-rash', '玉玺照接、钥匙未换：法度耗到四十以下送不进衙门，只靠京营连夜硬办'],
-    [Side.Left, Side.Left, 'RLLL', 's-wei-failed', '受玺即放权、当众焚册也救不回军心：牌票没人肯领，京营当值称病'],
-    [Side.Right, Side.Left, 'RLLL', 's-wei-failed', '钥匙虽换，焚册折了京营当值：军心只剩三十余，缇骑出不了城门'],
+    [Side.Left, Side.Right, 'LRRL', 's-wei-rash', '玉玺照接、温旨慰留换防：法度耗到四十以下送不进衙门，只靠京营连夜硬办'],
+    [Side.Left, Side.Left, 'RLLL', 's-wei-failed', '受玺即放权、准辞东厂后军心不足：牌票没人肯领，京营当值称病'],
+    [Side.Right, Side.Left, 'RLLL', 's-wei-failed', '钥匙虽换，准辞东厂后军心只剩三十余，缇骑出不了城门'],
   ] as const)('当开局依次选%s、%s、中段%s 时，第七步发出%s（%s）', (first, second, mid, id, why) => {
     const game = toArrest(first, second, mid)
     expect(why.length).toBeGreaterThan(0)
@@ -123,12 +123,12 @@ describe('T1 宫门定策四档', () => {
     expect(game.currentCard.value?.id).toBe(id)
   })
 
-  it('当九门钥匙未换、焚册未行而军心不足四十时，第七步落到中止且仍以未遂收束', () => {
+  it('当九门钥匙未换、准辞未行而军心不足四十时，第七步落到中止且仍以未遂收束', () => {
     const game = useGame()
     game.startGame()
-    game.choose(Side.Left)  // Step 0: s-tuogu left - no wei-watched
-    game.choose(Side.Right) // Step 1: s-dianjianglu right - sets wei-watched
-    // 清除 wei-watched 以模拟九门钥匙未曾换过、名分却已定的情形
+    game.choose(Side.Left)  // Step 0: s-tuogu left - no 密换九门
+    game.choose(Side.Right) // Step 1: s-qingci-dongchang right - 温旨慰留，sets 密换九门
+    // 清除密换九门以模拟九门钥匙未曾换过、名分却已定的情形
     game.flags.value = { ...game.flags.value, [Flag.密换九门]: undefined }
     game.resources.value = { ...healthy(), law: 41, army: 37 }
     game.choose(Side.Right) // Step 2: s-gongnv
@@ -179,9 +179,10 @@ describe('T1 宫门定策四档', () => {
     expect(game.currentCard.value?.id).not.toMatch(/^c-eunuch-marshal/)
   })
 
-  it('当第三步发落司礼监时，崔呈秀与逮牌都已在前面交代过', () => {
+  it('当第七步发落司礼监时，崔呈秀与逮牌都已在前面交代过', () => {
     const byId = new Map(ALL_EVENTS.map((event) => [event.id, event]))
-    expect(byId.get('s-dianjianglu')!.text).toContain('崔呈秀')
+    expect(byId.get('s-qingci-dongchang')!.text).toContain('东厂')
+    expect(byId.get('s-cui')!.text).toContain('崔呈秀')
     for (const id of ['s-wei', 's-wei-rash', 's-wei-failed', 's-wei-stalled']) {
       expect(byId.get(id)!.text, id).toContain('逮牌')
       expect(byId.get(id)!.text, id).toContain('牌票')

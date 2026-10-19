@@ -64,7 +64,7 @@ export const CHARACTERS: Character[] = [
     camp: Camp.InnerCourt,
     faction: 'law',
     born: 1568,
-    events: ['s-tuogu', 's-dianjianglu', 's-gongnv', 's-kesi', 's-cui', 's-impeach-wei', 's-wei', 's-wei-rash', 's-wei-failed', 's-wei-stalled', 's-wei-coup', 's-ni-an'],
+    events: ['s-tuogu', 's-qingci-dongchang', 's-gongnv', 's-kesi', 's-cui', 's-impeach-wei', 's-wei', 's-wei-rash', 's-wei-failed', 's-wei-stalled', 's-wei-coup', 's-ni-an'],
     fates: [
       { event: 's-wei', side: Side.Left, status: CharStatus.Dead, seal: '缢', note: '宫门有己人、文书照章程：你先免崔呈秀，逮牌出宫，他夜缢于阜城旅邸' },
       { event: 's-wei', side: Side.Right, status: CharStatus.Alive, seal: '留', note: '只革东厂，司礼监如故。他知道朝廷几乎办了他，从此奏疏出入先看他颜色' },
@@ -119,7 +119,7 @@ export const CHARACTERS: Character[] = [
     camp: Camp.Civil,
     faction: 'law',
     appearYear: 0,
-    events: ['s-dianjianglu', 's-cui', 's-impeach-wei', 's-wei', 's-wei-rash'],
+    events: ['s-cui', 's-impeach-wei', 's-wei', 's-wei-rash'],
     track: [
       { year: 0, status: CharStatus.Dead, note: '史实：先魏忠贤一日自缢。或曰闻逮牌将至，先自裁' },
     ],
@@ -868,7 +868,7 @@ export const CHARACTERS: Character[] = [
   {
     id: 'wangchengen',
     name: '王承恩',
-    alias: '司礼监 · 大伴',
+    alias: '大伴',
     avatar: '🕯️',
     role: '上潜邸旧人。宫中呼为「大伴」',
     bio: '帝在藩邸时旧人，性谨厚，不预外事。既入大统，侍从御前，掌内廷传达，凡禁中动息、章奏出入多经其手。帝之左右，无更亲信者。',
