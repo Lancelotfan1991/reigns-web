@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { computed, defineAsyncComponent, onMounted, onUnmounted, ref } from 'vue'
-import CharacterPanel from './components/CharacterPanel.vue'
 import CharSheet from './components/CharSheet.vue'
 import GameCard from './components/GameCard.vue'
 import ResourceBadge from './components/ResourceBadge.vue'
@@ -26,7 +25,11 @@ const chars = useCharacters(game)
 /** 皇舆图独立成页：#/map，按需加载，不占游戏主包 */
 const route = useRoute()
 const isMap = computed(() => route.value === '/map')
+const isDisasters = computed(() => route.value === '/disasters')
+const isCharacters = computed(() => route.value === '/characters')
 const MapPage = defineAsyncComponent(() => import('./components/MapPage.vue'))
+const DisasterPage = defineAsyncComponent(() => import('./components/DisasterPage.vue'))
+const CharacterPage = defineAsyncComponent(() => import('./components/CharacterPage.vue'))
 /** 上帝模式：只在本地加 ?god=1 时打开，正式玩家看不到任何痕迹 */
 const GOD = new URLSearchParams(window.location.search).get('god') === '1'
 /** 卡牌图谱：本地加 ?atlas=1 时打开。defineAsyncComponent 懒加载，主包不含图谱代码 */
@@ -36,7 +39,6 @@ const CardAtlas = new URLSearchParams(window.location.search).has('atlas')
 const { advice, pending: advicePending } = useHint(game, GOD)
 const screen = ref<Screen>('start')
 const cardRef = ref<InstanceType<typeof GameCard> | null>(null)
-const panelOpen = ref(false)
 const sheetCharId = ref<string | null>(null)
 const tipOpen = ref(false)
 
@@ -84,7 +86,6 @@ function isActive(key: ResourceKey) {
 function start() {
   game.startGame()
   dragDx.value = 0
-  panelOpen.value = false
   screen.value = 'play'
 }
 
@@ -105,17 +106,13 @@ function continueVerdict() {
 }
 
 function onKey(e: KeyboardEvent) {
-  if (isMap.value) return
+  if (isMap.value || isDisasters.value || isCharacters.value) return
   if (tipOpen.value) {
     if (e.key === 'Escape') tipOpen.value = false
     return
   }
   if (sheetCharId.value) {
     if (e.key === 'Escape') sheetCharId.value = null
-    return
-  }
-  if (panelOpen.value) {
-    if (e.key === 'Escape') panelOpen.value = false
     return
   }
   if (screen.value !== 'play') return
@@ -136,11 +133,25 @@ onUnmounted(() => window.removeEventListener('keydown', onKey))
 function openMap() {
   navigate('/map')
 }
+
+function openDisasters() {
+  navigate('/disasters')
+}
+
+function openCharacters() {
+  navigate('/characters')
+}
 </script>
 
 <template>
+  <!-- 人物志：#/characters 独立成页 -->
+  <CharacterPage v-if="isCharacters" />
+
+  <!-- 灾难卡：#/disasters 独立成页 -->
+  <DisasterPage v-else-if="isDisasters" />
+
   <!-- 皇舆图：#/map 独立成页 -->
-  <MapPage v-if="isMap" />
+  <MapPage v-else-if="isMap" />
 
   <div v-else class="app">
     <!-- 卡牌图谱：?atlas=1 时打开，占满全屏，不叠游戏三屏 -->
@@ -157,10 +168,33 @@ function openMap() {
       <div class="entry">
         <button class="btn seal inked" @click="start">入宫即位</button>
         <p v-if="game.bestYears.value > 0" class="best">前世最多撑了 {{ game.bestYears.value }} 年</p>
+
+        <nav class="route-hub" aria-label="图籍与人物">
+          <button class="route-card map" @click="openMap">
+            <span class="route-mark">舆</span>
+            <span class="route-copy">
+              <b>皇舆图</b>
+              <small>疆域与九边</small>
+            </span>
+          </button>
+          <button class="route-card disaster" @click="openDisasters">
+            <span class="route-mark">灾</span>
+            <span class="route-copy">
+              <b>灾难卡</b>
+              <small>天灾编年</small>
+            </span>
+          </button>
+          <button class="route-card people" @click="openCharacters">
+            <span class="route-mark">人</span>
+            <span class="route-copy">
+              <b>人物志</b>
+              <small>朝臣与流营</small>
+            </span>
+          </button>
+        </nav>
+
         <div class="entry-row">
           <button class="btn-ghost" @click="tipOpen = true">玩法说明</button>
-          <button class="btn-ghost" @click="panelOpen = true">本朝人物</button>
-          <button class="btn-ghost" @click="openMap">皇舆图</button>
         </div>
       </div>
 
@@ -282,8 +316,9 @@ function openMap() {
       <p v-else-if="game.isNewRecord.value" class="new-record">比前世撑得更久！</p>
 
       <button class="btn seal inked" @click="start">再着龙袍</button>
-      <button class="btn-ghost" @click="panelOpen = true">回看本朝人物</button>
+      <button class="btn-ghost" @click="openCharacters">回看人物志</button>
       <button class="btn-ghost" @click="openMap">观看皇舆图</button>
+      <button class="btn-ghost" @click="openDisasters">观看灾难卡</button>
     </section>
 
     <!-- 人物弹窗卡片：从卡面人名点入 -->
@@ -291,14 +326,6 @@ function openMap() {
       v-if="sheetView"
       :view="sheetView"
       @close="sheetCharId = null"
-    />
-
-    <!-- 人物抽屉：三屏共用一个入口 -->
-    <CharacterPanel
-      v-if="panelOpen"
-      :characters="chars.views.value"
-      :year-text="game.yearText.value"
-      @close="panelOpen = false"
     />
   </div>
 </template>
@@ -366,6 +393,7 @@ function openMap() {
 
 .entry {
   flex: none;
+  width: 100%;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -421,7 +449,92 @@ function openMap() {
   flex-wrap: wrap;
   justify-content: center;
   gap: 10px;
+  margin-top: 10px;
+}
+
+/* 首页图籍入口：三个并排的路由按钮 */
+.route-hub {
+  width: 100%;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
   margin-top: 12px;
+}
+
+.route-card {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  padding: 7px 6px;
+  text-align: left;
+  color: var(--ink);
+  background:
+    var(--grain),
+    rgba(255, 253, 248, 0.62);
+  border: 1px solid var(--line-soft);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: transform 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+}
+
+.route-card:hover,
+.route-card:focus-visible {
+  transform: translateY(-1px);
+  border-color: var(--cinnabar);
+  background: rgba(255, 253, 248, 0.9);
+  outline: none;
+}
+
+.route-mark {
+  flex: none;
+  width: 25px;
+  height: 25px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-kai);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--paper-hi);
+  border-radius: 3px;
+}
+
+.route-card.map .route-mark {
+  background: #8b6f47;
+}
+
+.route-card.disaster .route-mark {
+  background: var(--cinnabar);
+}
+
+.route-card.people .route-mark {
+  background: var(--azure);
+}
+
+.route-copy {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  line-height: 1.3;
+}
+
+.route-copy b {
+  font-family: var(--font-kai);
+  font-size: 12.5px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+}
+
+.route-copy small {
+  margin-top: 1px;
+  font-size: 9px;
+  letter-spacing: 0.2px;
+  color: var(--ink-3);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 /* ---------- 玩法提示弹窗 ---------- */

@@ -9,6 +9,8 @@ import type { CharView, ResourceKey } from '../types'
 const props = defineProps<{
   characters: CharView[]
   yearText: string
+  /** 独立成页时去掉遮罩与册页外框，作为普通内容嵌入 */
+  embedded?: boolean
 }>()
 
 defineEmits<{ (e: 'close'): void }>()
@@ -44,9 +46,9 @@ function faceOf(id: string) {
 </script>
 
 <template>
-  <div class="overlay" @click.self="$emit('close')">
-    <section class="panel">
-      <header class="ph">
+  <div class="overlay" :class="{ embedded }" @click.self="!embedded && $emit('close')">
+    <section class="panel" :class="{ embedded }">
+      <header v-if="!embedded" class="ph">
         <div class="ph-titles">
           <h2>朝中人物</h2>
           <p>{{ yearText }} ・ 已登场 {{ appeared.length }} 人，未知 {{ pending.length }} 人</p>
@@ -168,6 +170,16 @@ function faceOf(id: string) {
   justify-content: center;
 }
 
+/* 人物志独立成页：册页拆去遮罩，作为页面内容铺开 */
+.overlay.embedded {
+  position: static;
+  inset: auto;
+  z-index: auto;
+  display: block;
+  background: none;
+  backdrop-filter: none;
+}
+
 /* 一部名册：册页底色与装裱边 */
 .panel {
   width: 100%;
@@ -182,6 +194,27 @@ function faceOf(id: string) {
   border-right: 1px solid var(--line);
   box-shadow: 0 0 34px rgba(41, 33, 26, 0.3);
   animation: rise 0.22s ease;
+}
+
+.overlay.embedded .panel {
+  max-width: 980px;
+  height: auto;
+  margin: 0 auto;
+  padding-top: 0;
+  border: 1.5px solid var(--line);
+  border-radius: 4px;
+  box-shadow: 0 10px 28px rgba(41, 33, 26, 0.14);
+  animation: none;
+}
+
+.overlay.embedded .list {
+  flex: none;
+  overflow: visible;
+  padding: 6px 18px 20px;
+}
+
+.overlay.embedded .filters {
+  padding: 12px 18px;
 }
 
 @keyframes rise {
