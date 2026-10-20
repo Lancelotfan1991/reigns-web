@@ -149,6 +149,10 @@ function openCharacters() {
 function openWars() {
   navigate('/wars')
 }
+
+function openReforms() {
+  navigate('/reforms')
+}
 </script>
 
 <template>
@@ -210,6 +214,13 @@ function openWars() {
             <span class="route-copy">
               <b>人物志</b>
               <small>朝臣与流营</small>
+            </span>
+          </button>
+          <button class="route-card reform" @click="openReforms">
+            <span class="route-mark">政</span>
+            <span class="route-copy">
+              <b>改革方案</b>
+              <small>救国十策</small>
             </span>
           </button>
         </nav>
@@ -341,6 +352,7 @@ function openWars() {
       <button class="btn-ghost" @click="openMap">观看皇舆图</button>
       <button class="btn-ghost" @click="openWars">观看战事</button>
       <button class="btn-ghost" @click="openDisasters">观看灾难卡</button>
+      <button class="btn-ghost" @click="openReforms">查阅改革方案</button>
     </section>
 
     <!-- 人物弹窗卡片：从卡面人名点入 -->
@@ -536,6 +548,10 @@ function openWars() {
 
 .route-card.people .route-mark {
   background: var(--azure);
+}
+
+.route-card.reform .route-mark {
+  background: var(--ochre);
 }
 
 .route-copy {
