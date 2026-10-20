@@ -7,6 +7,7 @@ import ResourceBadge from './components/ResourceBadge.vue'
 import VerdictSheet from './components/VerdictSheet.vue'
 import { useCharacters } from './composables/useCharacters'
 import { useHint } from './composables/useHint'
+import { navigate, useRoute } from './router'
 import {
   AXIS_KEYS,
   RESOURCE_META,
@@ -22,6 +23,10 @@ type Screen = 'start' | 'play' | 'over'
 
 const game = useGame()
 const chars = useCharacters(game)
+/** 皇舆图独立成页：#/map，按需加载，不占游戏主包 */
+const route = useRoute()
+const isMap = computed(() => route.value === '/map')
+const MapPage = defineAsyncComponent(() => import('./components/MapPage.vue'))
 /** 上帝模式：只在本地加 ?god=1 时打开，正式玩家看不到任何痕迹 */
 const GOD = new URLSearchParams(window.location.search).get('god') === '1'
 /** 卡牌图谱：本地加 ?atlas=1 时打开。defineAsyncComponent 懒加载，主包不含图谱代码 */
@@ -100,6 +105,7 @@ function continueVerdict() {
 }
 
 function onKey(e: KeyboardEvent) {
+  if (isMap.value) return
   if (tipOpen.value) {
     if (e.key === 'Escape') tipOpen.value = false
     return
@@ -126,10 +132,17 @@ function onKey(e: KeyboardEvent) {
 
 onMounted(() => window.addEventListener('keydown', onKey))
 onUnmounted(() => window.removeEventListener('keydown', onKey))
+
+function openMap() {
+  navigate('/map')
+}
 </script>
 
 <template>
-  <div class="app">
+  <!-- 皇舆图：#/map 独立成页 -->
+  <MapPage v-if="isMap" />
+
+  <div v-else class="app">
     <!-- 卡牌图谱：?atlas=1 时打开，占满全屏，不叠游戏三屏 -->
     <CardAtlas v-if="CardAtlas" />
 
@@ -147,6 +160,7 @@ onUnmounted(() => window.removeEventListener('keydown', onKey))
         <div class="entry-row">
           <button class="btn-ghost" @click="tipOpen = true">玩法说明</button>
           <button class="btn-ghost" @click="panelOpen = true">本朝人物</button>
+          <button class="btn-ghost" @click="openMap">皇舆图</button>
         </div>
       </div>
 
@@ -269,6 +283,7 @@ onUnmounted(() => window.removeEventListener('keydown', onKey))
 
       <button class="btn seal inked" @click="start">再着龙袍</button>
       <button class="btn-ghost" @click="panelOpen = true">回看本朝人物</button>
+      <button class="btn-ghost" @click="openMap">观看皇舆图</button>
     </section>
 
     <!-- 人物弹窗卡片：从卡面人名点入 -->
@@ -403,6 +418,8 @@ onUnmounted(() => window.removeEventListener('keydown', onKey))
 
 .entry-row {
   display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
   gap: 10px;
   margin-top: 12px;
 }
