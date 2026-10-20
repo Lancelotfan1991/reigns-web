@@ -26,9 +26,11 @@ const chars = useCharacters(game)
 const route = useRoute()
 const isMap = computed(() => route.value === '/map')
 const isDisasters = computed(() => route.value === '/disasters')
+const isWars = computed(() => route.value === '/wars')
 const isCharacters = computed(() => route.value === '/characters')
 const MapPage = defineAsyncComponent(() => import('./components/MapPage.vue'))
 const DisasterPage = defineAsyncComponent(() => import('./components/DisasterPage.vue'))
+const WarPage = defineAsyncComponent(() => import('./components/WarPage.vue'))
 const CharacterPage = defineAsyncComponent(() => import('./components/CharacterPage.vue'))
 /** 上帝模式：只在本地加 ?god=1 时打开，正式玩家看不到任何痕迹 */
 const GOD = new URLSearchParams(window.location.search).get('god') === '1'
@@ -106,7 +108,7 @@ function continueVerdict() {
 }
 
 function onKey(e: KeyboardEvent) {
-  if (isMap.value || isDisasters.value || isCharacters.value) return
+  if (isMap.value || isDisasters.value || isWars.value || isCharacters.value) return
   if (tipOpen.value) {
     if (e.key === 'Escape') tipOpen.value = false
     return
@@ -141,11 +143,18 @@ function openDisasters() {
 function openCharacters() {
   navigate('/characters')
 }
+
+function openWars() {
+  navigate('/wars')
+}
 </script>
 
 <template>
+  <!-- 战事与民变：#/wars 独立成页 -->
+  <WarPage v-if="isWars" />
+
   <!-- 人物志：#/characters 独立成页 -->
-  <CharacterPage v-if="isCharacters" />
+  <CharacterPage v-else-if="isCharacters" />
 
   <!-- 灾难卡：#/disasters 独立成页 -->
   <DisasterPage v-else-if="isDisasters" />
@@ -175,6 +184,13 @@ function openCharacters() {
             <span class="route-copy">
               <b>皇舆图</b>
               <small>疆域与九边</small>
+            </span>
+          </button>
+          <button class="route-card war" @click="openWars">
+            <span class="route-mark">兵</span>
+            <span class="route-copy">
+              <b>战事与民变</b>
+              <small>边患与流寇</small>
             </span>
           </button>
           <button class="route-card disaster" @click="openDisasters">
@@ -318,6 +334,7 @@ function openCharacters() {
       <button class="btn seal inked" @click="start">再着龙袍</button>
       <button class="btn-ghost" @click="openCharacters">回看人物志</button>
       <button class="btn-ghost" @click="openMap">观看皇舆图</button>
+      <button class="btn-ghost" @click="openWars">观看战事</button>
       <button class="btn-ghost" @click="openDisasters">观看灾难卡</button>
     </section>
 
@@ -456,7 +473,7 @@ function openCharacters() {
 .route-hub {
   width: 100%;
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 6px;
   margin-top: 12px;
 }
@@ -502,6 +519,10 @@ function openCharacters() {
 
 .route-card.map .route-mark {
   background: #8b6f47;
+}
+
+.route-card.war .route-mark {
+  background: #6b4f86;
 }
 
 .route-card.disaster .route-mark {
