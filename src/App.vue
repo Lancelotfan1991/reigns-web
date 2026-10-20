@@ -28,10 +28,12 @@ const isMap = computed(() => route.value === '/map')
 const isDisasters = computed(() => route.value === '/disasters')
 const isWars = computed(() => route.value === '/wars')
 const isCharacters = computed(() => route.value === '/characters')
+const isReforms = computed(() => route.value === '/reforms')
 const MapPage = defineAsyncComponent(() => import('./components/MapPage.vue'))
 const DisasterPage = defineAsyncComponent(() => import('./components/DisasterPage.vue'))
 const WarPage = defineAsyncComponent(() => import('./components/WarPage.vue'))
 const CharacterPage = defineAsyncComponent(() => import('./components/CharacterPage.vue'))
+const ReformPage = defineAsyncComponent(() => import('./components/ReformPage.vue'))
 /** 上帝模式：只在本地加 ?god=1 时打开，正式玩家看不到任何痕迹 */
 const GOD = new URLSearchParams(window.location.search).get('god') === '1'
 /** 卡牌图谱：本地加 ?atlas=1 时打开。defineAsyncComponent 懒加载，主包不含图谱代码 */
@@ -108,7 +110,7 @@ function continueVerdict() {
 }
 
 function onKey(e: KeyboardEvent) {
-  if (isMap.value || isDisasters.value || isWars.value || isCharacters.value) return
+  if (isMap.value || isDisasters.value || isWars.value || isCharacters.value || isReforms.value) return
   if (tipOpen.value) {
     if (e.key === 'Escape') tipOpen.value = false
     return
@@ -155,6 +157,9 @@ function openWars() {
 
   <!-- 人物志：#/characters 独立成页 -->
   <CharacterPage v-else-if="isCharacters" />
+
+  <!-- 改革方案：#/reforms 独立成页 -->
+  <ReformPage v-else-if="isReforms" />
 
   <!-- 灾难卡：#/disasters 独立成页 -->
   <DisasterPage v-else-if="isDisasters" />
