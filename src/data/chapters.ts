@@ -1389,73 +1389,6 @@ export const CHAPTERS: StoryChapter[] = [
     ],
   },
   {
-    id: "g-caizheng-gaige",
-    name: "财政改革深化",
-    time: { year: 3, order: 3 },
-    steps: [
-      [
-        {
-          id: "s-kaishuijin",
-          name: "开海禁之议",
-          avatar: "🚢",
-          text: "崇祯三年，户部请开海禁，许民间商船出海贸易，抽分海税以充国用。福建巡抚邹维琏上疏：开海可得岁入百万，较加派田赋为善。廷臣争议：开海则商舶云集，利权下移，且恐倭寇复起；不开则国用日绌，加派不止，民将益困。",
-          left: {
-            label: "准开海禁，设关抽税",
-            effects: { court: -4, law: 4, army: 2, gold: 8, people: 4 },
-            response: "你准开海禁，于漳州、泉州、广州设关抽税，许民间商船出海。岁入海税百万，较加派为善。沿海商民得业，番银流入，国库稍宽。然市舶之利，多入豪商之家，小民所得有限。",
-            sets: [Flag.开海通商],
-          },
-          right: {
-            label: "仍禁出海，加派田赋",
-            effects: { court: 4, law: -4, army: -2, gold: -6, people: -6 },
-            response: "你仍禁出海，恐利权下移、倭患复起。户部请加派田赋以充国用，岁入较海税为少，且加派之银，多入胥吏之手，民受其害而国不得其利。",
-          },
-          people: ["邹维琏"],
-        },
-      ],
-      [
-        {
-          id: "s-qingcha-yintian",
-          name: "清查隐田",
-          avatar: "📋",
-          text: "海禁既开，国库稍宽。然田赋之弊犹在：豪强隐田，小民代赔，赋役不均，民不堪命。徐光启请清查隐田，令有司丈量田亩，造册登记，按亩征税。廷臣多反对：隐田之查，必扰民；且豪强之势，不可轻撄。",
-          left: {
-            label: "准徐光启所请，清查隐田",
-            effects: { court: -6, law: 8, gold: 6, people: -2 },
-            response: "你准徐光启所请，令有司清查隐田，丈量田亩，造册登记。岁增田赋数十万，赋役稍均。然豪强隐田者，多有权势，查核之际，阻力重重，地方官多畏葸不前。",
-            sets: [Flag.清查隐田],
-          },
-          right: {
-            label: "隐田难查，仍照旧例",
-            effects: { court: 6, law: -6, gold: -4, people: 2 },
-            response: "你以隐田难查、恐扰民为由，仍照旧例。豪强隐田如故，小民代赔如故，赋役不均之弊，终崇祯之世未能除。",
-          },
-          people: ["徐光启"],
-        },
-      ],
-      [
-        {
-          id: "s-zhengdun-yanzheng",
-          name: "整顿盐政",
-          avatar: "🧂",
-          text: "田赋之外，盐政亦弊窦丛生：盐商纳银领引，私盐泛滥，官盐滞销，盐税日绌。户部请整顿盐政，严缉私盐，令盐商按引纳课。两淮盐运使上疏：盐政之弊，在官不在商，请裁撤冗员，简化引目。",
-          left: {
-            label: "整顿盐政，严缉私盐",
-            effects: { court: -2, law: 6, gold: 6, people: -2 },
-            response: "你整顿盐政，严缉私盐，令盐商按引纳课。岁增盐税数十万。然缉私之役，多扰小民，私盐未绝而民先受其害。",
-            sets: [Flag.整顿盐政],
-          },
-          right: {
-            label: "盐政照旧，不加整顿",
-            effects: { court: 2, law: -4, gold: -4, people: 2 },
-            response: "你以盐政照旧为便，不加整顿。盐商纳课如故，私盐泛滥如故，盐税日绌如故。",
-          },
-          people: [],
-        },
-      ],
-    ],
-  },
-  {
     id: "g-huoqi-fazhan",
     name: "火器技术发展",
     time: { year: 5, order: 2 },
@@ -1528,33 +1461,6 @@ export const CHAPTERS: StoryChapter[] = [
           },
           requires: [Flag.登莱保炮],
           people: ["皇太极", "李倧"],
-        },
-      ],
-    ],
-  },
-  {
-    id: "g-dalinghe-zhanbei",
-    name: "辽东反攻准备",
-    time: { year: 15, order: 5 },
-    steps: [
-      [
-        {
-          id: "s-songjin-zhubei",
-          name: "松锦之战准备",
-          avatar: "⚔️",
-          text: "崇祯十四年，清军围锦州，祖大寿请援。洪承畴请发蓟镇、辽东诸镇兵，合军十余万，进援锦州。兵部议：诸军云集，粮饷难继，请缓行。洪承畴上疏：锦州被围日久，不急援则城陷。",
-          left: {
-            label: "准洪承畴所请，发兵援锦",
-            effects: { court: -4, law: 2, army: -6, gold: -10, people: 4 },
-            response: "你准洪承畴所请，发蓟镇、辽东诸镇兵十余万，进援锦州。洪承畴督师出关，与清军战于松山。",
-            sets: [Flag.松锦缓守],
-          },
-          right: {
-            label: "令祖大寿坚守，不发援兵",
-            effects: { court: 4, law: -2, army: 2, gold: 4, people: -4 },
-            response: "你令祖大寿坚守锦州，不发援兵。锦州被围日久，粮尽城陷，祖大寿降清。",
-          },
-          people: ["洪承畴", "祖大寿"],
         },
       ],
     ],
@@ -2124,6 +2030,73 @@ export const CHAPTERS: StoryChapter[] = [
   },
 
   // ── 崇祯八年 ──
+  {
+    id: "g-caizheng-gaige",
+    name: "财政改革深化",
+    time: { year: 8, order: 1 },
+    steps: [
+      [
+        {
+          id: "s-kaishuijin",
+          name: "开海禁之议",
+          avatar: "🚢",
+          text: "崇祯八年，户部请开海禁，许民间商船出海贸易，抽分海税以充国用。福建巡抚邹维琏上疏：开海可得岁入百万，较加派田赋为善。廷臣争议：开海则商舶云集，利权下移，且恐倭寇复起；不开则国用日绌，加派不止，民将益困。",
+          left: {
+            label: "准开海禁，设关抽税",
+            effects: { court: -4, law: 4, army: 2, gold: 8, people: 4 },
+            response: "你准开海禁，于漳州、泉州、广州设关抽税，许民间商船出海。岁入海税百万，较加派为善。沿海商民得业，番银流入，国库稍宽。然市舶之利，多入豪商之家，小民所得有限。",
+            sets: [Flag.开海通商],
+          },
+          right: {
+            label: "仍禁出海，加派田赋",
+            effects: { court: 4, law: -4, army: -2, gold: -6, people: -6 },
+            response: "你仍禁出海，恐利权下移、倭患复起。户部请加派田赋以充国用，岁入较海税为少，且加派之银，多入胥吏之手，民受其害而国不得其利。",
+          },
+          people: ["邹维琏"],
+        },
+      ],
+      [
+        {
+          id: "s-qingcha-yintian",
+          name: "清查隐田",
+          avatar: "📋",
+          text: "海禁既开，国库稍宽。然田赋之弊犹在：豪强隐田，小民代赔，赋役不均，民不堪命。户部侍郎请清查隐田，令有司丈量田亩，造册登记，按亩征税。廷臣多反对：隐田之查，必扰民；且豪强之势，不可轻撄。",
+          left: {
+            label: "准户部所请，清查隐田",
+            effects: { court: -6, law: 8, gold: 6, people: -2 },
+            response: "你准户部所请，令有司清查隐田，丈量田亩，造册登记。岁增田赋数十万，赋役稍均。然豪强隐田者，多有权势，查核之际，阻力重重，地方官多畏葸不前。",
+            sets: [Flag.清查隐田],
+          },
+          right: {
+            label: "隐田难查，仍照旧例",
+            effects: { court: 6, law: -6, gold: -4, people: 2 },
+            response: "你以隐田难查、恐扰民为由，仍照旧例。豪强隐田如故，小民代赔如故，赋役不均之弊，终崇祯之世未能除。",
+          },
+          people: [],
+        },
+      ],
+      [
+        {
+          id: "s-zhengdun-yanzheng",
+          name: "整顿盐政",
+          avatar: "🧂",
+          text: "田赋之外，盐政亦弊窦丛生：盐商纳银领引，私盐泛滥，官盐滞销，盐税日绌。户部请整顿盐政，严缉私盐，令盐商按引纳课。两淮盐运使上疏：盐政之弊，在官不在商，请裁撤冗员，简化引目。",
+          left: {
+            label: "整顿盐政，严缉私盐",
+            effects: { court: -2, law: 6, gold: 6, people: -2 },
+            response: "你整顿盐政，严缉私盐，令盐商按引纳课。岁增盐税数十万。然缉私之役，多扰小民，私盐未绝而民先受其害。",
+            sets: [Flag.整顿盐政],
+          },
+          right: {
+            label: "盐政照旧，不加整顿",
+            effects: { court: 2, law: -4, gold: -4, people: 2 },
+            response: "你以盐政照旧为便，不加整顿。盐商纳课如故，私盐泛滥如故，盐税日绌如故。",
+          },
+          people: [],
+        },
+      ],
+    ],
+  },
   {
     id: "g-payroll",
     name: "饷银发到点名的人",
@@ -3812,6 +3785,33 @@ export const CHAPTERS: StoryChapter[] = [
             label: "再投余粮救一处据点",
             effects: { court: 2, army: -5, gold: -5, people: -2 },
             response: "余粮用于突援，只接出部分守兵。各镇伤亡加重，军械散失，后方可再调动的钱粮更少了。",
+          },
+          people: ["洪承畴", "祖大寿"],
+        },
+      ],
+    ],
+  },
+  {
+    id: "g-dalinghe-zhanbei",
+    name: "辽东反攻准备",
+    time: { year: 14, order: 4 },
+    steps: [
+      [
+        {
+          id: "s-songjin-zhubei",
+          name: "松锦之战准备",
+          avatar: "⚔️",
+          text: "崇祯十四年，清军围锦州，祖大寿请援。洪承畴请发蓟镇、辽东诸镇兵，合军十余万，进援锦州。兵部议：诸军云集，粮饷难继，请缓行。洪承畴上疏：锦州被围日久，不急援则城陷。",
+          left: {
+            label: "准洪承畴所请，发兵援锦",
+            effects: { court: -4, law: 2, army: -6, gold: -10, people: 4 },
+            response: "你准洪承畴所请，发蓟镇、辽东诸镇兵十余万，进援锦州。洪承畴督师出关，与清军战于松山。",
+            sets: [Flag.松锦缓守],
+          },
+          right: {
+            label: "令祖大寿坚守，不发援兵",
+            effects: { court: 4, law: -2, army: 2, gold: 4, people: -4 },
+            response: "你令祖大寿坚守锦州，不发援兵。锦州被围日久，粮尽城陷，祖大寿降清。",
           },
           people: ["洪承畴", "祖大寿"],
         },
