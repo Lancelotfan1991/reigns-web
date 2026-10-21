@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import type { Reform } from '../data/reformBrowse'
 import { REFORM_CATEGORY_META } from '../data/reformBrowse'
 
@@ -12,20 +12,107 @@ const emit = defineEmits<{
 }>()
 
 const currentCardIndex = ref(0)
+const dragOffset = ref(0)
+const isDragging = ref(false)
+let activePointer: number | null = null
+let startX = 0
+let startY = 0
+let axisLocked: 'x' | 'y' | null = null
 
 const hasPrevious = computed(() => currentCardIndex.value > 0)
 const hasNext = computed(() => currentCardIndex.value < props.reform.cards.length - 1)
 
+const trackStyle = computed(() => ({
+  transform: `translateX(calc(${-currentCardIndex.value * 100}% + ${dragOffset.value}px))`,
+  transition: isDragging.value ? 'none' : 'transform 0.32s cubic-bezier(0.22, 0.61, 0.36, 1)',
+}))
+
+watch(
+  () => props.reform.id,
+  () => {
+    currentCardIndex.value = 0
+    dragOffset.value = 0
+    isDragging.value = false
+  },
+)
+
+onMounted(() => {
+  document.body.style.overflow = 'hidden'
+})
+
+onBeforeUnmount(() => {
+  document.body.style.overflow = ''
+})
+
 function previousCard() {
-  if (hasPrevious.value) {
-    currentCardIndex.value--
-  }
+  if (hasPrevious.value) currentCardIndex.value--
 }
 
 function nextCard() {
-  if (hasNext.value) {
-    currentCardIndex.value++
+  if (hasNext.value) currentCardIndex.value++
+}
+
+function goTo(index: number) {
+  if (index >= 0 && index < props.reform.cards.length) {
+    currentCardIndex.value = index
   }
+}
+
+function ordinalOf(index: number): number {
+  const kind = props.reform.cards[index].kind
+  let n = 0
+  for (let i = 0; i <= index; i++) {
+    if (props.reform.cards[i].kind === kind) n++
+  }
+  return n
+}
+
+function onPointerDown(event: PointerEvent) {
+  if (event.pointerType === 'mouse' && event.button !== 0) return
+  if (props.reform.cards.length < 2) return
+  activePointer = event.pointerId
+  startX = event.clientX
+  startY = event.clientY
+  axisLocked = null
+  dragOffset.value = 0
+  isDragging.value = true
+}
+
+function onPointerMove(event: PointerEvent) {
+  if (!isDragging.value || event.pointerId !== activePointer) return
+  const dx = event.clientX - startX
+  const dy = event.clientY - startY
+  if (!axisLocked) {
+    if (Math.abs(dx) < 5 && Math.abs(dy) < 5) return
+    axisLocked = Math.abs(dx) > Math.abs(dy) ? 'x' : 'y'
+    if (axisLocked === 'y') {
+      isDragging.value = false
+      return
+    }
+    try {
+      ;(event.currentTarget as HTMLElement).setPointerCapture?.(event.pointerId)
+    } catch {
+      // 合成事件的 pointerId 可能无效，忽略即可
+    }
+  }
+  if (axisLocked !== 'x') return
+  const atStart = currentCardIndex.value === 0 && dx > 0
+  const atEnd = currentCardIndex.value === props.reform.cards.length - 1 && dx < 0
+  dragOffset.value = atStart || atEnd ? dx * 0.25 : dx
+}
+
+function endDrag(event: PointerEvent) {
+  if (event.pointerId !== activePointer) return
+  activePointer = null
+  if (!isDragging.value) {
+    dragOffset.value = 0
+    return
+  }
+  isDragging.value = false
+  const threshold = 48
+  if (dragOffset.value <= -threshold) nextCard()
+  else if (dragOffset.value >= threshold) previousCard()
+  dragOffset.value = 0
 }
 
 function close() {
@@ -61,83 +148,92 @@ function formatGold(value: number): string {
 
       <!-- 卡片轮播区域 -->
       <div class="card-carousel">
-        <div class="carousel-track" :style="{ transform: `translateX(-${currentCardIndex / reform.cards.length * 100}%)` }">
-          <div
-            v-for="(card, index) in reform.cards"
-            :key="card.id"
-            class="carousel-slide"
-          >
-            <!-- 步骤卡 -->
-            <div v-if="card.kind === 'step'" class="reform-card step-card">
-              <div class="card-header">
-                <div class="card-badge">步骤 {{ index + 1 }}</div>
-                <h2 class="card-title">{{ card.title }}</h2>
-              </div>
-              <p class="card-body">{{ card.body }}</p>
-              
-              <div class="card-stats">
-                <div class="stat-item">
-                  <span class="stat-label">财力</span>
-                  <span class="stat-value">{{ formatGold(card.costGold ?? 0) }}两</span>
+        <div
+          class="carousel-viewport"
+          :class="{ dragging: isDragging }"
+          @pointerdown="onPointerDown"
+          @pointermove="onPointerMove"
+          @pointerup="endDrag"
+          @pointercancel="endDrag"
+        >
+          <div class="carousel-track" :style="trackStyle">
+            <div
+              v-for="(card, index) in reform.cards"
+              :key="card.id"
+              class="carousel-slide"
+            >
+              <!-- 步骤卡 -->
+              <div v-if="card.kind === 'step'" class="reform-card step-card">
+                <div class="card-header">
+                  <div class="card-badge">步骤 {{ ordinalOf(index) }}</div>
+                  <h2 class="card-title">{{ card.title }}</h2>
                 </div>
-                <div class="stat-item">
-                  <span class="stat-label">人力</span>
-                  <span class="stat-value">{{ (card.costManpower ?? 0).toLocaleString() }}人</span>
-                </div>
-                <div class="stat-item">
-                  <span class="stat-label">时间</span>
-                  <span class="stat-value">{{ card.duration }}年</span>
-                </div>
-                <div class="stat-item highlight">
-                  <span class="stat-label">成功率</span>
-                  <span class="stat-value">{{ card.successRate }}%</span>
-                </div>
-              </div>
+                <p class="card-body">{{ card.body }}</p>
 
-              <div v-if="card.boostConditions?.length" class="card-section">
-                <h3 class="section-title">提升成功率</h3>
-                <ul class="condition-list">
-                  <li v-for="condition in card.boostConditions" :key="condition">
-                    ✓ {{ condition }}
-                  </li>
-                </ul>
-              </div>
-
-              <div v-if="card.requiredRoles?.length" class="card-section">
-                <h3 class="section-title">所需人员</h3>
-                <div class="roles-list">
-                  <span v-for="role in card.requiredRoles" :key="role" class="role-tag">
-                    {{ role }}
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            <!-- 挑战卡 -->
-            <div v-else class="reform-card challenge-card">
-              <div class="card-header">
-                <div class="card-badge challenge">危机 {{ index + 1 }}</div>
-                <h2 class="card-title">{{ card.title }}</h2>
-                <div class="severity-indicator">
-                  <span v-for="i in (card.severity ?? 1)" :key="i" class="severity-dot"></span>
-                </div>
-              </div>
-              <p class="card-body">{{ card.body }}</p>
-
-              <div v-if="card.optionA || card.optionB" class="card-section options">
-                <div v-if="card.optionA" class="option">
-                  <div class="option-header">
-                    <span class="option-badge">甲</span>
-                    <span class="option-label">{{ card.optionA.label }}</span>
+                <div class="card-stats">
+                  <div class="stat-item">
+                    <span class="stat-label">财力</span>
+                    <span class="stat-value">{{ formatGold(card.costGold ?? 0) }}两</span>
                   </div>
-                  <p class="option-effect">{{ card.optionA.effect }}</p>
-                </div>
-                <div v-if="card.optionB" class="option">
-                  <div class="option-header">
-                    <span class="option-badge">乙</span>
-                    <span class="option-label">{{ card.optionB.label }}</span>
+                  <div class="stat-item">
+                    <span class="stat-label">人力</span>
+                    <span class="stat-value">{{ (card.costManpower ?? 0).toLocaleString() }}人</span>
                   </div>
-                  <p class="option-effect">{{ card.optionB.effect }}</p>
+                  <div class="stat-item">
+                    <span class="stat-label">时间</span>
+                    <span class="stat-value">{{ card.duration }}年</span>
+                  </div>
+                  <div class="stat-item highlight">
+                    <span class="stat-label">成功率</span>
+                    <span class="stat-value">{{ card.successRate }}%</span>
+                  </div>
+                </div>
+
+                <div v-if="card.boostConditions?.length" class="card-section">
+                  <h3 class="section-title">提升成功率</h3>
+                  <ul class="condition-list">
+                    <li v-for="condition in card.boostConditions" :key="condition">
+                      ✓ {{ condition }}
+                    </li>
+                  </ul>
+                </div>
+
+                <div v-if="card.requiredRoles?.length" class="card-section">
+                  <h3 class="section-title">所需人员</h3>
+                  <div class="roles-list">
+                    <span v-for="role in card.requiredRoles" :key="role" class="role-tag">
+                      {{ role }}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 挑战卡 -->
+              <div v-else class="reform-card challenge-card">
+                <div class="card-header">
+                  <div class="card-badge challenge">危机 {{ ordinalOf(index) }}</div>
+                  <h2 class="card-title">{{ card.title }}</h2>
+                  <div class="severity-indicator">
+                    <span v-for="i in (card.severity ?? 1)" :key="i" class="severity-dot"></span>
+                  </div>
+                </div>
+                <p class="card-body">{{ card.body }}</p>
+
+                <div v-if="card.optionA || card.optionB" class="card-section options">
+                  <div v-if="card.optionA" class="option">
+                    <div class="option-header">
+                      <span class="option-badge">甲</span>
+                      <span class="option-label">{{ card.optionA.label }}</span>
+                    </div>
+                    <p class="option-effect">{{ card.optionA.effect }}</p>
+                  </div>
+                  <div v-if="card.optionB" class="option">
+                    <div class="option-header">
+                      <span class="option-badge">乙</span>
+                      <span class="option-label">{{ card.optionB.label }}</span>
+                    </div>
+                    <p class="option-effect">{{ card.optionB.effect }}</p>
+                  </div>
                 </div>
               </div>
             </div>
@@ -153,8 +249,19 @@ function formatGold(value: number): string {
           >
             ←
           </button>
-          <div class="card-indicator">
-            {{ currentCardIndex + 1 }} / {{ reform.cards.length }}
+          <div class="carousel-status">
+            <div class="carousel-dots">
+              <button
+                v-for="(card, index) in reform.cards"
+                :key="card.id"
+                :class="['dot', card.kind, { active: index === currentCardIndex }]"
+                :aria-label="`第 ${index + 1} 张`"
+                @click="goTo(index)"
+              ></button>
+            </div>
+            <div class="card-indicator">
+              {{ currentCardIndex + 1 }} / {{ reform.cards.length }}
+            </div>
           </div>
           <button
             class="nav-btn next"
@@ -317,17 +424,30 @@ function formatGold(value: number): string {
   overflow: hidden;
 }
 
+.carousel-viewport {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  touch-action: pan-y;
+  cursor: grab;
+  user-select: none;
+}
+
+.carousel-viewport.dragging {
+  cursor: grabbing;
+}
+
 .carousel-track {
   display: flex;
-  width: max-content;
+  width: 100%;
   height: 100%;
-  transition: transform 0.3s ease;
+  will-change: transform;
 }
 
 .carousel-slide {
-  flex: 0 0 auto;
-  width: calc(100vw - 40px);
-  max-width: 420px;
+  flex: 0 0 100%;
+  width: 100%;
+  min-width: 0;
   padding: 16px;
   display: flex;
   flex-direction: column;
@@ -571,10 +691,56 @@ function formatGold(value: number): string {
   cursor: not-allowed;
 }
 
-.card-indicator {
+.carousel-status {
   flex: 1;
-  text-align: center;
-  font-size: 13px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+}
+
+.carousel-dots {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.dot {
+  width: 7px;
+  height: 7px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: rgba(107, 90, 68, 0.28);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.dot.step {
+  background: rgba(171, 132, 48, 0.4);
+}
+
+.dot.challenge {
+  background: rgba(168, 50, 42, 0.35);
+}
+
+.dot.active {
+  width: 16px;
+  border-radius: 4px;
+  background: var(--ink);
+}
+
+.dot.step.active {
+  background: var(--ochre);
+}
+
+.dot.challenge.active {
+  background: var(--cinnabar);
+}
+
+.card-indicator {
+  font-size: 11px;
   color: var(--ink-3);
   letter-spacing: 1px;
   font-weight: 700;
@@ -641,6 +807,66 @@ function formatGold(value: number): string {
 
   .reform-detail-overlay {
     padding: 0;
+  }
+}
+
+@media (max-height: 720px) {
+  .reform-detail {
+    height: 96dvh;
+  }
+
+  .detail-header {
+    padding: 10px 14px 8px;
+  }
+
+  .carousel-slide {
+    padding: 10px 12px;
+  }
+
+  .reform-card {
+    padding: 12px;
+  }
+
+  .card-header {
+    margin-bottom: 8px;
+  }
+
+  .card-body {
+    margin-bottom: 10px;
+    font-size: 13px;
+    line-height: 1.65;
+  }
+
+  .card-stats {
+    gap: 6px;
+    margin-bottom: 10px;
+  }
+
+  .stat-item {
+    padding: 6px 8px;
+  }
+
+  .card-section {
+    margin-top: 10px;
+    padding-top: 10px;
+  }
+
+  .carousel-nav {
+    padding: 8px 16px;
+  }
+
+  .nav-btn {
+    width: 34px;
+    height: 34px;
+    font-size: 16px;
+  }
+
+  .detail-footer {
+    padding: 10px 14px;
+  }
+
+  .footer-title {
+    margin-bottom: 4px;
   }
 }
 </style>
