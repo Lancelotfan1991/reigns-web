@@ -202,7 +202,7 @@ function formatGold(value: number): string {
 .reform-detail {
   width: 100%;
   max-width: 420px;
-  height: 80vh;
+  height: 90vh;
   display: flex;
   flex-direction: column;
   background:
@@ -331,7 +331,7 @@ function formatGold(value: number): string {
   padding: 16px;
   box-shadow: 0 4px 12px rgba(41, 33, 26, 0.1);
   animation: card-slide 0.3s ease;
-  overflow-y: auto;
+  overflow: hidden;
 }
 
 @keyframes card-slide {
