@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { RESOURCE_META, yearLabel } from '../composables/useGame'
-import { STATUS_META } from '../data/characters'
+import { ATTRIBUTE_META, STATUS_META } from '../data/characters'
 import { portraitOf } from '../data/portraits'
 import type { CharView } from '../types'
 
@@ -41,6 +41,33 @@ function faceOf(id: string) {
       </div>
 
       <p class="role">{{ view.char.role }}</p>
+
+      <div class="block">
+        <h3>才具</h3>
+        <ul class="stats">
+          <li v-for="a in ATTRIBUTE_META" :key="a.key" :title="a.hint">
+            <span class="sl">{{ a.label }}</span>
+            <span class="bar"><i :style="{ width: `${view.char.attributes[a.key]}%` }"></i></span>
+            <span class="sv">{{ view.char.attributes[a.key] }}</span>
+          </li>
+        </ul>
+        <p class="stat-note">只作品鉴，不参与发牌与成败判定</p>
+      </div>
+
+      <div class="block duo">
+        <div>
+          <h3>所长</h3>
+          <ul class="chips">
+            <li v-for="item in view.char.expertise" :key="item">{{ item }}</li>
+          </ul>
+        </div>
+        <div>
+          <h3>性情</h3>
+          <ul class="chips">
+            <li v-for="item in view.char.traits" :key="item">{{ item }}</li>
+          </ul>
+        </div>
+      </div>
 
       <div class="block">
         <h3>小传</h3>
@@ -239,6 +266,78 @@ function faceOf(id: string) {
   letter-spacing: 4px;
   color: var(--cinnabar);
   margin-bottom: 6px;
+}
+
+.stats {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  list-style: none;
+}
+
+.stats li {
+  display: grid;
+  grid-template-columns: 2.4em minmax(0, 1fr) 2em;
+  align-items: center;
+  gap: 8px;
+}
+
+.sl {
+  font-family: var(--font-kai);
+  font-size: 12px;
+  color: var(--ink-2);
+}
+
+.bar {
+  height: 6px;
+  overflow: hidden;
+  background: rgba(171, 142, 95, 0.22);
+  border-radius: 1px;
+}
+
+.bar i {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, #c1483d, var(--cinnabar));
+  border-radius: 1px;
+}
+
+.sv {
+  font-family: var(--font-kai);
+  font-size: 12.5px;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink);
+  text-align: right;
+}
+
+.stat-note {
+  margin-top: 5px;
+  font-size: 10.5px;
+  color: var(--ink-3);
+  text-align: right;
+}
+
+.duo {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  list-style: none;
+}
+
+.chips li {
+  padding: 2px 8px;
+  font-family: var(--font-kai);
+  font-size: 12px;
+  color: var(--ink-2);
+  background: rgba(255, 253, 248, 0.7);
+  border: 1px solid var(--line-soft);
+  border-radius: 2px;
 }
 
 .rels {

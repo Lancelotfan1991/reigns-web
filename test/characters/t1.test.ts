@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { CHARACTERS, CHAR_MAP } from '../../src/data/characters'
+import { ATTRIBUTE_META, CHARACTERS, CHAR_MAP } from '../../src/data/characters'
 import { ALL_EVENTS } from '../../src/data/chapters'
 import { seedRandom } from '../game/helpers'
 
@@ -29,6 +29,37 @@ describe('T1 人物改革事迹与登场', () => {
         ...(char.track ?? []).flatMap((track) => track.unlessEvent ?? [])]
       for (const id of refs) expect(cards.has(id), `${char.id}: ${id}`).toBe(true)
       for (const fate of char.fates ?? []) expect(char.events).toContain(fate.event)
+    }
+  })
+
+  it('当加载人物谱时，43 人五维才具齐备且都在五的倍数刻度上', () => {
+    expect(ATTRIBUTE_META.map((a) => a.key)).toEqual([
+      'military',
+      'strategy',
+      'politics',
+      'economy',
+      'culture',
+    ])
+    expect(CHARACTERS.length).toBe(43)
+
+    for (const char of CHARACTERS) {
+      for (const { key } of ATTRIBUTE_META) {
+        const value = char.attributes[key]
+        expect(Number.isInteger(value), `${char.id}.${key}`).toBe(true)
+        expect(value, `${char.id}.${key}`).toBeGreaterThanOrEqual(0)
+        expect(value, `${char.id}.${key}`).toBeLessThanOrEqual(100)
+        expect(value % 5, `${char.id}.${key}=${value}`).toBe(0)
+      }
+
+      for (const [field, items] of [
+        ['expertise', char.expertise],
+        ['traits', char.traits],
+      ] as const) {
+        expect(items.length, `${char.id}.${field}`).toBeGreaterThanOrEqual(2)
+        expect(items.length, `${char.id}.${field}`).toBeLessThanOrEqual(3)
+        expect(new Set(items).size, `${char.id}.${field} 重复`).toBe(items.length)
+        for (const item of items) expect(item.length, `${char.id}.${field}`).toBeGreaterThan(0)
+      }
     }
   })
 

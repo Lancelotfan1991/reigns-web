@@ -1,12 +1,15 @@
 <script setup lang="ts">
-import { onMounted, onUnmounted } from 'vue'
+import { onMounted, onUnmounted, ref } from 'vue'
 import CharacterPanel from './CharacterPanel.vue'
+import CharSheet from './CharSheet.vue'
 import { useCharacters } from '../composables/useCharacters'
 import { useGame } from '../composables/useGame'
 import { navigate } from '../router'
+import type { CharView } from '../types'
 
 const game = useGame()
 const chars = useCharacters(game)
+const sheetView = ref<CharView | null>(null)
 const previousTitle = typeof document === 'undefined' ? '' : document.title
 
 function back() {
@@ -37,14 +40,16 @@ onUnmounted(() => {
     </header>
 
     <p class="lede">
-      人物状态随本局纪年与抉择变化：已登场者列其小传、关系与亲历之事，未登场者只存名册。
+      已登场者列其五维才具、所长与性情，点开可阅小传、关系与亲历之事；未登场者只存名册。才具只作品鉴，不参与成败判定。
     </p>
 
     <CharacterPanel
       :characters="chars.views.value"
       :year-text="game.yearText.value"
-      embedded
+      @select="sheetView = $event"
     />
+
+    <CharSheet v-if="sheetView" :view="sheetView" @close="sheetView = null" />
   </div>
 </template>
 

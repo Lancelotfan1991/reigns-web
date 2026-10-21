@@ -281,6 +281,22 @@ export enum Camp {
   Western = '西学',
 }
 
+/** 人物五维才具的键；只评能力，不评忠奸与立场 */
+export type CharacterAttributeKey = 'military' | 'strategy' | 'politics' | 'economy' | 'culture'
+
+export interface CharacterAttributes {
+  /** 统兵、练兵、攻守、边务 */
+  military: number
+  /** 战略筹画、用间、机变 */
+  strategy: number
+  /** 用人、行政、朝堂周旋 */
+  politics: number
+  /** 钱粮、理财、农工、商贸 */
+  economy: number
+  /** 学问、著述、文辞、西学 */
+  culture: number
+}
+
 export interface Relation {
   /** 对方人物姓名（与人物谱 name 一致） */
   to: string
@@ -325,6 +341,12 @@ export interface Character {
   camp: Camp
   /** 主要牵动的国势 */
   faction: ResourceKey
+  /** 五维才具：只作品鉴，不参与发牌与成败判定 */
+  attributes: CharacterAttributes
+  /** 所长：守城、火器、筹饷一类可数的本事 */
+  expertise: string[]
+  /** 性情：气质与行事风格，不是道德评分 */
+  traits: string[]
   /** 生年（公历），不详留空 */
   born?: number
   /** 强制登场年：开局即已知其人（不必等到卡面出现） */

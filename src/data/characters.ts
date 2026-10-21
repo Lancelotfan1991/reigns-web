@@ -1,6 +1,6 @@
 import { ALL_EVENTS } from './chapters'
 import { Camp, CharStatus, Flag, RelationType, Side } from '../types'
-import type { Character } from '../types'
+import type { Character, CharacterAttributeKey } from '../types'
 
 /**
  * 崇祯朝人物谱。
@@ -18,6 +18,9 @@ export const CHARACTERS: Character[] = [
     bio: '光宗第五子，母刘选侍早逝，育于宫中。在藩邸时已知魏阉势倾内外、边镇饷匮。即位之初，接见廷臣、批发章奏皆亲裁于御前。所承者海内积弱之局，所倚者亲断而已。',
     camp: Camp.InnerCourt,
     faction: 'court',
+    attributes: { military: 45, strategy: 60, politics: 60, economy: 55, culture: 80 },
+    expertise: ['亲裁', '节俭', '察吏'],
+    traits: ['勤勉', '多疑', '刚愎'],
     born: 1611,
     appearYear: 0,
     /** 皇帝亲裁每一张卡：直接从卡池派生，避免手写清单随卡池腐烂 */
@@ -48,6 +51,9 @@ export const CHARACTERS: Character[] = [
     bio: '光宗长子，万历四十八年即位，改元天启。性喜工艺，亲执斧锯绳墨，通宵不倦；章奏批红则委之内臣，魏忠贤、客氏由是用事。在位七年，辽左蹙地，党狱屡兴。天启七年八月病亟，召信王入见，遗命嗣位，无子。',
     camp: Camp.InnerCourt,
     faction: 'court',
+    attributes: { military: 10, strategy: 20, politics: 15, economy: 20, culture: 45 },
+    expertise: ['木作', '漆器', '营造'],
+    traits: ['疏懒', '好巧'],
     born: 1605,
     appearYear: 0,
     events: ['s-tuogu', 's-kesi'],
@@ -63,6 +69,9 @@ export const CHARACTERS: Character[] = [
     bio: '肃宁人，少贫，自宫入宫，与天启帝乳母客氏对食结援，遂擅禁中之权。附者立跻通显，忤者辄下诏狱，其党布于部院。新君即位，中外皆视其颜色，去留动关朝局。',
     camp: Camp.InnerCourt,
     faction: 'law',
+    attributes: { military: 10, strategy: 60, politics: 90, economy: 40, culture: 5 },
+    expertise: ['厂卫', '权术', '宫禁'],
+    traits: ['猜狠', '骄横'],
     born: 1568,
     events: ['s-tuogu', 's-gongnv', 's-qingci-dongchang', 's-kesi', 's-cui', 's-impeach-wei', 's-wei', 's-wei-rash', 's-wei-failed', 's-wei-stalled', 's-wei-coup', 's-ni-an'],
     fates: [
@@ -94,6 +103,9 @@ export const CHARACTERS: Character[] = [
     bio: '保定定兴人，本侯家妇。万历末入宫，哺育皇长孙由校，由是有宠。帝登极后封奉圣夫人，恩赉冠于宫中；宫中动息，多经其身达于外。新君初立，其去留即宫禁耳目所系。',
     camp: Camp.InnerCourt,
     faction: 'court',
+    attributes: { military: 5, strategy: 55, politics: 55, economy: 30, culture: 5 },
+    expertise: ['宫闱', '交通消息', '固宠'],
+    traits: ['贪宠', '机巧'],
     born: 1591,
     appearYear: 0,
     events: ['s-kesi', 's-impeach-wei'],
@@ -118,6 +130,9 @@ export const CHARACTERS: Character[] = [
     bio: '蓟州人，万历四十一年进士。巡按淮扬以贪黩被议，乃投魏忠贤门下，乞为养子，遂党附用事，兵政、言路皆归其掌握。士论羞之，而其去留亦系阉党势力消长。',
     camp: Camp.Civil,
     faction: 'law',
+    attributes: { military: 35, strategy: 60, politics: 80, economy: 50, culture: 65 },
+    expertise: ['党附', '言路', '兵部'],
+    traits: ['谄附', '贪黩'],
     appearYear: 0,
     events: ['s-cui', 's-impeach-wei', 's-wei', 's-wei-rash'],
     track: [
@@ -140,6 +155,9 @@ export const CHARACTERS: Character[] = [
     bio: '广东东莞人，万历四十七年进士。天启间自请出关，守宁远有功。崇祯元年奉召起复，平台召对，自任五年复辽，帝倾听之。其志专断任事，粮饷、号令皆期于必得，中外属目。',
     camp: Camp.Civil,
     faction: 'army',
+    attributes: { military: 90, strategy: 85, politics: 45, economy: 60, culture: 75 },
+    expertise: ['守城', '火器', '练兵'],
+    traits: ['刚锐', '敢任', '寡合'],
     born: 1584,
     events: ['s-zhaoqi', 's-pingtai', 's-yuan-dongjiang-memorial', 's-shuangdao', 'c-shuangdao', 's-shanhou-killed', 's-jisi', 's-jisi2', 'c-yuan-rumour-outside', 's-yuanshi', 's-yuan-liaodong', 's-yuan-songjin'],
     track: [
@@ -177,6 +195,9 @@ export const CHARACTERS: Character[] = [
     bio: '高阳人，万历三十二年进士，尝为帝师。天启二年经略辽东，恢复四百里，筑宁远、锦州诸城，关外防务自此有纲。为魏党所构，归里闲住。今虏骑薄畿，廷议思老臣知兵者，众望首及。',
     camp: Camp.Civil,
     faction: 'army',
+    attributes: { military: 85, strategy: 90, politics: 75, economy: 70, culture: 90 },
+    expertise: ['筑防', '练兵', '战略'],
+    traits: ['老成', '持重'],
     born: 1563,
     events: ['s-sunchengzong-tongzhou', 's-sunchengzong-dismissed', 's-sunchengzong-martyr'],
     track: [
@@ -204,6 +225,9 @@ export const CHARACTERS: Character[] = [
     bio: '宜兴人，天启二年进士，文吏而善骑射，喜言兵事。所练天雄军，选乡里子弟，绳以军法，号令严整，屡破流寇。历抚郧阳、总理东南军务，累迁宣大总督。入卫京畿之后，凡论边事，独以主战称。',
     camp: Camp.Civil,
     faction: 'army',
+    attributes: { military: 85, strategy: 75, politics: 50, economy: 60, culture: 80 },
+    expertise: ['练兵', '敢战', '治军'],
+    traits: ['刚烈', '孤忠'],
     born: 1600,
     events: ['s-luxiangsheng-war', 's-luxiangsheng-martyr'],
     track: [
@@ -227,6 +251,9 @@ export const CHARACTERS: Character[] = [
     bio: '浙江钱塘人，行伍出身。天启元年以兵袭镇江，报「镇江大捷」，遂开镇海外，官号东江。招辽民为兵，时时出没建州后方；岛中兵数、饷额俱由其一言而决，文臣不得过问。',
     camp: Camp.Liaodong,
     faction: 'army',
+    attributes: { military: 75, strategy: 70, politics: 35, economy: 55, culture: 30 },
+    expertise: ['游击', '东江', '谍报'],
+    traits: ['专擅', '枭桀'],
     born: 1576,
     events: ['s-dongjiang', 's-yuan-dongjiang-memorial', 's-shuangdao', 'c-shuangdao', 's-shanhou-killed', 's-shanhou-prisoned', 'c-shanhou'],
     track: [
@@ -254,6 +281,9 @@ export const CHARACTERS: Character[] = [
     bio: '建州左卫首领，以父祖十三副遗甲起兵，次第削平诸部，统一女真。万历四十七年萨尔浒一战破明四路之师，遂有辽沈，建元天命。天启六年攻宁远，为炮所创，未几崩于叆鸡堡，遗位付皇太极。',
     camp: Camp.Qing,
     faction: 'army',
+    attributes: { military: 90, strategy: 85, politics: 80, economy: 70, culture: 45 },
+    expertise: ['骑战', '统合诸部', '八旗'],
+    traits: ['雄鸷', '坚忍'],
     born: 1559,
     appearYear: 0,
     events: ['s-daiching'],
@@ -269,6 +299,9 @@ export const CHARACTERS: Character[] = [
     bio: '努尔哈赤第八子，天命十一年嗣汗位，与诸大贝勒并坐听政。抚辑宗室，整八旗为兵民合一之制；又联姻蒙古，收用汉官降人。用兵不专攻坚城，务取间道迂回，游骑尝及关内。',
     camp: Camp.Qing,
     faction: 'army',
+    attributes: { military: 85, strategy: 90, politics: 90, economy: 80, culture: 80 },
+    expertise: ['骑战', '用人', '汉化'],
+    traits: ['沉毅', '权变'],
     born: 1592,
     events: ['s-jisi', 's-jisi2', 'c-yuan-rumour-outside', 's-chaoxian', 'c-chaoxian-limited-fleet', 's-daiching', 's-jinzhou', 's-songjin', 's-yuan-songjin', 's-mihe', 's-mihe-leak', 's-htj', 'c-htj-no-treaty', 'g-peace', 'g-peace-ratify', 'c-peace-withdraw-talks', 'c-peace-close-deficit'],
     track: [
@@ -303,6 +336,9 @@ export const CHARACTERS: Character[] = [
     bio: '努尔哈赤第十四子，封睿亲王。少从征战，每先登陷阵，议政时诸王亦不能夺其言。今皇太极暴崩，未留遗命，其与肃亲王各挟重兵，相持于盛京。内外惶疑，大位之归，系于此数日。',
     camp: Camp.Qing,
     faction: 'army',
+    attributes: { military: 90, strategy: 85, politics: 80, economy: 65, culture: 50 },
+    expertise: ['骑战', '决断', '用人'],
+    traits: ['沉鸷', '果决'],
     born: 1612,
     events: ['s-htj', 'c-htj-no-treaty'],
     track: [
@@ -327,6 +363,9 @@ export const CHARACTERS: Character[] = [
     bio: '皇太极长子，封肃亲王。自少年统军从征，战功冠于宗室。帝崩无诏，诸王贝勒集议崇政殿，其党请立长，与睿亲王相持不下。开国以来未定之局，决于殿中数日之议。',
     camp: Camp.Qing,
     faction: 'army',
+    attributes: { military: 80, strategy: 60, politics: 50, economy: 40, culture: 40 },
+    expertise: ['骑战', '先登', '统军'],
+    traits: ['刚勇', '寡谋'],
     born: 1609,
     events: ['s-htj', 'c-htj-no-treaty'],
     track: [
@@ -348,6 +387,9 @@ export const CHARACTERS: Character[] = [
     bio: '蒙古末代大汗，元裔。部众携贰，东迫于建州，西不能辑右翼诸部。崇祯七年渡河西走，欲据青海，中道以痘殂于大草滩。传国玺归于皇太极，漠南蒙古之局自此大定。',
     camp: Camp.Steppe,
     faction: 'army',
+    attributes: { military: 65, strategy: 50, politics: 40, economy: 35, culture: 55 },
+    expertise: ['骑战', '察哈尔', '号令诸部'],
+    traits: ['骄矜', '寡断'],
     born: 1592,
     events: ['s-chaoxian', 'c-chaoxian-limited-fleet'],
     track: [{ year: 7, status: CharStatus.Dead, note: '史实：西奔青海，痘殇于途。传国玺入于皇太极' }],
@@ -362,6 +404,9 @@ export const CHARACTERS: Character[] = [
     bio: '陕西米脂人，本名李鸿基，充银川驿马夫。驿粮不足以赡家，又值秦中大旱，粟斗千钱，饥民蜂起。鸿基挺入流营，膂力善走，为饥卒所推。乱起于驿卒，而所连动者，秦晋之民。',
     camp: Camp.Rebels,
     faction: 'people',
+    attributes: { military: 85, strategy: 70, politics: 55, economy: 30, culture: 20 },
+    expertise: ['流动作战', '聚众', '骑兵'],
+    traits: ['枭悍', '坚忍'],
     born: 1606,
     events: ['s-hanzai', 's-yizhan', 's-licheng-officer', 'c-recruit-no-post', 's-chuangjiang', 's-annei', 's-tongguanyuan', 's-qinbing-ruwei', 's-shangluo-hunt', 'c-kaifeng-emergency-plan', 'c-peace-dividend-flood', 's-chuanti', 'g-recruit', 'g-guanzhong', 'c-guanzhong-recruit', 's-luoyang', 's-fuwang-mourning', 's-xiangyang-fall', 's-nanqian-li'],
     track: [
@@ -413,6 +458,9 @@ export const CHARACTERS: Character[] = [
     bio: '陕西安塞人，起自流营，剽疾善战。流营诸帅并起，而推其最强，官军合围数四，莫能制。甥李自成亦隶其部中。秦晋之交，凡言流寇，必首称闯王。',
     camp: Camp.Rebels,
     faction: 'people',
+    attributes: { military: 80, strategy: 60, politics: 35, economy: 25, culture: 15 },
+    expertise: ['流动作战', '聚众', '剽疾'],
+    traits: ['强悍', '轻脱'],
     events: ['s-chuangjiang'],
     track: [{ year: 9, status: CharStatus.Alive, note: '被擒于子午谷，械送京师候旨，生死尚待裁决' }],
     fates: [
@@ -430,6 +478,9 @@ export const CHARACTERS: Character[] = [
     bio: '延安卫人，行伍出身，起事于米脂，众号「八大王」，官军目为「黄虎」。为人狡黠多计，倏东倏西，官军屡围而辄逸。转战秦楚皖豫，部众动以数万。朝廷议剿议抚，咸以其为标的。',
     camp: Camp.Rebels,
     faction: 'people',
+    attributes: { military: 80, strategy: 80, politics: 50, economy: 35, culture: 25 },
+    expertise: ['流动作战', '用间', '剽疾'],
+    traits: ['狡黠', '猜忍'],
     born: 1606,
     events: ['s-annei', 's-xianzhong', 'g-gucheng-households', 'c-gucheng-households-claims', 'g-gucheng', 'c-gucheng-settlement-incomplete', 's-yang-dushi', 's-xiangyang-fall', 'c-xiangyang-fall'],
     track: [
@@ -455,6 +506,9 @@ export const CHARACTERS: Character[] = [
     bio: '贵州永宁卫人，万历三十五年进士。巡抚福建时招抚郑芝龙等海上之众，以知兵闻于朝。持议主宽，谓贼亦吾民，可饵以粮赏、散其党与，数遣使入贼营。',
     camp: Camp.Civil,
     faction: 'law',
+    attributes: { military: 45, strategy: 65, politics: 70, economy: 55, culture: 75 },
+    expertise: ['招抚', '海防', '用人'],
+    traits: ['宽纵', '寡断'],
     /** 受命总理军务、专办招抚之年：其人先于谷城之局见于朝端 */
     appearYear: 10,
     events: ['s-xianzhong', 'g-gucheng-households', 'c-gucheng-households-claims', 'g-gucheng', 'c-gucheng-settlement-incomplete', 's-yang-dushi'],
@@ -479,6 +533,9 @@ export const CHARACTERS: Character[] = [
     bio: '武陵人，万历三十八年进士。敏练有口辩，旁通兵事，以边才自任，在宣大任上数陈边计。其父鹤前督陕西，抚秦获谴；他独以知兵自效于边。',
     camp: Camp.Civil,
     faction: 'gold',
+    attributes: { military: 50, strategy: 90, politics: 85, economy: 80, culture: 80 },
+    expertise: ['筹饷', '围剿', '谋画'],
+    traits: ['果锐', '苛细'],
     born: 1588,
     events: ['s-duoqing', 'c-bingbu-xuren', 's-luxiangsheng-war', 's-annei', 'g-gucheng', 'c-gucheng-settlement-incomplete', 's-yang-dushi', 's-xiangyang-fall', 'c-xiangyang-fall', 's-yanghe-xudian'],
     track: [
@@ -519,6 +576,9 @@ export const CHARACTERS: Character[] = [
     bio: '武陵人，万历三十二年进士，杨嗣昌之父。崇祯二年继督陕西三边。见秦中旱饥，流亡载道，锐意以赈靖乱。然降众杂处，安置与粮饷皆无所出，抚事所恃者，惟赈济之一筹。',
     camp: Camp.Civil,
     faction: 'people',
+    attributes: { military: 35, strategy: 55, politics: 65, economy: 55, culture: 80 },
+    expertise: ['赈抚', '招亡', '边务'],
+    traits: ['宽厚', '迂缓'],
     born: 1570,
     events: ['s-yanghe-dushan', 's-yanghe-zhenfu', 's-yanghe-fuju', 's-yanghe-xudian'],
     track: [
@@ -544,6 +604,9 @@ export const CHARACTERS: Character[] = [
     bio: '山东临清人，行伍出身，目不识书，而骁勇善战，积功至总兵。所部半皆降卒流民，唯以剽掠自给。诸镇之中，其众最盛，亦最难制。倚饷为命，饷不至则兵不可用。',
     camp: Camp.Liaodong,
     faction: 'army',
+    attributes: { military: 80, strategy: 55, politics: 30, economy: 25, culture: 10 },
+    expertise: ['野战', '蓄兵', '骑战'],
+    traits: ['骄纵', '猜疑'],
     born: 1599,
     events: ['s-liangyu'],
     track: [
@@ -566,6 +629,9 @@ export const CHARACTERS: Character[] = [
     bio: '松江华亭人，万历三十五年进士。性持正，遇事敢言，颇留心边计。东江镇兵数、饷额虚冒之弊，朝论欲核其实，其议自龙锡发之。',
     camp: Camp.Civil,
     faction: 'court',
+    attributes: { military: 20, strategy: 55, politics: 75, economy: 50, culture: 85 },
+    expertise: ['铨选', '边饷', '持正'],
+    traits: ['刚介', '持正'],
     born: 1578,
     events: ['s-dongjiang'],
     track: [
@@ -590,6 +656,9 @@ export const CHARACTERS: Character[] = [
     bio: '山西代州人，万历四十七年进士，仪表魁杰，沉毅多谋。历永城知县、吏部郎中以材称。崇祯九年出抚陕西，简练卒伍，秦军由是可用。为治严急，而临敌敢任，不避险阻。',
     camp: Camp.Civil,
     faction: 'army',
+    attributes: { military: 85, strategy: 85, politics: 60, economy: 70, culture: 80 },
+    expertise: ['练兵', '设伏', '秦军'],
+    traits: ['沉毅', '严急'],
     born: 1593,
     events: ['s-chuangjiang', 's-tongguanyuan', 's-qinbing-ruwei', 's-shangluo-hunt', 's-chuanti', 'g-guanzhong', 'c-guanzhong-recruit', 'c-guanzhong-without-general', 's-chuanti-ready', 'c-chuanting-short-pay', 'c-chuanting-still-imprisoned', 's-finale-restore'],
     track: [
@@ -629,6 +698,9 @@ export const CHARACTERS: Character[] = [
     bio: '福建南安人，万历四十四年进士。自督粮参政起家，督兵剿寇，转战秦晋，累官三边总督，驭将严而临阵持重，流贼诸部屡挫于其手。清兵入塞，又奉诏率兵入卫。',
     camp: Camp.Civil,
     faction: 'army',
+    attributes: { military: 85, strategy: 85, politics: 75, economy: 70, culture: 80 },
+    expertise: ['剿抚', '用间', '治军'],
+    traits: ['沉鸷', '持重'],
     born: 1593,
     events: ['s-tongguanyuan', 's-qinbing-ruwei', 's-shangluo-hunt', 's-jinzhou', 's-songjin', 's-yuan-songjin', 'g-jinzhou', 'c-jinzhou-supply-broken', 'g-songjin', 'c-songjin-withdrawal'],
     track: [
@@ -657,6 +729,9 @@ export const CHARACTERS: Character[] = [
     bio: '四川长寿人，举人出身，以边才历官枢府。慷慨任事，通晓军事，帝倚之甚专。辽事、寇事两棘，凡有密办之务，多经其手，外廷不得与闻。',
     camp: Camp.Civil,
     faction: 'gold',
+    attributes: { military: 40, strategy: 70, politics: 75, economy: 65, culture: 70 },
+    expertise: ['兵部', '密议', '边务'],
+    traits: ['任事', '寡合'],
     events: ['s-mihe', 's-mihe-leak', 'g-peace', 'g-peace-ratify', 'c-peace-withdraw-talks'],
     fates: [
       { event: 's-mihe', side: Side.Left, status: CharStatus.Alive, note: '受密旨于帷中，与虏使往来十数番，不入阁票' },
@@ -683,6 +758,9 @@ export const CHARACTERS: Character[] = [
     bio: '辽东宁远人，袁崇焕部曲，自宁远诸役皆在行间。为人剽勇善守，部曲精锐，关宁诸将推其名。今大凌河筑城未毕，虏骑大至，围之数重，援师四集不得入。',
     camp: Camp.Liaodong,
     faction: 'army',
+    attributes: { military: 80, strategy: 65, politics: 40, economy: 45, culture: 25 },
+    expertise: ['守城', '关宁军', '骑战'],
+    traits: ['剽勇', '持重'],
     born: 1579,
     events: ['s-dalinghe-siege', 's-dalinghe-surrender', 's-jinzhou', 's-songjin', 's-yuan-songjin', 'g-guanning', 'c-guanning-escort-only', 'g-jinzhou', 'c-jinzhou-supply-broken', 'g-songjin', 'c-songjin-withdrawal'],
     track: [
@@ -711,6 +789,9 @@ export const CHARACTERS: Character[] = [
     bio: '辽东人，总兵吴襄之子。少习骑射，以父荫从军，积功历官宁远、山海关间，为关宁后起之最。所部劲卒当关外之冲，亲戚旧部多在军中，一举一动，人所瞩目。',
     camp: Camp.Liaodong,
     faction: 'army',
+    attributes: { military: 80, strategy: 70, politics: 55, economy: 45, culture: 40 },
+    expertise: ['骑战', '守关', '关宁军'],
+    traits: ['枭雄', '审势'],
     born: 1612,
     events: ['g-guanning', 'c-guanning-escort-only'],
     track: [
@@ -733,6 +814,9 @@ export const CHARACTERS: Character[] = [
     bio: '辽东人，毛文龙麾下参将。文龙既死，其众内渡，客居山东，与土兵杂处而饷不时给。今岁奉调北援，行至吴桥，天雨粮断，众心遂摇。',
     camp: Camp.Liaodong,
     faction: 'army',
+    attributes: { military: 70, strategy: 55, politics: 30, economy: 35, culture: 15 },
+    expertise: ['火器', '东江旧部', '水师'],
+    traits: ['悍勇', '怨望'],
     events: ['s-wuqiao', 'g-wuqiao-rations', 'c-wuqiao-rations-emergency', 'g-wuqiao', 'c-wuqiao-artisans', 'c-wuqiao-losses', 's-kong-defect'],
     track: [
       { year: 6, status: CharStatus.Alive, note: '史实：浮海投后金，随行炮队与水师为其所用', unlessEvent: ['g-wuqiao'] },
@@ -757,6 +841,9 @@ export const CHARACTERS: Character[] = [
     bio: '辽东人，自毛文龙麾下起行伍，积功为参将。文龙既死，东江之众内渡，客居登莱，粮饷不时；孔有德部哗变于吴桥，登州旋为乱军所据，耿仲明身在其间。海上舟师与炮匠多为东江旧人，去留一动，牵动朝廷两线战事。',
     camp: Camp.Liaodong,
     faction: 'army',
+    attributes: { military: 65, strategy: 50, politics: 30, economy: 30, culture: 15 },
+    expertise: ['水师', '炮械', '东江旧部'],
+    traits: ['狡黠', '观望'],
     born: 1610,
     appearYear: 5,
     events: [],
@@ -776,6 +863,9 @@ export const CHARACTERS: Character[] = [
     bio: '江苏嘉定人，举人出身，长于制器之学，以善铸炮闻于朝。崇祯初出抚登莱，欲用西洋之器练一军。登莱当辽人内渡之冲，客主百务，皆集于一身。',
     camp: Camp.Civil,
     faction: 'army',
+    attributes: { military: 45, strategy: 70, politics: 50, economy: 65, culture: 85 },
+    expertise: ['铸炮', '西学', '练兵'],
+    traits: ['迂阔', '任事'],
     born: 1581,
     events: ['s-wuqiao', 'g-wuqiao-protect', 'c-wuqiao-protect-scattered', 'g-wuqiao-rations', 'c-wuqiao-rations-emergency', 'g-wuqiao', 'c-wuqiao-artisans', 'c-wuqiao-losses', 'g-denglai-workshop'],
     track: [
@@ -809,6 +899,9 @@ export const CHARACTERS: Character[] = [
     bio: '澳门葡人，精于铳炮之学。以明廷礼聘，率善炮者北来，造炮授艺；京营、登莱诸局，皆有与焉。其人来客中土，所恃者炮法之精与夫铳台之制。',
     camp: Camp.Western,
     faction: 'army',
+    attributes: { military: 40, strategy: 60, politics: 20, economy: 35, culture: 75 },
+    expertise: ['铸炮', '铳台', '炮法'],
+    traits: ['沉静', '尽责'],
     born: 1580,
     events: ['s-wuqiao', 'g-wuqiao-protect', 'c-wuqiao-protect-scattered', 'g-wuqiao', 'c-wuqiao-artisans', 'c-wuqiao-losses', 'g-denglai-workshop'],
     track: [
@@ -839,6 +932,9 @@ export const CHARACTERS: Character[] = [
     bio: '内廷旧珰，久侍禁中，颇以知兵自命。崇祯间受命出监诸军，进退升黜，多从其意。督抚在军者每为所掣，奏报亦先过其目。',
     camp: Camp.InnerCourt,
     faction: 'army',
+    attributes: { military: 30, strategy: 50, politics: 55, economy: 40, culture: 20 },
+    expertise: ['监军', '内廷', '掣肘'],
+    traits: ['贪狡', '逢迎'],
     appearYear: 5,
     events: ['s-luxiangsheng-martyr'],
     track: [
@@ -856,6 +952,9 @@ export const CHARACTERS: Character[] = [
     bio: '南京内廷内臣，职在管用钱粮。久居南中，稔知富室、盐商积赀之厚。值边饷大绌，乃密疏御前，策括江南之财以佐九边。疏一入，中外侧目。',
     camp: Camp.InnerCourt,
     faction: 'law',
+    attributes: { military: 20, strategy: 55, politics: 50, economy: 65, culture: 35 },
+    expertise: ['管用钱粮', '括财', '南中'],
+    traits: ['刻薄', '迎合'],
     events: ['s-yingdi', 'g-revenue'],
     fates: [
       { event: 's-yingdi', side: Side.Left, status: CharStatus.Dead, seal: '斩', note: '斩于市以谢言路。自此内廷不敢言及富户' },
@@ -874,6 +973,9 @@ export const CHARACTERS: Character[] = [
     bio: '帝在藩邸时旧人，性谨厚，不预外事。既入大统，侍从御前，掌内廷传达，凡禁中动息、章奏出入多经其手。帝之左右，无更亲信者。',
     camp: Camp.InnerCourt,
     faction: 'court',
+    attributes: { military: 20, strategy: 45, politics: 40, economy: 35, culture: 35 },
+    expertise: ['内廷传达', '扈从', '谨守'],
+    traits: ['谨厚', '忠谨'],
     events: ['g-capital', 'c-capital-partial-backup', 's-finale', 's-finale-restore', 'g-finale-gewu', 'g-finale-incomplete'],
     // 从死由煤山抉择决定，不能在甲申终章尚待裁决时预先判死。
     fates: [
@@ -897,6 +999,9 @@ export const CHARACTERS: Character[] = [
     bio: '神宗第三子，母郑贵妃，宠冠诸子，国本之争十余年由之而起。既藩洛阳，赐田二万顷、盐引之利甲于宗藩。居洛二十余年，而中原流寇之焰，渐及河洛。',
     camp: Camp.ImperialClan,
     faction: 'gold',
+    attributes: { military: 10, strategy: 25, politics: 30, economy: 40, culture: 45 },
+    expertise: ['藩府', '积藏', '宗藩'],
+    traits: ['贪吝', '奢纵'],
     born: 1586,
     events: ['s-fuwang', 's-luoyang', 'c-luoyang-famine', 's-fuwang-mourning', 'g-luoyang-precedent'],
     track: [{ year: 14, status: CharStatus.Dead, note: '史实：洛阳城陷，为闯所戮，并鹿烹之，号「福禄酒」', unlessFlag: [Flag.招抚流亡] }],
@@ -919,6 +1024,9 @@ export const CHARACTERS: Character[] = [
     bio: '河南孟津人，天启二年进士，以书翰名于当代。性持重，守宗室之制宜。值辽饷告匮，户部议请福王出银助饷，铎独抗言：宗藩之产，不当以国用轻动，力争于廷。',
     camp: Camp.Civil,
     faction: 'law',
+    attributes: { military: 25, strategy: 60, politics: 70, economy: 50, culture: 95 },
+    expertise: ['书法', '词章', '宗藩之制'],
+    traits: ['持重', '守制'],
     born: 1592,
     events: ['s-fuwang'],
     track: [{ year: 25, status: CharStatus.Dead, note: '史实：南都倾覆后归清，官至礼部尚书；顺治九年卒' }],
@@ -932,6 +1040,9 @@ export const CHARACTERS: Character[] = [
     bio: '见天下驿递冒滥，州县疲于供亿，役夫坐困，往来者复借乘传之威横索夫马；乃上疏请裁十之三，谓岁可省银数十万两，以济度支。其言切于时用，疏下所司议。',
     camp: Camp.Civil,
     faction: 'law',
+    attributes: { military: 20, strategy: 65, politics: 70, economy: 65, culture: 80 },
+    expertise: ['驿政', '言官', '裁冗'],
+    traits: ['急切', '任怨'],
     events: ['s-yizhan'],
     track: [{ year: 4, status: CharStatus.Dead, note: '史实：裁驿招怨，攻者不已；未几，忧愤而卒' }],
     relations: [],
@@ -945,6 +1056,9 @@ export const CHARACTERS: Character[] = [
     bio: '帝之元子，母皇后周氏。既立东宫，渐长出阁讲学，礼度端重，中外属望。国步艰难之际，讲幄之仪与储位之制，渐次议及御前。',
     camp: Camp.ImperialClan,
     faction: 'law',
+    attributes: { military: 10, strategy: 30, politics: 35, economy: 30, culture: 55 },
+    expertise: ['储君', '讲学', '礼度'],
+    traits: ['端重', '仁弱'],
     born: 1629,
     events: ['g-succession', 'c-succession-unfinished', 's-nanqian-taizi', 's-finale'],
     fates: [
@@ -965,6 +1079,9 @@ export const CHARACTERS: Character[] = [
     bio: '上海人，万历三十二年进士。尝从利玛窦游，尽究天文、历算、火器、农政之学，志在会通中西。崇祯元年召还，时朝议方以旧历疏舛、将求新法。其学为时所重，修历、造器之议，多待其一言。',
     camp: Camp.Western,
     faction: 'law',
+    attributes: { military: 45, strategy: 65, politics: 60, economy: 85, culture: 95 },
+    expertise: ['西学', '农政', '火器'],
+    traits: ['务实', '沉静'],
     born: 1562,
     events: ['s-zhaoqi', 's-liju', 'g-institute', 'g-measure', 'g-seeds', 'g-manuals'],
     track: [{ year: 6, status: CharStatus.Dead, note: '史实：崇祯六年卒于官。历书成而身不及见' }],
@@ -979,6 +1096,9 @@ export const CHARACTERS: Character[] = [
     bio: '日耳曼人，耶稣会士。幼习天文、历算与制造之术，东渡入华数载，居京师，习华语。崇祯二年，徐光启荐之入历局，同译西书，以新法推算天行。',
     camp: Camp.Western,
     faction: 'gold',
+    attributes: { military: 25, strategy: 65, politics: 35, economy: 45, culture: 90 },
+    expertise: ['历算', '铸炮', '西学'],
+    traits: ['沉静', '坚忍'],
     born: 1591,
     events: ['s-liju'],
     track: [{ year: 39, status: CharStatus.Dead, note: '史实：易代后仍居京师，掌钦天监；康熙五年卒' }],
@@ -993,6 +1113,9 @@ export const CHARACTERS: Character[] = [
     bio: '意大利人，耶稣会士，继利玛窦任中国会长，久居中土，通华语。崇祯二年历局既开，同预修历之事，与徐光启、汤若望共译西法。其人守教规严，为中土教会所倚。',
     camp: Camp.Western,
     faction: 'law',
+    attributes: { military: 20, strategy: 60, politics: 40, economy: 45, culture: 85 },
+    expertise: ['西学', '华语', '教会'],
+    traits: ['守规', '固执'],
     born: 1559,
     events: ['s-liju'],
     track: [{ year: 27, status: CharStatus.Dead, note: '史实：居中国逾五十年；顺治十一年卒于北京' }],
@@ -1007,6 +1130,9 @@ export const CHARACTERS: Character[] = [
     bio: '福建泉州南安人。少走海上，习风涛之利，聚众往来日本、吕宋之间，商舶遍于闽粤。既隶军籍，积功至参将。东南水师之盛，诸将莫及；海道商利，半出入其手。',
     camp: Camp.Maritime,
     faction: 'gold',
+    attributes: { military: 80, strategy: 75, politics: 45, economy: 90, culture: 35 },
+    expertise: ['水师', '海贸', '航路'],
+    traits: ['枭雄', '投机'],
     born: 1604,
     events: ['g-shipping', 'c-shipping-charterless', 'g-customs', 'c-shipping-customs-port', 'c-shipping-audit-receipts', 'g-shipping-dispute', 'c-shipping-dispute-private'],
     track: [
@@ -1033,6 +1159,9 @@ export const CHARACTERS: Character[] = [
     bio: '宜兴人，万历四十一年进士，善揣摩上意，以机敏称于时。崇祯初入阁为首辅，寻罢归里居。今上念旧臣，召之再起，朝野以其敏练周旋，颇有属望。',
     camp: Camp.Civil,
     faction: 'court',
+    attributes: { military: 30, strategy: 75, politics: 90, economy: 60, culture: 90 },
+    expertise: ['权术', '词章', '揣摩'],
+    traits: ['机敏', '贪巧'],
     born: 1593,
     appearYear: 14,
     events: ['g-peace', 's-mihe'],
@@ -1070,6 +1199,15 @@ export const RELATION_META: Record<RelationType, { label: string; inverse: strin
   [RelationType.Rival]: { label: '政争', inverse: '政争', color: '#9a6b1f' },
   [RelationType.Suspicion]: { label: '猜忌', inverse: '见疑于上', color: '#6b4f86' },
 }
+
+/** 五维才具的题头；顺序即卡面与详情的行序 */
+export const ATTRIBUTE_META: { key: CharacterAttributeKey; label: string; hint: string }[] = [
+  { key: 'military', label: '军事', hint: '统兵、练兵、攻守' },
+  { key: 'strategy', label: '谋略', hint: '战略、用间、机变' },
+  { key: 'politics', label: '政治', hint: '用人、行政、朝堂' },
+  { key: 'economy', label: '经济', hint: '钱粮、理财、农工' },
+  { key: 'culture', label: '文教', hint: '学问、著述、西学' },
+]
 
 export const CAMP_ORDER: Camp[] = [
   Camp.InnerCourt,

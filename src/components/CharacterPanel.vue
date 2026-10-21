@@ -1,19 +1,16 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { RESOURCE_KEYS, RESOURCE_META, yearLabel } from '../composables/useGame'
-import { STATUS_META } from '../data/characters'
+import { RESOURCE_KEYS, RESOURCE_META } from '../composables/useGame'
+import { ATTRIBUTE_META, STATUS_META } from '../data/characters'
 import { portraitOf } from '../data/portraits'
-import { CharStatus } from '../types'
 import type { CharView, ResourceKey } from '../types'
 
 const props = defineProps<{
   characters: CharView[]
   yearText: string
-  /** 独立成页时去掉遮罩与册页外框，作为普通内容嵌入 */
-  embedded?: boolean
 }>()
 
-defineEmits<{ (e: 'close'): void }>()
+defineEmits<{ (e: 'select', view: CharView): void }>()
 
 type Filter = 'all' | ResourceKey
 
@@ -23,7 +20,6 @@ const FILTERS: { key: Filter; label: string }[] = [
 ]
 
 const filter = ref<Filter>('all')
-const openId = ref<string | null>(null)
 
 const byFilter = computed(() =>
   props.characters.filter((v) => filter.value === 'all' || v.char.faction === filter.value)
@@ -36,26 +32,17 @@ function countOf(key: Filter) {
   return props.characters.filter((v) => v.char.faction === key).length
 }
 
-function toggle(id: string) {
-  openId.value = openId.value === id ? null : id
-}
-
 function faceOf(id: string) {
   return portraitOf(id)?.sm
 }
 </script>
 
 <template>
-  <div class="overlay" :class="{ embedded }" @click.self="!embedded && $emit('close')">
-    <section class="panel" :class="{ embedded }">
-      <header v-if="!embedded" class="ph">
-        <div class="ph-titles">
-          <h2>朝中人物</h2>
-          <p>{{ yearText }} ・ 已登场 {{ appeared.length }} 人，未知 {{ pending.length }} 人</p>
-        </div>
-        <button class="close" aria-label="关闭" @click="$emit('close')">✕</button>
-      </header>
-
+  <section class="panel">
+    <header class="ph">
+      <p class="ph-meta">
+        {{ yearText }} ・ 已登场 {{ appeared.length }} 人，未登场 {{ pending.length }} 人
+      </p>
       <nav class="filters">
         <button
           v-for="f in FILTERS"
@@ -67,204 +54,101 @@ function faceOf(id: string) {
           {{ f.label }}<i>{{ countOf(f.key) }}</i>
         </button>
       </nav>
+    </header>
 
-      <div class="list">
-        <article
-          v-for="v in appeared"
-          :key="v.char.id"
-          class="row"
-          :class="{ open: openId === v.char.id }"
-        >
-          <button class="head" @click="toggle(v.char.id)">
-            <span class="ava" :class="v.status">
-              <img v-if="faceOf(v.char.id)" class="face" :src="faceOf(v.char.id)" :alt="v.char.name" />
-              <template v-else>{{ v.char.avatar }}</template>
-            </span>
-            <span class="who">
-              <span class="nm">{{ v.char.name }}</span>
-              <span v-if="v.char.alias" class="al">{{ v.char.alias }}</span>
-            </span>
-            <span class="meta">
-              <span class="st" :style="{ color: STATUS_META[v.status].color }">
-                {{ STATUS_META[v.status].label }}
-              </span>
-              <span v-if="v.age !== null" class="age">{{ v.age }} 岁</span>
-            </span>
-          </button>
+    <div v-if="appeared.length" class="grid">
+      <button
+        v-for="v in appeared"
+        :key="v.char.id"
+        class="char-card"
+        :aria-label="`查看${v.char.name}`"
+        @click="$emit('select', v)"
+      >
+        <span class="portrait" :class="v.status">
+          <img
+            v-if="faceOf(v.char.id)"
+            :src="faceOf(v.char.id)"
+            :alt="v.char.name"
+            loading="lazy"
+          />
+          <span v-else class="glyph">{{ v.char.avatar }}</span>
+          <span
+            class="stamp"
+            :style="{ color: STATUS_META[v.status].color, borderColor: STATUS_META[v.status].color }"
+          >
+            {{ STATUS_META[v.status].label }}
+          </span>
+        </span>
 
-          <p class="brief">
-            <span class="camp">{{ v.char.camp }}</span>
-            <span class="fac">
-              {{ RESOURCE_META[v.char.faction].icon }} {{ RESOURCE_META[v.char.faction].name }}
-            </span>
-            <span class="role">{{ v.char.role }}</span>
-          </p>
+        <span class="who">
+          <span class="nm-line">
+            <span class="nm">{{ v.char.name }}</span>
+            <span v-if="v.age !== null" class="age">{{ v.age }} 岁</span>
+          </span>
+          <span v-if="v.char.alias" class="al">{{ v.char.alias }}</span>
+        </span>
 
-          <div v-if="openId === v.char.id" class="detail">
-            <div class="block">
-              <h3>小传</h3>
-              <p class="bio">{{ v.char.bio }}</p>
-            </div>
+        <span class="meta">
+          <span class="tag">{{ v.char.camp }}</span>
+          <span class="tag fac">
+            {{ RESOURCE_META[v.char.faction].icon }} {{ RESOURCE_META[v.char.faction].name }}
+          </span>
+        </span>
 
-            <p v-if="v.note" class="note">{{ v.note }}</p>
+        <span class="stats">
+          <span v-for="a in ATTRIBUTE_META" :key="a.key" class="stat" :title="a.hint">
+            <span class="sl">{{ a.label }}</span>
+            <span class="bar"><i :style="{ width: `${v.char.attributes[a.key]}%` }"></i></span>
+            <span class="sv">{{ v.char.attributes[a.key] }}</span>
+          </span>
+        </span>
+      </button>
+    </div>
 
-            <div v-if="v.relations.length" class="block">
-              <h3>关系</h3>
-              <ul class="rels">
-                <li v-for="(r, i) in v.relations" :key="i">
-                  <span class="rl" :style="{ color: r.color }">{{ r.label }}</span>
-                  <span class="rn">{{ r.target.name }}</span>
-                </li>
-              </ul>
-            </div>
+    <div v-if="pending.length" class="sep">尚未登场</div>
+    <div v-if="pending.length" class="grid">
+      <article v-for="v in pending" :key="v.char.id" class="char-card dim">
+        <span class="portrait locked">
+          <span class="glyph">❔</span>
+        </span>
+        <span class="who">
+          <span class="nm-line">
+            <span class="nm">{{ v.char.name }}</span>
+          </span>
+          <span v-if="v.char.alias" class="al">{{ v.char.alias }}</span>
+        </span>
+        <span class="meta">
+          <span class="tag">{{ v.char.camp }}</span>
+        </span>
+        <span class="locked-note">尚未登场</span>
+      </article>
+    </div>
 
-            <div v-if="v.deeds.length" class="block">
-              <h3>已亲历之事</h3>
-              <ul class="deeds">
-                <li v-for="d in v.deeds" :key="d.eventId">
-                  <span class="dy">{{ yearLabel(d.year) }}</span>
-                  <span class="dt">{{ d.title }}</span>
-                  <span class="dl" :class="d.side ?? 'todo'">{{ d.label }}</span>
-                </li>
-              </ul>
-            </div>
-          </div>
-        </article>
-
-        <div v-if="pending.length" class="sep">尚未登场</div>
-        <article v-for="v in pending" :key="v.char.id" class="row dim">
-          <div class="head">
-            <span class="ava">❔</span>
-            <span class="who">
-              <span class="nm">{{ v.char.name }}</span>
-              <span v-if="v.char.alias" class="al">{{ v.char.alias }}</span>
-            </span>
-            <span class="meta">
-              <span class="st" :style="{ color: STATUS_META[CharStatus.Hidden].color }">
-                {{ STATUS_META[CharStatus.Hidden].label }}
-              </span>
-            </span>
-          </div>
-          <p class="brief">
-            <span class="camp">{{ v.char.camp }}</span>
-            <span class="fac">
-              {{ RESOURCE_META[v.char.faction].icon }} {{ RESOURCE_META[v.char.faction].name }}
-            </span>
-          </p>
-        </article>
-
-        <p class="foot">未发生之事不入此册。人事如何收场，取决于你每一次滑动。</p>
-      </div>
-    </section>
-  </div>
+    <p class="foot">未发生之事不入此册。人事如何收场，取决于你每一次滑动。</p>
+  </section>
 </template>
 
 <style scoped>
-.overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 30;
-  background: rgba(66, 52, 34, 0.42);
-  backdrop-filter: blur(2px);
-  display: flex;
-  justify-content: center;
-}
-
-/* 人物志独立成页：册页拆去遮罩，作为页面内容铺开 */
-.overlay.embedded {
-  position: static;
-  inset: auto;
-  z-index: auto;
-  display: block;
-  background: none;
-  backdrop-filter: none;
-}
-
-/* 一部名册：册页底色与装裱边 */
 .panel {
   width: 100%;
-  max-width: 460px;
-  height: 100dvh;
-  display: flex;
-  flex-direction: column;
-  padding-top: env(safe-area-inset-top);
-  background-color: #f4ead8;
-  background-image: var(--grain);
-  border-left: 1px solid var(--line);
-  border-right: 1px solid var(--line);
-  box-shadow: 0 0 34px rgba(41, 33, 26, 0.3);
-  animation: rise 0.22s ease;
-}
-
-.overlay.embedded .panel {
-  max-width: 980px;
-  height: auto;
-  margin: 0 auto;
-  padding-top: 0;
-  border: 1.5px solid var(--line);
-  border-radius: 4px;
-  box-shadow: 0 10px 28px rgba(41, 33, 26, 0.14);
-  animation: none;
-}
-
-.overlay.embedded .list {
-  flex: none;
-  overflow: visible;
-  padding: 6px 18px 20px;
-}
-
-.overlay.embedded .filters {
-  padding: 12px 18px;
-}
-
-@keyframes rise {
-  from {
-    transform: translateY(18px);
-    opacity: 0.4;
-  }
 }
 
 .ph {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 16px 18px 10px;
+  padding-bottom: 10px;
   border-bottom: 1px solid var(--line-soft);
 }
 
-.ph-titles h2 {
-  font-family: var(--font-kai);
-  font-size: 22px;
-  font-weight: 700;
-  letter-spacing: 6px;
-  color: var(--ink);
-}
-
-.ph-titles p {
-  margin-top: 4px;
+.ph-meta {
   font-size: 11.5px;
   color: var(--ink-3);
-}
-
-.close {
-  flex: none;
-  width: 32px;
-  height: 32px;
-  border: 1.5px solid var(--cinnabar);
-  border-radius: 50%;
-  background: rgba(255, 253, 248, 0.7);
-  color: var(--cinnabar);
-  font-size: 14px;
-  cursor: pointer;
 }
 
 .filters {
   display: flex;
   gap: 6px;
-  padding: 10px 14px;
+  margin-top: 9px;
   overflow-x: auto;
-  border-bottom: 1px solid var(--line-soft);
+  -webkit-overflow-scrolling: touch;
 }
 
 .chip {
@@ -297,72 +181,104 @@ function faceOf(id: string) {
   color: rgba(251, 244, 230, 0.75);
 }
 
-.list {
-  flex: 1;
-  min-height: 0;
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
-  padding: 4px 18px calc(18px + env(safe-area-inset-bottom));
+.grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  padding-top: 14px;
 }
 
-.row {
-  border-bottom: 1px solid rgba(171, 142, 95, 0.28);
-  padding: 10px 0;
-}
-
-.row.dim {
-  opacity: 0.52;
-}
-
-.head {
+.char-card {
   display: flex;
-  align-items: center;
-  gap: 10px;
+  flex-direction: column;
   width: 100%;
-  padding: 0;
-  background: none;
-  border: none;
+  min-width: 0;
+  padding: 7px 7px 9px;
+  font: inherit;
   text-align: left;
+  color: inherit;
+  background: rgba(255, 252, 244, 0.74);
+  border: 1px solid var(--line-soft);
+  border-radius: 4px;
   cursor: pointer;
+  transition:
+    border-color 0.16s ease,
+    box-shadow 0.16s ease,
+    transform 0.16s ease;
 }
 
-.ava {
-  flex: none;
-  width: 34px;
-  height: 34px;
-  /* 圆角而非正圆：正圆会切掉展角乌纱的帽翅，那是文官在 34px 上唯一的剪影线索 */
-  border-radius: 8px;
-  overflow: hidden;
-  background: rgba(255, 252, 244, 0.8);
-  border: 1px solid var(--line);
+.char-card:hover,
+.char-card:focus-visible {
+  border-color: var(--cinnabar);
+  box-shadow: 0 8px 18px rgba(41, 33, 26, 0.12);
+  transform: translateY(-1px);
+}
+
+.portrait {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 17px;
+  width: 100%;
+  aspect-ratio: 1;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 3px;
+  background: rgba(255, 252, 244, 0.8);
 }
 
-.face {
+.portrait img {
+  display: block;
   width: 100%;
   height: 100%;
   object-fit: cover;
-  display: block;
 }
 
-.ava.死 {
+.portrait.死 img {
   filter: grayscale(1);
-  opacity: 0.66;
+  opacity: 0.7;
 }
 
-.ava.病 {
+.portrait.病 {
   border-color: var(--ochre);
 }
 
+.glyph {
+  font-size: clamp(30px, 6vw, 44px);
+}
+
+.stamp {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 21px;
+  height: 21px;
+  padding: 0 4px;
+  font-family: var(--font-kai);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+  background: rgba(251, 246, 236, 0.9);
+  border: 1px solid;
+  border-radius: 2px;
+}
+
 .who {
-  flex: 1;
-  min-width: 0;
   display: flex;
   flex-direction: column;
-  line-height: 1.35;
+  gap: 1px;
+  min-height: 35px;
+  margin-top: 7px;
+}
+
+.nm-line {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 6px;
 }
 
 .nm {
@@ -370,179 +286,125 @@ function faceOf(id: string) {
   font-size: 17px;
   font-weight: 700;
   letter-spacing: 1px;
+  line-height: 1.25;
   color: var(--ink);
-}
-
-.al {
-  font-size: 11.5px;
-  color: var(--ink-3);
-}
-
-.meta {
-  flex: none;
-  text-align: right;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  line-height: 1.3;
-}
-
-.st {
-  font-family: var(--font-kai);
-  font-size: 13px;
-  font-weight: 700;
 }
 
 .age {
-  font-size: 11.5px;
+  flex: none;
+  font-size: 10.5px;
   color: var(--ink-3);
 }
 
-.brief {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 7px;
-  margin-top: 6px;
-  padding-left: 44px;
-  font-size: 12px;
+.al {
+  overflow: hidden;
+  font-size: 11px;
+  line-height: 1.35;
   color: var(--ink-3);
-}
-
-.camp,
-.fac {
-  padding: 1px 7px;
-  border: 1px solid var(--line-soft);
-  border-radius: 2px;
-  background: rgba(255, 253, 248, 0.6);
+  text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.role {
-  flex: 1;
-  min-width: 120px;
-}
-
-.detail {
-  margin: 9px 0 2px 44px;
-  padding: 10px 12px;
-  background: rgba(168, 50, 42, 0.05);
-  border: 1px dashed rgba(168, 50, 42, 0.3);
-  border-radius: 3px;
-}
-
-.bio {
-  font-family: var(--font-kai);
-  font-size: 13.5px;
-  line-height: 1.85;
-  color: var(--ink-2);
-}
-
-.note {
-  font-family: var(--font-kai);
-  font-size: 13.5px;
-  line-height: 1.85;
-  color: var(--ink-2);
-}
-
-.block + .block {
-  margin-top: 12px;
-}
-
-.note + .block {
-  margin-top: 12px;
-}
-
-.block + .note {
-  margin-top: 12px;
-}
-
-.block h3 {
-  font-size: 10.5px;
-  letter-spacing: 4px;
-  color: var(--cinnabar);
-  margin-bottom: 6px;
-}
-
-.rels {
+.meta {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
-  list-style: none;
+  gap: 4px;
+  margin-top: 4px;
 }
 
-.rels li {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  padding: 3px 8px;
+.tag {
+  padding: 1px 6px;
+  font-size: 10.5px;
+  color: var(--ink-3);
+  white-space: nowrap;
+  background: rgba(255, 253, 248, 0.6);
   border: 1px solid var(--line-soft);
   border-radius: 2px;
-  background: rgba(255, 253, 248, 0.75);
-  font-size: 12px;
 }
 
-.rl {
-  font-family: var(--font-kai);
-  font-weight: 700;
-}
-
-.rn {
-  color: var(--ink-2);
-}
-
-.deeds {
-  list-style: none;
-}
-
-.deeds li {
+.stats {
   display: flex;
-  align-items: baseline;
-  gap: 8px;
-  padding: 4px 0;
-  font-size: 12.5px;
-  border-top: 1px dotted rgba(171, 142, 95, 0.5);
+  flex-direction: column;
+  gap: 3px;
+  margin-top: 8px;
 }
 
-.deeds li:first-child {
-  border-top: none;
+.stat {
+  display: grid;
+  grid-template-columns: 2.1em minmax(0, 1fr) 1.9em;
+  align-items: center;
+  gap: 5px;
 }
 
-.dy {
-  flex: none;
+.sl {
   font-family: var(--font-kai);
   font-size: 11px;
-  letter-spacing: 1px;
-  color: var(--cinnabar);
+  color: var(--ink-3);
 }
 
-.dt {
-  flex: none;
-  color: var(--ink);
-  font-weight: 700;
+.bar {
+  height: 5px;
+  overflow: hidden;
+  background: rgba(171, 142, 95, 0.22);
+  border-radius: 1px;
 }
 
-.dl {
-  flex: 1;
+.bar i {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, #c1483d, var(--cinnabar));
+  border-radius: 1px;
+}
+
+.sv {
+  font-family: var(--font-kai);
+  font-size: 11.5px;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-2);
   text-align: right;
+}
+
+.char-card.dim {
+  cursor: default;
+  opacity: 0.55;
+}
+
+.char-card.dim:hover {
+  border-color: var(--line-soft);
+  box-shadow: none;
+  transform: none;
+}
+
+/* 未登场者作卡背：压成 5:3，免得几十张空牌把名册拖成一条长卷 */
+.portrait.locked {
+  aspect-ratio: 5 / 3;
+  border-style: dashed;
+  background:
+    repeating-linear-gradient(
+      -45deg,
+      rgba(171, 142, 95, 0.08) 0 6px,
+      rgba(171, 142, 95, 0.02) 6px 12px
+    ),
+    rgba(255, 252, 244, 0.6);
+}
+
+.portrait.locked .glyph {
+  font-size: clamp(24px, 4vw, 32px);
+}
+
+.locked-note {
+  margin-top: 8px;
+  padding-top: 8px;
+  font-family: var(--font-kai);
+  font-size: 11px;
+  letter-spacing: 3px;
   color: var(--ink-3);
-}
-
-.dl.左 {
-  color: var(--cinnabar);
-}
-
-.dl.右 {
-  color: var(--jade);
-}
-
-.dl.todo {
-  color: var(--ink-3);
-  font-style: italic;
+  text-align: center;
+  border-top: 1px dashed var(--line-soft);
 }
 
 .sep {
-  margin: 18px 0 4px;
+  margin: 24px 0 2px;
   font-family: var(--font-kai);
   font-size: 11.5px;
   letter-spacing: 5px;
@@ -551,18 +413,35 @@ function faceOf(id: string) {
 }
 
 .foot {
-  margin: 18px 6px 0;
+  margin: 22px 6px 0;
   font-size: 11.5px;
   line-height: 1.8;
   color: var(--ink-3);
   text-align: center;
 }
 
+@media (max-width: 900px) {
+  .grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 9px;
+    padding-top: 12px;
+  }
+
+  .nm {
+    font-size: 16px;
+  }
+}
+
 /* 窄屏让五档筛选正好一行放平，避免末位被切 */
 @media (max-width: 400px) {
   .filters {
     gap: 4px;
-    padding: 10px 11px;
   }
 
   .chip {
