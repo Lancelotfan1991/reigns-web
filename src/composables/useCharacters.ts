@@ -27,11 +27,16 @@ function adOf(year: number): number {
   return 1627 + year
 }
 
+interface CharacterViewOptions {
+  /** 人物志全览：未到登场年的人物也按史实最早登场年解锁，不写入本局进度 */
+  revealAll?: boolean
+}
+
 /**
  * 人物状态派生：史实轨迹为底，玩家已做的抉择在其发生年份覆盖轨迹，
  * 同年冲突时以抉择为准；未登场的只保留姓名与阵营。
  */
-export function useCharacters(game: Game) {
+export function useCharacters(game: Game, options: CharacterViewOptions = {}) {
   const now = game.year
   const decided = game.decisionByEvent
   const seen = game.seenEventIds
@@ -47,6 +52,17 @@ export function useCharacters(game: Game) {
       if (year === null || at < year) year = at
     }
     return year
+  }
+
+  /** 人物志用：取史实轨迹里的最早登场年，不看本局是否已翻到 */
+  function historicalAppearYearOf(id: string): number {
+    const ch = CHAR_MAP[id]
+    let year = ch.appearYear ?? Number.POSITIVE_INFINITY
+    for (const eventId of ch.events) {
+      const at = EVENT_META[eventId]?.year
+      if (at !== undefined && at < year) year = at
+    }
+    return Number.isFinite(year) ? year : 0
   }
 
   function fateOf(id: string, appear: number): Fate {
@@ -86,7 +102,7 @@ export function useCharacters(game: Game) {
 
   const views = computed<CharView[]>(() => {
     const list = CHARACTERS.map<CharView>((ch) => {
-      const appear = appearYearOf(ch.id)
+      const appear = options.revealAll ? historicalAppearYearOf(ch.id) : appearYearOf(ch.id)
       if (appear === null) {
         return {
           char: ch,
@@ -100,7 +116,8 @@ export function useCharacters(game: Game) {
       }
       const { status, note, at } = fateOf(ch.id, appear)
       const baseYear = status === CharStatus.Dead ? at : now.value
-      const age = ch.born === undefined ? null : Math.max(0, adOf(baseYear) - ch.born)
+      const years = ch.born === undefined ? null : adOf(baseYear) - ch.born
+      const age = years !== null && years >= 0 ? years : null
       const relations = [
         ...ch.relations.map((r) => {
           const meta = RELATION_META[r.type]

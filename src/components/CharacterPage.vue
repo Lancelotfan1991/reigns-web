@@ -8,7 +8,7 @@ import { navigate } from '../router'
 import type { CharView } from '../types'
 
 const game = useGame()
-const chars = useCharacters(game)
+const chars = useCharacters(game, { revealAll: true })
 const sheetView = ref<CharView | null>(null)
 const previousTitle = typeof document === 'undefined' ? '' : document.title
 
@@ -40,7 +40,7 @@ onUnmounted(() => {
     </header>
 
     <p class="lede">
-      已登场者列其五维才具、所长与性情，点开可阅小传、关系与亲历之事；未登场者只存名册。才具只作品鉴，不参与成败判定。
+      人物尽数在册，按史实轨迹与本局抉择显示当前处境；点开可阅小传、关系与亲历之事。才具只作品鉴，不参与成败判定。
     </p>
 
     <CharacterPanel

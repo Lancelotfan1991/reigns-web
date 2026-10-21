@@ -41,7 +41,7 @@ function faceOf(id: string) {
   <section class="panel">
     <header class="ph">
       <p class="ph-meta">
-        {{ yearText }} ・ 已登场 {{ appeared.length }} 人，未登场 {{ pending.length }} 人
+        {{ yearText }} ・ 共 {{ characters.length }} 人
       </p>
       <nav class="filters">
         <button
@@ -124,7 +124,7 @@ function faceOf(id: string) {
       </article>
     </div>
 
-    <p class="foot">未发生之事不入此册。人事如何收场，取决于你每一次滑动。</p>
+    <p class="foot">处境随编年与本局抉择推演，人事如何收场，取决于你每一次滑动。</p>
   </section>
 </template>
 
