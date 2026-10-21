@@ -18,6 +18,10 @@ let activePointer: number | null = null
 let startX = 0
 let startY = 0
 let axisLocked: 'x' | 'y' | null = null
+let touchActive = false
+let touchAxis: 'x' | 'y' | null = null
+let touchStartX = 0
+let touchStartY = 0
 
 const hasPrevious = computed(() => currentCardIndex.value > 0)
 const hasNext = computed(() => currentCardIndex.value < props.reform.cards.length - 1)
@@ -68,6 +72,7 @@ function ordinalOf(index: number): number {
 }
 
 function onPointerDown(event: PointerEvent) {
+  if (event.pointerType === 'touch') return
   if (event.pointerType === 'mouse' && event.button !== 0) return
   if (props.reform.cards.length < 2) return
   activePointer = event.pointerId
@@ -104,6 +109,52 @@ function onPointerMove(event: PointerEvent) {
 function endDrag(event: PointerEvent) {
   if (event.pointerId !== activePointer) return
   activePointer = null
+  if (!isDragging.value) {
+    dragOffset.value = 0
+    return
+  }
+  isDragging.value = false
+  const threshold = 48
+  if (dragOffset.value <= -threshold) nextCard()
+  else if (dragOffset.value >= threshold) previousCard()
+  dragOffset.value = 0
+}
+
+function onTouchStart(event: TouchEvent) {
+  if (event.touches.length !== 1 || props.reform.cards.length < 2) return
+  const touch = event.touches[0]
+  touchActive = true
+  touchAxis = null
+  touchStartX = touch.clientX
+  touchStartY = touch.clientY
+  dragOffset.value = 0
+  isDragging.value = false
+}
+
+function onTouchMove(event: TouchEvent) {
+  if (!touchActive || event.touches.length !== 1) return
+  const touch = event.touches[0]
+  const dx = touch.clientX - touchStartX
+  const dy = touch.clientY - touchStartY
+  if (!touchAxis) {
+    if (Math.abs(dx) < 8 && Math.abs(dy) < 8) return
+    touchAxis = Math.abs(dx) > Math.abs(dy) ? 'x' : 'y'
+    if (touchAxis === 'y') {
+      touchActive = false
+      return
+    }
+    isDragging.value = true
+  }
+  if (touchAxis !== 'x') return
+  if (event.cancelable) event.preventDefault()
+  const atStart = currentCardIndex.value === 0 && dx > 0
+  const atEnd = currentCardIndex.value === props.reform.cards.length - 1 && dx < 0
+  dragOffset.value = atStart || atEnd ? dx * 0.25 : dx
+}
+
+function onTouchEnd() {
+  if (!touchActive) return
+  touchActive = false
   if (!isDragging.value) {
     dragOffset.value = 0
     return
@@ -155,6 +206,10 @@ function formatGold(value: number): string {
           @pointermove="onPointerMove"
           @pointerup="endDrag"
           @pointercancel="endDrag"
+          @touchstart="onTouchStart"
+          @touchmove="onTouchMove"
+          @touchend="onTouchEnd"
+          @touchcancel="onTouchEnd"
         >
           <div class="carousel-track" :style="trackStyle">
             <div

@@ -4,7 +4,7 @@ import { mount } from '@vue/test-utils'
 import ReformPage from '../../src/components/ReformPage.vue'
 import { REFORM_BROWSE_DATA } from '../../src/data/reformBrowse'
 
-it('打开改革后按卡轮播：编号、翻页、圆点跳转与滑动均正确', async () => {
+it('打开改革后按卡轮播：编号、翻页、圆点跳转与触摸滑动均正确', async () => {
   const wrapper = mount(ReformPage)
   try {
     const reform = REFORM_BROWSE_DATA[0]
@@ -26,10 +26,21 @@ it('打开改革后按卡轮播：编号、翻页、圆点跳转与滑动均正�
     expect(wrapper.get('.nav-btn.next').attributes('disabled')).toBeDefined()
 
     const viewport = wrapper.get('.carousel-viewport')
-    await viewport.trigger('pointerdown', { pointerId: 1, pointerType: 'touch', clientX: 180, clientY: 300 })
-    await viewport.trigger('pointermove', { pointerId: 1, pointerType: 'touch', clientX: 300, clientY: 302 })
-    await viewport.trigger('pointerup', { pointerId: 1, pointerType: 'touch', clientX: 300, clientY: 302 })
+
+    await viewport.trigger('pointerdown', { pointerId: 1, pointerType: 'mouse', clientX: 180, clientY: 300 })
+    await viewport.trigger('pointermove', { pointerId: 1, pointerType: 'mouse', clientX: 300, clientY: 302 })
+    await viewport.trigger('pointerup', { pointerId: 1, pointerType: 'mouse', clientX: 300, clientY: 302 })
     expect(wrapper.get('.card-indicator').text()).toBe(`5 / ${reform.cards.length}`)
+
+    await viewport.trigger('touchstart', { touches: [{ clientX: 300, clientY: 300 }] })
+    await viewport.trigger('touchmove', { touches: [{ clientX: 160, clientY: 302 }] })
+    await viewport.trigger('touchend')
+    expect(wrapper.get('.card-indicator').text()).toBe(`6 / ${reform.cards.length}`)
+
+    await viewport.trigger('touchstart', { touches: [{ clientX: 300, clientY: 300 }] })
+    await viewport.trigger('touchmove', { touches: [{ clientX: 280, clientY: 302 }] })
+    await viewport.trigger('touchend')
+    expect(wrapper.get('.card-indicator').text()).toBe(`6 / ${reform.cards.length}`)
 
     await wrapper.get('.close-btn').trigger('click')
     await wrapper.findAll('.reform-card')[1].trigger('click')
