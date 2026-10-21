@@ -310,23 +310,29 @@ function formatGold(value: number): string {
   flex-direction: column;
   min-height: 0;
   padding: 16px;
-  overflow-y: auto;
+  overflow: hidden;
 }
 
 .card-wrapper {
   flex: 1;
   display: flex;
   flex-direction: column;
+  min-height: 0;
+  position: relative;
 }
 
 /* 改革卡片 */
 .reform-card {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
   background: rgba(255, 253, 248, 0.7);
   border: 1.5px solid var(--line-soft);
   border-radius: 5px;
   padding: 16px;
   box-shadow: 0 4px 12px rgba(41, 33, 26, 0.1);
   animation: card-slide 0.3s ease;
+  overflow-y: auto;
 }
 
 @keyframes card-slide {
