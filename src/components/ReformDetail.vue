@@ -202,7 +202,7 @@ function formatGold(value: number): string {
 .reform-detail {
   width: 100%;
   max-width: 420px;
-  max-height: 90dvh;
+  height: 80vh;
   display: flex;
   flex-direction: column;
   background:
@@ -310,7 +310,7 @@ function formatGold(value: number): string {
   flex-direction: column;
   min-height: 0;
   padding: 16px;
-  overflow: hidden;
+  background: rgba(255, 253, 248, 0.3);
 }
 
 .card-wrapper {
@@ -318,7 +318,6 @@ function formatGold(value: number): string {
   display: flex;
   flex-direction: column;
   min-height: 0;
-  position: relative;
 }
 
 /* 改革卡片 */
@@ -326,7 +325,7 @@ function formatGold(value: number): string {
   flex: 1;
   display: flex;
   flex-direction: column;
-  background: rgba(255, 253, 248, 0.7);
+  background: rgba(255, 253, 248, 0.9);
   border: 1.5px solid var(--line-soft);
   border-radius: 5px;
   padding: 16px;
