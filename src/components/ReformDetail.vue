@@ -61,93 +61,99 @@ function formatGold(value: number): string {
         <button class="close-btn" @click="close" title="关闭">×</button>
       </header>
 
-      <!-- 卡片滑动区域 -->
-      <div class="card-container">
-        <div class="card-wrapper">
-          <!-- 步骤卡 -->
-          <div v-if="currentCard.kind === 'step'" class="reform-card step-card">
-            <div class="card-header">
-              <div class="card-badge">步骤 {{ currentCardIndex + 1 }}</div>
-              <h2 class="card-title">{{ currentCard.title }}</h2>
-            </div>
-            <p class="card-body">{{ currentCard.body }}</p>
-            
-            <div class="card-stats">
-              <div class="stat-item">
-                <span class="stat-label">财力</span>
-                <span class="stat-value">{{ formatGold(currentCard.costGold ?? 0) }}两</span>
+      <!-- 卡片轮播区域 -->
+      <div class="card-carousel">
+        <div class="carousel-track" :style="{ transform: `translateX(-${currentCardIndex * 100}%)` }">
+          <div
+            v-for="(card, index) in reform.cards"
+            :key="card.id"
+            class="carousel-slide"
+          >
+            <!-- 步骤卡 -->
+            <div v-if="card.kind === 'step'" class="reform-card step-card">
+              <div class="card-header">
+                <div class="card-badge">步骤 {{ index + 1 }}</div>
+                <h2 class="card-title">{{ card.title }}</h2>
               </div>
-              <div class="stat-item">
-                <span class="stat-label">人力</span>
-                <span class="stat-value">{{ (currentCard.costManpower ?? 0).toLocaleString() }}人</span>
-              </div>
-              <div class="stat-item">
-                <span class="stat-label">时间</span>
-                <span class="stat-value">{{ currentCard.duration }}年</span>
-              </div>
-              <div class="stat-item highlight">
-                <span class="stat-label">成功率</span>
-                <span class="stat-value">{{ currentCard.successRate }}%</span>
-              </div>
-            </div>
-
-            <div v-if="currentCard.boostConditions?.length" class="card-section">
-              <h3 class="section-title">提升成功率</h3>
-              <ul class="condition-list">
-                <li v-for="condition in currentCard.boostConditions" :key="condition">
-                  ✓ {{ condition }}
-                </li>
-              </ul>
-            </div>
-
-            <div v-if="currentCard.requiredRoles?.length" class="card-section">
-              <h3 class="section-title">所需人员</h3>
-              <div class="roles-list">
-                <span v-for="role in currentCard.requiredRoles" :key="role" class="role-tag">
-                  {{ role }}
-                </span>
-              </div>
-            </div>
-          </div>
-
-          <!-- 挑战卡 -->
-          <div v-else class="reform-card challenge-card">
-            <div class="card-header">
-              <div class="card-badge challenge">危机 {{ currentCardIndex + 1 }}</div>
-              <h2 class="card-title">{{ currentCard.title }}</h2>
-              <div class="severity-indicator">
-                <span v-for="i in (currentCard.severity ?? 1)" :key="i" class="severity-dot"></span>
-              </div>
-            </div>
-            <p class="card-body">{{ currentCard.body }}</p>
-
-            <div v-if="currentCard.optionA || currentCard.optionB" class="card-section options">
-              <div v-if="currentCard.optionA" class="option">
-                <div class="option-header">
-                  <span class="option-badge">甲</span>
-                  <span class="option-label">{{ currentCard.optionA.label }}</span>
+              <p class="card-body">{{ card.body }}</p>
+              
+              <div class="card-stats">
+                <div class="stat-item">
+                  <span class="stat-label">财力</span>
+                  <span class="stat-value">{{ formatGold(card.costGold ?? 0) }}两</span>
                 </div>
-                <p class="option-effect">{{ currentCard.optionA.effect }}</p>
-              </div>
-              <div v-if="currentCard.optionB" class="option">
-                <div class="option-header">
-                  <span class="option-badge">乙</span>
-                  <span class="option-label">{{ currentCard.optionB.label }}</span>
+                <div class="stat-item">
+                  <span class="stat-label">人力</span>
+                  <span class="stat-value">{{ (card.costManpower ?? 0).toLocaleString() }}人</span>
                 </div>
-                <p class="option-effect">{{ currentCard.optionB.effect }}</p>
+                <div class="stat-item">
+                  <span class="stat-label">时间</span>
+                  <span class="stat-value">{{ card.duration }}年</span>
+                </div>
+                <div class="stat-item highlight">
+                  <span class="stat-label">成功率</span>
+                  <span class="stat-value">{{ card.successRate }}%</span>
+                </div>
+              </div>
+
+              <div v-if="card.boostConditions?.length" class="card-section">
+                <h3 class="section-title">提升成功率</h3>
+                <ul class="condition-list">
+                  <li v-for="condition in card.boostConditions" :key="condition">
+                    ✓ {{ condition }}
+                  </li>
+                </ul>
+              </div>
+
+              <div v-if="card.requiredRoles?.length" class="card-section">
+                <h3 class="section-title">所需人员</h3>
+                <div class="roles-list">
+                  <span v-for="role in card.requiredRoles" :key="role" class="role-tag">
+                    {{ role }}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <!-- 挑战卡 -->
+            <div v-else class="reform-card challenge-card">
+              <div class="card-header">
+                <div class="card-badge challenge">危机 {{ index + 1 }}</div>
+                <h2 class="card-title">{{ card.title }}</h2>
+                <div class="severity-indicator">
+                  <span v-for="i in (card.severity ?? 1)" :key="i" class="severity-dot"></span>
+                </div>
+              </div>
+              <p class="card-body">{{ card.body }}</p>
+
+              <div v-if="card.optionA || card.optionB" class="card-section options">
+                <div v-if="card.optionA" class="option">
+                  <div class="option-header">
+                    <span class="option-badge">甲</span>
+                    <span class="option-label">{{ card.optionA.label }}</span>
+                  </div>
+                  <p class="option-effect">{{ card.optionA.effect }}</p>
+                </div>
+                <div v-if="card.optionB" class="option">
+                  <div class="option-header">
+                    <span class="option-badge">乙</span>
+                    <span class="option-label">{{ card.optionB.label }}</span>
+                  </div>
+                  <p class="option-effect">{{ card.optionB.effect }}</p>
+                </div>
               </div>
             </div>
           </div>
         </div>
 
         <!-- 导航按钮 -->
-        <div class="card-navigation">
+        <div class="carousel-nav">
           <button
             class="nav-btn prev"
             :disabled="!hasPrevious"
             @click="previousCard"
           >
-            ← 上一张
+            ←
           </button>
           <div class="card-indicator">
             {{ currentCardIndex + 1 }} / {{ reform.cards.length }}
@@ -157,7 +163,7 @@ function formatGold(value: number): string {
             :disabled="!hasNext"
             @click="nextCard"
           >
-            下一张 →
+            →
           </button>
         </div>
       </div>
@@ -303,21 +309,28 @@ function formatGold(value: number): string {
   color: var(--paper-hi);
 }
 
-/* 卡片滑动区域 */
-.card-container {
+/* 卡片轮播区域 */
+.card-carousel {
   flex: 1;
   display: flex;
   flex-direction: column;
   min-height: 0;
-  padding: 16px;
-  background: rgba(255, 253, 248, 0.3);
+  position: relative;
+  overflow: hidden;
 }
 
-.card-wrapper {
+.carousel-track {
   flex: 1;
   display: flex;
+  transition: transform 0.3s ease;
+}
+
+.carousel-slide {
+  flex: 0 0 100%;
+  width: 100%;
+  padding: 16px;
+  display: flex;
   flex-direction: column;
-  min-height: 0;
 }
 
 /* 改革卡片 */
@@ -330,15 +343,7 @@ function formatGold(value: number): string {
   border-radius: 5px;
   padding: 16px;
   box-shadow: 0 4px 12px rgba(41, 33, 26, 0.1);
-  animation: card-slide 0.3s ease;
-  overflow: hidden;
-}
-
-@keyframes card-slide {
-  from {
-    transform: translateX(20px);
-    opacity: 0;
-  }
+  overflow-y: auto;
 }
 
 .card-header {
@@ -528,26 +533,29 @@ function formatGold(value: number): string {
 }
 
 /* 导航按钮 */
-.card-navigation {
+.carousel-nav {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  margin-top: 16px;
-  padding-top: 16px;
+  padding: 12px 16px;
   border-top: 1px solid var(--line-soft);
+  background: rgba(255, 253, 248, 0.5);
 }
 
 .nav-btn {
-  flex: 1;
-  padding: 8px 12px;
-  font-size: 12px;
+  flex: none;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
   font-weight: 700;
-  letter-spacing: 1px;
   color: var(--ink-3);
-  background: rgba(255, 253, 248, 0.6);
-  border: 1px solid var(--line-soft);
-  border-radius: 3px;
+  background: rgba(255, 253, 248, 0.8);
+  border: 1.5px solid var(--line-soft);
+  border-radius: 50%;
   cursor: pointer;
   transition: all 0.15s ease;
 }
@@ -555,7 +563,7 @@ function formatGold(value: number): string {
 .nav-btn:hover:not(:disabled) {
   color: var(--cinnabar);
   border-color: var(--cinnabar);
-  background: rgba(255, 253, 248, 0.9);
+  background: rgba(255, 253, 248, 1);
 }
 
 .nav-btn:disabled {
@@ -564,10 +572,12 @@ function formatGold(value: number): string {
 }
 
 .card-indicator {
-  flex: none;
-  font-size: 11px;
+  flex: 1;
+  text-align: center;
+  font-size: 13px;
   color: var(--ink-3);
   letter-spacing: 1px;
+  font-weight: 700;
 }
 
 /* 底部信息栏 */
