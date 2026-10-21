@@ -13,8 +13,6 @@ const emit = defineEmits<{
 
 const currentCardIndex = ref(0)
 
-const currentCard = computed(() => props.reform.cards[currentCardIndex.value])
-
 const hasPrevious = computed(() => currentCardIndex.value > 0)
 const hasNext = computed(() => currentCardIndex.value < props.reform.cards.length - 1)
 
