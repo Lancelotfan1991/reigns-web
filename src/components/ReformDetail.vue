@@ -319,6 +319,7 @@ function formatGold(value: number): string {
 
 .carousel-track {
   display: flex;
+  width: 100%;
   height: 100%;
   transition: transform 0.3s ease;
 }
