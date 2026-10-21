@@ -61,7 +61,7 @@ function formatGold(value: number): string {
 
       <!-- 卡片轮播区域 -->
       <div class="card-carousel">
-        <div class="carousel-track" :style="{ transform: `translateX(-${currentCardIndex * 100}%)` }">
+        <div class="carousel-track" :style="{ transform: `translateX(-${currentCardIndex / reform.cards.length * 100}%)` }">
           <div
             v-for="(card, index) in reform.cards"
             :key="card.id"
@@ -319,14 +319,15 @@ function formatGold(value: number): string {
 
 .carousel-track {
   display: flex;
-  width: 100%;
+  width: max-content;
   height: 100%;
   transition: transform 0.3s ease;
 }
 
 .carousel-slide {
-  flex: 0 0 100%;
-  width: 100%;
+  flex: 0 0 auto;
+  width: calc(100vw - 40px);
+  max-width: 420px;
   padding: 16px;
   display: flex;
   flex-direction: column;
