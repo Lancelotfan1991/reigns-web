@@ -2,25 +2,38 @@
  * 崇祯朝改革方案浏览数据
  *
  * 基于《崇祯朝改革方案总览》文档，整理10项可能改革的详细信息，用于改革方案浏览页面。
+ * 每个改革拆分为多张卡片（步骤卡 + 挑战卡），支持左右滑动浏览。
  */
 
-export interface ReformStep {
-  /** 步骤名称 */
-  name: string
-  /** 步骤描述 */
-  description: string
-  /** 财力耗费（白银两） */
-  costGold: number
-  /** 人力需求（人数） */
-  costManpower: number
-  /** 所需时间（年） */
-  duration: number
-  /** 基础成功率（0-100） */
-  successRate: number
-  /** 提升成功率的条件 */
-  boostConditions: string[]
-  /** 实施人员要求 */
-  requiredRoles: string[]
+export type ReformCardKind = 'step' | 'challenge'
+
+export interface ReformCard {
+  /** 卡片ID */
+  id: string
+  /** 卡片类型 */
+  kind: ReformCardKind
+  /** 卡片标题 */
+  title: string
+  /** 卡片正文 */
+  body: string
+  /** 财力耗费（仅步骤卡） */
+  costGold?: number
+  /** 人力需求（仅步骤卡） */
+  costManpower?: number
+  /** 所需时间（仅步骤卡，年） */
+  duration?: number
+  /** 基础成功率（仅步骤卡，0-100） */
+  successRate?: number
+  /** 提升成功率的条件（仅步骤卡） */
+  boostConditions?: string[]
+  /** 实施人员要求（仅步骤卡） */
+  requiredRoles?: string[]
+  /** 危机严重程度（仅挑战卡，1-3） */
+  severity?: number
+  /** 应对选项A（仅挑战卡） */
+  optionA?: { label: string; effect: string }
+  /** 应对选项B（仅挑战卡） */
+  optionB?: { label: string; effect: string }
 }
 
 export interface Reform {
@@ -38,16 +51,10 @@ export interface Reform {
   totalDuration: number
   /** 改革内容概述 */
   summary: string
-  /** 实施步骤 */
-  steps: ReformStep[]
+  /** 卡片序列（步骤卡 + 挑战卡） */
+  cards: ReformCard[]
   /** 前置条件 */
   prerequisites: string[]
-  /** 深层挑战 */
-  challenges: string[]
-  /** 失败触发条件 */
-  failureConditions: string[]
-  /** 失败后果 */
-  failureConsequences: string[]
   /** 预期收益 */
   expectedBenefits: string
 }
@@ -61,10 +68,12 @@ export const REFORM_BROWSE_DATA: Reform[] = [
     proposers: ['熊文灿', '邹维琏'],
     totalDuration: 2,
     summary: '开放海禁，允许民间商船出海贸易，在沿海港口设立海关，征收海税。',
-    steps: [
+    cards: [
       {
-        name: '设立海关',
-        description: '在漳州月港、泉州、广州等地设立海关，制定海税则例。',
+        id: 'open-maritime-step-1',
+        kind: 'step',
+        title: '设立海关',
+        body: '在漳州月港、泉州、广州等地设立海关，制定海税则例，派遣户部官员主持。',
         costGold: 100000,
         costManpower: 100,
         duration: 0.5,
@@ -73,8 +82,19 @@ export const REFORM_BROWSE_DATA: Reform[] = [
         requiredRoles: ['户部侍郎', '福建巡抚'],
       },
       {
-        name: '发放船引',
-        description: '制定出海许可证制度，控制出海船只数量和规模。',
+        id: 'open-maritime-challenge-1',
+        kind: 'challenge',
+        title: '荷兰东印度公司威胁',
+        body: '荷兰舰队频繁骚扰沿海，要求独占贸易权，否则封锁港口。郑芝龙虽强，但荷兰火炮犀利，料罗湾一战胜负难料。',
+        severity: 3,
+        optionA: { label: '联郑抗荷', effect: '借郑芝龙水师迎战，胜则海路畅通，败则损失惨重' },
+        optionB: { label: '妥协让步', effect: '给予荷兰部分贸易特权，换取和平，但丧失关税自主' },
+      },
+      {
+        id: 'open-maritime-step-2',
+        kind: 'step',
+        title: '发放船引',
+        body: '制定出海许可证制度，控制出海船只数量和规模，登记船员信息，防止走私。',
         costGold: 50000,
         costManpower: 50,
         duration: 0.5,
@@ -83,8 +103,19 @@ export const REFORM_BROWSE_DATA: Reform[] = [
         requiredRoles: ['海关官员'],
       },
       {
-        name: '建立水师',
-        description: '招募水师巡逻，打击海盗，保护商船。',
+        id: 'open-maritime-challenge-2',
+        kind: 'challenge',
+        title: '保守派反对',
+        body: '朝中大臣上疏：「开海必招倭寇，祖制禁海乃保境安民之策。」礼部援引嘉靖倭乱旧事，要求停止开海。',
+        severity: 2,
+        optionA: { label: '力排众议', effect: '以财政危机为由强硬推行，但失去士大夫支持' },
+        optionB: { label: '妥协限口', effect: '仅开放漳州月港一处，减少反对声浪，但收益有限' },
+      },
+      {
+        id: 'open-maritime-step-3',
+        kind: 'step',
+        title: '建立水师',
+        body: '招募水师巡逻，打击海盗，保护商船。利用郑芝龙水师为基础，建立官方海军。',
         costGold: 150000,
         costManpower: 1000,
         duration: 1,
@@ -92,26 +123,20 @@ export const REFORM_BROWSE_DATA: Reform[] = [
         boostConditions: ['利用郑芝龙水师', '料罗湾海战胜利'],
         requiredRoles: ['水师将领'],
       },
+      {
+        id: 'open-maritime-challenge-3',
+        kind: 'challenge',
+        title: '走私利益集团阻挠',
+        body: '福建、广东士绅长期靠走私获利，开海后关税透明，利润大减。暗中雇人破坏海关，煽动水手闹事。',
+        severity: 2,
+        optionA: { label: '严厉镇压', effect: '派御史严查，处决首恶，但士绅与朝廷离心' },
+        optionB: { label: '拉拢分化', effect: '给予走私大户合法贸易资格，换取合作，但腐败滋生' },
+      },
     ],
     prerequisites: [
       '沿海局势相对稳定',
       '朝廷有决心推行',
       '压制保守派反对',
-    ],
-    challenges: [
-      '荷兰东印度公司威胁',
-      '保守派反对（担心倭寇复起）',
-      '走私利益集团阻挠',
-    ],
-    failureConditions: [
-      '沿海发生大规模海盗袭击',
-      '保守派强力阻挠',
-      '走私反而加剧',
-    ],
-    failureConsequences: [
-      '海禁依旧，走私猖獗',
-      '沿海百姓失去生计',
-      '国库继续依赖加派田赋',
     ],
     expectedBenefits: '岁入100-200万两/年',
   },
@@ -123,10 +148,12 @@ export const REFORM_BROWSE_DATA: Reform[] = [
     proposers: ['毕自严', '倪元璐'],
     totalDuration: 4,
     summary: '清查士绅豪强隐匿的土地，重新登记造册，按亩征税。',
-    steps: [
+    cards: [
       {
-        name: '培训测量人员',
-        description: '引入西方测量技术，培训专业清丈官员。',
+        id: 'land-survey-step-1',
+        kind: 'step',
+        title: '培训测量人员',
+        body: '引入西方测量技术，培训专业清丈官员。邀请传教士讲授几何测量，编制鱼鳞图册标准。',
         costGold: 50000,
         costManpower: 200,
         duration: 1,
@@ -135,8 +162,19 @@ export const REFORM_BROWSE_DATA: Reform[] = [
         requiredRoles: ['户部官员', '传教士'],
       },
       {
-        name: '试点清丈',
-        description: '先在江南、福建等土地隐匿严重地区试点。',
+        id: 'land-survey-challenge-1',
+        kind: 'challenge',
+        title: '士绅集体抗税',
+        body: '江南士绅联名上书：「清丈即抄家，祖制优免士绅田赋。」扬言若强行清丈，将煽动佃户抗租。',
+        severity: 3,
+        optionA: { label: '铁腕推行', effect: '派御史严查，处决抗税首领，但士绅与朝廷决裂' },
+        optionB: { label: '妥协让步', effect: '暂不触动举人以上功名者，清丈效果大减' },
+      },
+      {
+        id: 'land-survey-step-2',
+        kind: 'step',
+        title: '试点清丈',
+        body: '先在江南、福建等土地隐匿严重地区试点。建立举报奖励，鼓励佃户揭发隐田。',
         costGold: 100000,
         costManpower: 500,
         duration: 1.5,
@@ -145,8 +183,19 @@ export const REFORM_BROWSE_DATA: Reform[] = [
         requiredRoles: ['巡抚', '御史'],
       },
       {
-        name: '编制鱼鳞图册',
-        description: '登记土地所有者、面积、质量，编制新册。',
+        id: 'land-survey-challenge-2',
+        kind: 'challenge',
+        title: '地方官抵制',
+        body: '地方官多出身士绅，执行清丈等于自断财路。阳奉阴违，上报数据造假，清丈流于形式。',
+        severity: 2,
+        optionA: { label: '换血清洗', effect: '撤换不配合官员，但人手不足，政务停滞' },
+        optionB: { label: '利益交换', effect: '给予地方官合法津贴，换取配合，但腐败合法化' },
+      },
+      {
+        id: 'land-survey-step-3',
+        kind: 'step',
+        title: '编制鱼鳞图册',
+        body: '登记土地所有者、面积、质量，编制新册。暂不触动宗室土地，给予主动申报者宽大处理。',
         costGold: 150000,
         costManpower: 1000,
         duration: 1.5,
@@ -154,26 +203,20 @@ export const REFORM_BROWSE_DATA: Reform[] = [
         boostConditions: ['暂不触动宗室土地', '给予主动申报者宽大'],
         requiredRoles: ['清丈官员', '书吏'],
       },
+      {
+        id: 'land-survey-challenge-3',
+        kind: 'challenge',
+        title: '民变风险',
+        body: '清丈过程中，地方官借机勒索，佃户不堪其扰。江南爆发小规模民变，要求停止清丈。',
+        severity: 3,
+        optionA: { label: '镇压安抚', effect: '派兵镇压首恶，减免部分赋税，但清丈中断' },
+        optionB: { label: '暂停整顿', effect: '暂停清丈，查处贪腐官员，但改革停滞' },
+      },
     ],
     prerequisites: [
       '朝廷有铁腕决心',
       '有得力官员主持',
       '有准确的测量方法',
-    ],
-    challenges: [
-      '士绅豪强强烈反对',
-      '地方官多出身士绅，执行阻力大',
-      '清丈流于形式',
-    ],
-    failureConditions: [
-      '士绅集体抗税',
-      '发生民变或骚乱',
-      '主持官员被弹劾',
-    ],
-    failureConsequences: [
-      '隐田依旧',
-      '士绅与朝廷离心',
-      '田赋负担继续压在自耕农身上',
     ],
     expectedBenefits: '新增田赋100-300万两/年',
   },
@@ -185,10 +228,12 @@ export const REFORM_BROWSE_DATA: Reform[] = [
     proposers: ['毕自严'],
     totalDuration: 3,
     summary: '整顿盐业专卖制度，打击私盐，增加盐税收入。',
-    steps: [
+    cards: [
       {
-        name: '清理盐引',
-        description: '清理盐业经营许可证，裁撤冗余盐官。',
+        id: 'salt-reform-step-1',
+        kind: 'step',
+        title: '清理盐引',
+        body: '清理盐业经营许可证，裁撤冗余盐官。重新发放盐引，打击垄断。',
         costGold: 50000,
         costManpower: 100,
         duration: 1,
@@ -197,8 +242,19 @@ export const REFORM_BROWSE_DATA: Reform[] = [
         requiredRoles: ['两淮盐运使', '户部侍郎'],
       },
       {
-        name: '加强盐场管理',
-        description: '加强盐场管理，防止盐课流失。',
+        id: 'salt-reform-challenge-1',
+        kind: 'challenge',
+        title: '盐商贿赂',
+        body: '两淮盐商暗中向朝廷重臣行贿，要求保留旧制。户部尚书收受十万两白银，上疏反对改革。',
+        severity: 2,
+        optionA: { label: '严查贪腐', effect: '处决受贿官员，但失去户部支持' },
+        optionB: { label: '妥协保留', effect: '给予盐商部分特权，换取合作，但改革流于形式' },
+      },
+      {
+        id: 'salt-reform-step-2',
+        kind: 'step',
+        title: '加强盐场管理',
+        body: '加强盐场管理，防止盐课流失。建立巡查制度，严惩贪腐。',
         costGold: 100000,
         costManpower: 500,
         duration: 1,
@@ -207,8 +263,19 @@ export const REFORM_BROWSE_DATA: Reform[] = [
         requiredRoles: ['盐场官员'],
       },
       {
-        name: '打击私盐',
-        description: '增设盐务巡兵，严厉打击私盐贩运。',
+        id: 'salt-reform-challenge-2',
+        kind: 'challenge',
+        title: '私盐武装',
+        body: '私盐贩子组织武装，对抗盐务巡兵。两淮私盐首领扬言：「断我生计，必报此仇。」',
+        severity: 3,
+        optionA: { label: '军事镇压', effect: '派兵剿灭，但耗费军费，且私盐网络转入地下' },
+        optionB: { label: '招安收编', effect: '给予私盐贩子合法资格，换取合作，但腐败滋生' },
+      },
+      {
+        id: 'salt-reform-step-3',
+        kind: 'step',
+        title: '打击私盐',
+        body: '增设盐务巡兵，严厉打击私盐贩运。利用保甲制度，降低官盐价格。',
         costGold: 150000,
         costManpower: 2000,
         duration: 1,
@@ -216,26 +283,20 @@ export const REFORM_BROWSE_DATA: Reform[] = [
         boostConditions: ['利用保甲制度', '降低官盐价格'],
         requiredRoles: ['巡兵', '地方官'],
       },
+      {
+        id: 'salt-reform-challenge-3',
+        kind: 'challenge',
+        title: '盐务官员贪腐',
+        body: '盐务巡兵被盐商收买，放行走私。御史弹劾盐运使贪墨盐课十万两。',
+        severity: 2,
+        optionA: { label: '严厉惩处', effect: '处决贪腐官员，但盐务系统瘫痪' },
+        optionB: { label: '从轻发落', effect: '罚俸降级，但贪腐依旧' },
+      },
     ],
     prerequisites: [
       '有得力盐务官员',
       '有足够巡兵打击私盐',
       '朝廷支持',
-    ],
-    challenges: [
-      '盐商与官员勾结深',
-      '私盐网络庞大',
-      '盐务腐败',
-    ],
-    failureConditions: [
-      '盐商向朝廷施压',
-      '巡兵被收买',
-      '盐务官员贪腐',
-    ],
-    failureConsequences: [
-      '盐税依旧流失',
-      '盐商继续垄断暴利',
-      '百姓食盐价格居高不下',
     ],
     expectedBenefits: '新增盐税50-100万两/年',
   },
@@ -247,10 +308,12 @@ export const REFORM_BROWSE_DATA: Reform[] = [
     proposers: ['崇祯帝', '韩爌'],
     totalDuration: 2,
     summary: '裁减宗室（朱姓皇族）的俸禄，减轻财政负担。',
-    steps: [
+    cards: [
       {
-        name: '削减远支俸禄',
-        description: '先削减远支宗室俸禄，暂不触动近支。',
+        id: 'reduce-clan-step-1',
+        kind: 'step',
+        title: '削减远支俸禄',
+        body: '先削减远支宗室俸禄，暂不触动近支。给予过渡期，争取士大夫支持。',
         costGold: 0,
         costManpower: 0,
         duration: 1,
@@ -259,8 +322,19 @@ export const REFORM_BROWSE_DATA: Reform[] = [
         requiredRoles: ['宗人府令', '户部尚书'],
       },
       {
-        name: '允许自谋生计',
-        description: '允许宗室子弟参加科举、经商。',
+        id: 'reduce-clan-challenge-1',
+        kind: 'challenge',
+        title: '宗室亲王抗旨',
+        body: '周王、赵王等亲王联名上疏：「宗室俸禄乃祖制，削减即不孝。」扬言若强行削减，将率宗室闹事。',
+        severity: 3,
+        optionA: { label: '强硬镇压', effect: '以军费不足为由强硬推行，但宗室与朝廷决裂' },
+        optionB: { label: '妥协保留', effect: '仅削减自愿者，效果有限' },
+      },
+      {
+        id: 'reduce-clan-step-2',
+        kind: 'step',
+        title: '允许自谋生计',
+        body: '允许宗室子弟参加科举、经商。设立过渡期，给予补偿金。',
         costGold: 0,
         costManpower: 0,
         duration: 0.5,
@@ -269,8 +343,19 @@ export const REFORM_BROWSE_DATA: Reform[] = [
         requiredRoles: ['礼部官员'],
       },
       {
-        name: '逐步推广',
-        description: '在试点成功基础上，逐步推广至全国宗室。',
+        id: 'reduce-clan-challenge-2',
+        kind: 'challenge',
+        title: '礼部弹劾',
+        body: '礼部尚书上疏：「宗室不仕乃太祖祖制，允许经商科举即乱祖制。」要求停止改革。',
+        severity: 2,
+        optionA: { label: '强行推行', effect: '以财政危机为由强硬推行，但失去礼部支持' },
+        optionB: { label: '妥协限制', effect: '仅允许底层宗室自谋生计，亲王依旧' },
+      },
+      {
+        id: 'reduce-clan-step-3',
+        kind: 'step',
+        title: '逐步推广',
+        body: '在试点成功基础上，逐步推广至全国宗室。给予军事力量镇压叛乱，安置底层宗室。',
         costGold: 100000,
         costManpower: 100,
         duration: 0.5,
@@ -278,26 +363,20 @@ export const REFORM_BROWSE_DATA: Reform[] = [
         boostConditions: ['军事力量镇压叛乱', '安置底层宗室'],
         requiredRoles: ['内阁首辅', '各省巡抚'],
       },
+      {
+        id: 'reduce-clan-challenge-3',
+        kind: 'challenge',
+        title: '宗室叛乱',
+        body: '河南某郡王煽动宗室叛乱，扬言「清君侧」。虽规模不大，但震动朝野。',
+        severity: 3,
+        optionA: { label: '军事镇压', effect: '派兵剿灭，处决首恶，但宗室与朝廷彻底决裂' },
+        optionB: { label: '安抚妥协', effect: '恢复部分俸禄，换取和平，但改革失败' },
+      },
     ],
     prerequisites: [
       '朝廷有极强决心',
       '有足够军事力量镇压叛乱',
       '有替代方案安置底层宗室',
-    ],
-    challenges: [
-      '宗室是皇族，朝廷难以强硬',
-      '宗室可能煽动叛乱',
-      '礼部以祖制相抗',
-    ],
-    failureConditions: [
-      '宗室亲王集体抗旨',
-      '发生宗室叛乱',
-      '礼部弹劾主持官员',
-    ],
-    failureConsequences: [
-      '宗室与朝廷决裂',
-      '俸禄依旧，财政负担不减',
-      '朝廷威信受损',
     ],
     expectedBenefits: '节省200-500万两/年',
   },
@@ -309,10 +388,12 @@ export const REFORM_BROWSE_DATA: Reform[] = [
     proposers: ['杨嗣昌', '熊文灿'],
     totalDuration: 3,
     summary: '清查军队虚额（吃空饷），按实际兵数发放军饷。',
-    steps: [
+    cards: [
       {
-        name: '精锐试点',
-        description: '先在京营、关宁铁骑等精锐部队试点。',
+        id: 'verify-troops-step-1',
+        kind: 'step',
+        title: '精锐试点',
+        body: '先在京营、关宁铁骑等精锐部队试点。朝廷直接派员监督，建立奖惩机制。',
         costGold: 50000,
         costManpower: 100,
         duration: 1,
@@ -321,8 +402,19 @@ export const REFORM_BROWSE_DATA: Reform[] = [
         requiredRoles: ['兵部尚书', '户部侍郎'],
       },
       {
-        name: '建立核查制度',
-        description: '建立三册核对制度（名册、饷凭、仓单）。',
+        id: 'verify-troops-challenge-1',
+        kind: 'challenge',
+        title: '将领抵制',
+        body: '边将集体抵制：「虚额乃潜规则，裁撤即断我财路。」扬言若强行清查，将引发兵变。',
+        severity: 3,
+        optionA: { label: '强硬推行', effect: '撤换不配合将领，但军心动摇' },
+        optionB: { label: '妥协保留', effect: '给予将领合法津贴，换取配合，但腐败合法化' },
+      },
+      {
+        id: 'verify-troops-step-2',
+        kind: 'step',
+        title: '建立核查制度',
+        body: '建立三册核对制度（名册、饷凭、仓单）。粮饷直接发放，绕过将领。',
         costGold: 80000,
         costManpower: 200,
         duration: 1,
@@ -331,14 +423,34 @@ export const REFORM_BROWSE_DATA: Reform[] = [
         requiredRoles: ['核查官员', '御史'],
       },
       {
-        name: '全国推广',
-        description: '在试点成功基础上，推广至全国军队。',
+        id: 'verify-troops-challenge-2',
+        kind: 'challenge',
+        title: '核查官员被收买',
+        body: '核查官员被将领收买，上报数据造假。御史弹劾核查使贪墨军饷。',
+        severity: 2,
+        optionA: { label: '严厉惩处', effect: '处决贪腐官员，但核查系统瘫痪' },
+        optionB: { label: '从轻发落', effect: '罚俸降级，但贪腐依旧' },
+      },
+      {
+        id: 'verify-troops-step-3',
+        kind: 'step',
+        title: '全国推广',
+        body: '在试点成功基础上，推广至全国军队。给予将领合法津贴，保留灵活军费。',
         costGold: 150000,
         costManpower: 500,
         duration: 1,
         successRate: 40,
         boostConditions: ['给予将领合法津贴', '保留灵活军费'],
         requiredRoles: ['各省巡抚', '将领'],
+      },
+      {
+        id: 'verify-troops-challenge-3',
+        kind: 'challenge',
+        title: '兵变风险',
+        body: '裁撤虚额后，实兵饷银仍未增加。某边将煽动兵变，扬言「饷银不足，何以作战」。',
+        severity: 3,
+        optionA: { label: '军事镇压', effect: '派兵剿灭，但军心动摇' },
+        optionB: { label: '妥协增饷', effect: '增加军费预算，但财政压力加大' },
       },
     ],
     prerequisites: [
@@ -347,22 +459,6 @@ export const REFORM_BROWSE_DATA: Reform[] = [
       '有替代资金来源',
       '有可信文官主持',
       '至少2-3年稳定期',
-    ],
-    challenges: [
-      '吃空饷已是潜规则，利益根深蒂固',
-      '裁撤虚额易引发兵变或投敌',
-      '朝廷缺乏可信监督体系',
-      '财政危机下往往选择加派而非清查',
-    ],
-    failureConditions: [
-      '将领集体抵制，以兵变相威胁',
-      '核查官员被收买或威胁',
-      '裁撤后实兵饷银仍未增加',
-    ],
-    failureConsequences: [
-      '虚额依旧，军饷继续流失',
-      '将领与朝廷离心',
-      '实兵士气低落',
     ],
     expectedBenefits: '节省100-300万两/年',
   },
@@ -374,10 +470,12 @@ export const REFORM_BROWSE_DATA: Reform[] = [
     proposers: ['徐光启', '孙元化'],
     totalDuration: 4,
     summary: '引进西方火器技术，改良明军火器，提升战斗力。',
-    steps: [
+    cards: [
       {
-        name: '设立炮局',
-        description: '在登莱设立炮局，仿制红夷大炮。',
+        id: 'firearms-step-1',
+        kind: 'step',
+        title: '设立炮局',
+        body: '在登莱设立炮局，仿制红夷大炮。邀请传教士技术指导，建立标准化生产。',
         costGold: 200000,
         costManpower: 500,
         duration: 1,
@@ -386,8 +484,19 @@ export const REFORM_BROWSE_DATA: Reform[] = [
         requiredRoles: ['登莱巡抚', '传教士'],
       },
       {
-        name: '训练火器部队',
-        description: '培训专业火器操作人员，制定火器战术。',
+        id: 'firearms-challenge-1',
+        kind: 'challenge',
+        title: '技术泄露风险',
+        body: '后金细作潜入登莱，试图收买工匠。一名炮匠被发现与后金使者接触。',
+        severity: 3,
+        optionA: { label: '严厉清查', effect: '处决涉案工匠，加强安保，但人心惶惶' },
+        optionB: { label: '转移基地', effect: '将炮局迁至内地，但延误进度' },
+      },
+      {
+        id: 'firearms-step-2',
+        kind: 'step',
+        title: '训练火器部队',
+        body: '培训专业火器操作人员，制定火器战术。建立火器编制，编写使用手册。',
         costGold: 300000,
         costManpower: 5000,
         duration: 1.5,
@@ -396,14 +505,34 @@ export const REFORM_BROWSE_DATA: Reform[] = [
         requiredRoles: ['火器将领', '教官'],
       },
       {
-        name: '分发边军',
-        description: '向辽东边军分发新式火器，集中使用。',
+        id: 'firearms-challenge-2',
+        kind: 'challenge',
+        title: '吴桥兵变',
+        body: '登莱炮营发生兵变，孔有德率部叛变，携带火炮投降后金。火器技术面临泄露风险。',
+        severity: 3,
+        optionA: { label: '追剿平叛', effect: '派兵追剿，但火器技术已泄露' },
+        optionB: { label: '招安抚慰', effect: '尝试招安，但孔有德已降，难以挽回' },
+      },
+      {
+        id: 'firearms-step-3',
+        kind: 'step',
+        title: '分发边军',
+        body: '向辽东边军分发新式火器，集中使用。边军将领配合，火药供应稳定。',
         costGold: 500000,
         costManpower: 10000,
         duration: 1.5,
         successRate: 50,
         boostConditions: ['边军将领配合', '火药供应稳定'],
         requiredRoles: ['兵部侍郎', '边将'],
+      },
+      {
+        id: 'firearms-challenge-3',
+        kind: 'challenge',
+        title: '保守派弹劾',
+        body: '保守派弹劾主持官员：「火器乃奇技淫巧，不如骑射。」要求停止火器研发。',
+        severity: 2,
+        optionA: { label: '强硬推行', effect: '以战果证明火器价值，但失去保守派支持' },
+        optionB: { label: '妥协缩减', effect: '缩减火器规模，保留骑射，但效果有限' },
       },
     ],
     prerequisites: [
@@ -415,23 +544,6 @@ export const REFORM_BROWSE_DATA: Reform[] = [
       '供应链保障：铁料、火药稳定供应',
       '至少3-5年和平期',
     ],
-    challenges: [
-      '火器研发是长期投入，朝廷往往急于求成',
-      '技术人才稀缺，核心团队难以维持',
-      '保守派随时可能弹劾主持官员',
-      '火器部队训练周期长，战事紧迫时仓促上阵',
-      '技术泄露风险极高',
-    ],
-    failureConditions: [
-      '登莱炮营发生兵变（如吴桥兵变）',
-      '火器技术落入敌手',
-      '朝廷因短期无效果而中断投入',
-    ],
-    failureConsequences: [
-      '火器技术流失',
-      '投入银两打水漂',
-      '后金获得火器，明军优势丧失',
-    ],
     expectedBenefits: '明军火器射程、精度大幅提升',
   },
   {
@@ -442,10 +554,12 @@ export const REFORM_BROWSE_DATA: Reform[] = [
     proposers: ['徐光启门生', '方以智'],
     totalDuration: 8,
     summary: '在科举考试中增加实学内容（如算学、农政、兵法、水利），而非只考八股文。',
-    steps: [
+    cards: [
       {
-        name: '增设实学科目',
-        description: '在乡试、会试中增设算学、地理、兵法等实学科目。',
+        id: 'exam-reform-step-1',
+        kind: 'step',
+        title: '增设实学科目',
+        body: '在乡试、会试中增设算学、地理、兵法等实学科目。保留八股但降低比重。',
         costGold: 50000,
         costManpower: 100,
         duration: 2,
@@ -454,8 +568,19 @@ export const REFORM_BROWSE_DATA: Reform[] = [
         requiredRoles: ['礼部尚书', '内阁首辅'],
       },
       {
-        name: '建立新式学堂',
-        description: '建立历局、钦天监培训班等新式学堂。',
+        id: 'exam-reform-challenge-1',
+        kind: 'challenge',
+        title: '士子集体抵制',
+        body: '天下士子上书：「八股乃祖制，实学乃异端。」扬言若改科举，将集体罢考。',
+        severity: 3,
+        optionA: { label: '强硬推行', effect: '以财政危机为由强硬推行，但失去士子支持' },
+        optionB: { label: '妥协保留', effect: '实学仅作加分项，不改八股主体' },
+      },
+      {
+        id: 'exam-reform-step-2',
+        kind: 'step',
+        title: '建立新式学堂',
+        body: '建立历局、钦天监培训班等新式学堂。邀请传教士讲授，翻译西方科技书籍。',
         costGold: 100000,
         costManpower: 200,
         duration: 3,
@@ -464,8 +589,19 @@ export const REFORM_BROWSE_DATA: Reform[] = [
         requiredRoles: ['国子监祭酒', '传教士'],
       },
       {
-        name: '推广实学教育',
-        description: '在地方试点实学教育，积累经验后推广。',
+        id: 'exam-reform-challenge-2',
+        kind: 'challenge',
+        title: '保守派反对',
+        body: '保守派弹劾主持官员：「实学乃奇技淫巧，背离祖制。」要求停止改革。',
+        severity: 2,
+        optionA: { label: '强硬推行', effect: '以战果证明实学价值，但失去保守派支持' },
+        optionB: { label: '妥协缩减', effect: '缩减实学规模，保留八股，但效果有限' },
+      },
+      {
+        id: 'exam-reform-step-3',
+        kind: 'step',
+        title: '推广实学教育',
+        body: '在地方试点实学教育，积累经验后推广。给予实学人才同等待遇，不立即废除八股。',
         costGold: 150000,
         costManpower: 500,
         duration: 3,
@@ -473,26 +609,20 @@ export const REFORM_BROWSE_DATA: Reform[] = [
         boostConditions: ['给予实学人才同等待遇', '不立即废除八股'],
         requiredRoles: ['各省学政', '地方官'],
       },
+      {
+        id: 'exam-reform-challenge-3',
+        kind: 'challenge',
+        title: '实学人才无出路',
+        body: '实学人才毕业后，无合适衙门安置。礼部拒绝录用，实学人才纷纷转行。',
+        severity: 2,
+        optionA: { label: '强制录用', effect: '要求各部录用实学人才，但遭到抵制' },
+        optionB: { label: '妥协安置', effect: '给予虚职，但无实权，实学人才流失' },
+      },
     ],
     prerequisites: [
       '朝廷有决心',
       '有实学背景的考官',
       '有配套任用制度',
-    ],
-    challenges: [
-      '士子习惯八股，转型困难',
-      '保守派反对（认为背离祖制）',
-      '实学人才出路有限',
-    ],
-    failureConditions: [
-      '保守派强力阻挠',
-      '士子集体抵制',
-      '实学人才无合适衙门安置',
-    ],
-    failureConsequences: [
-      '科举依旧考八股',
-      '官员继续缺乏实务能力',
-      '改革流于形式',
     ],
     expectedBenefits: '培养一批有实务能力的官员',
   },
@@ -504,10 +634,12 @@ export const REFORM_BROWSE_DATA: Reform[] = [
     proposers: ['徐光启', '徐光启门生'],
     totalDuration: 4,
     summary: '在不同土壤、气候条件下试种甘薯、旱稻、玉米等新作物，推广种植技术。',
-    steps: [
+    cards: [
       {
-        name: '引进新作物',
-        description: '引进美洲作物（玉米、甘薯、马铃薯）。',
+        id: 'agriculture-step-1',
+        kind: 'step',
+        title: '引进新作物',
+        body: '引进美洲作物（玉米、甘薯、马铃薯）。徐光启技术指导，建立试验田。',
         costGold: 50000,
         costManpower: 100,
         duration: 1,
@@ -516,8 +648,19 @@ export const REFORM_BROWSE_DATA: Reform[] = [
         requiredRoles: ['户部侍郎', '农技人员'],
       },
       {
-        name: '设立样田',
-        description: '在京畿、河南、陕西等地设立样田试种。',
+        id: 'agriculture-challenge-1',
+        kind: 'challenge',
+        title: '农民保守',
+        body: '农民不愿尝试新作物：「祖祖辈辈种稻麦，从未听说种此异物。」拒绝在官田试种。',
+        severity: 1,
+        optionA: { label: '强制推行', effect: '派官强制要求试种，但农民消极怠工' },
+        optionB: { label: '示范引导', effect: '先在官田试种，成功后示范，但进度缓慢' },
+      },
+      {
+        id: 'agriculture-step-2',
+        kind: 'step',
+        title: '设立样田',
+        body: '在京畿、河南、陕西等地设立样田试种。记录生长数据，对比产量。',
         costGold: 100000,
         costManpower: 200,
         duration: 1.5,
@@ -526,8 +669,19 @@ export const REFORM_BROWSE_DATA: Reform[] = [
         requiredRoles: ['地方官', '农民'],
       },
       {
-        name: '推广种植',
-        description: '先在官田试种成功后，推广至民田。',
+        id: 'agriculture-challenge-2',
+        kind: 'challenge',
+        title: '徐光启去世',
+        body: '徐光启去世，农政无人主持。门生经验不足，试种工作停滞。',
+        severity: 3,
+        optionA: { label: '另寻主持', effect: '寻找新的农技专家，但人选难觅' },
+        optionB: { label: '暂停推广', effect: '暂停推广，保留试验田，但进度停滞' },
+      },
+      {
+        id: 'agriculture-step-3',
+        kind: 'step',
+        title: '推广种植',
+        body: '先在官田试种成功后，推广至民田。给予税收优惠，编写技术手册。',
         costGold: 150000,
         costManpower: 500,
         duration: 1.5,
@@ -535,26 +689,20 @@ export const REFORM_BROWSE_DATA: Reform[] = [
         boostConditions: ['给予税收优惠', '编写技术手册'],
         requiredRoles: ['各省巡抚', '农技人员'],
       },
+      {
+        id: 'agriculture-challenge-3',
+        kind: 'challenge',
+        title: '饥荒紧急',
+        body: '河南大饥，朝廷急于赈灾，要求立即推广高产作物。但试种尚未成功，仓促推广风险极大。',
+        severity: 2,
+        optionA: { label: '仓促推广', effect: '强制推广未经验证的作物，可能失败' },
+        optionB: { label: '坚持试点', effect: '继续试点，但饥民等不及' },
+      },
     ],
     prerequisites: [
       '有农技专家主持',
       '有样田作为示范',
       '朝廷持续投入',
-    ],
-    challenges: [
-      '农民保守，不愿尝试新作物',
-      '徐光启去世后无人主持',
-      '饥荒紧急时中断长期投入',
-    ],
-    failureConditions: [
-      '核心农技专家去世',
-      '农民拒绝尝试',
-      '朝廷中断投入',
-    ],
-    failureConsequences: [
-      '新作物推广失败',
-      '饥荒依旧',
-      '投入银两浪费',
     ],
     expectedBenefits: '提高粮食产量，缓解饥荒',
   },
@@ -566,10 +714,12 @@ export const REFORM_BROWSE_DATA: Reform[] = [
     proposers: ['徐光启门生', '孙元化'],
     totalDuration: 8,
     summary: '设立专门机构，研究农具、水利、火器等技术，记录试验过程，推广成功技术。',
-    steps: [
+    cards: [
       {
-        name: '设立总院',
-        description: '在北京设立器院总院，招募工匠、技术人员。',
+        id: 'tech-institute-step-1',
+        kind: 'step',
+        title: '设立总院',
+        body: '在北京设立器院总院，招募工匠、技术人员。给予技术人员官职，与传教士合作。',
         costGold: 200000,
         costManpower: 200,
         duration: 2,
@@ -578,8 +728,19 @@ export const REFORM_BROWSE_DATA: Reform[] = [
         requiredRoles: ['工部侍郎', '传教士'],
       },
       {
-        name: '设立分院',
-        description: '在地方设立分院（如福建火器院、江南机械院）。',
+        id: 'tech-institute-challenge-1',
+        kind: 'challenge',
+        title: '保守派反对',
+        body: '保守派弹劾：「器院乃奇技淫巧，背离祖制。」要求停止设立。',
+        severity: 2,
+        optionA: { label: '强硬推行', effect: '以战果证明器院价值，但失去保守派支持' },
+        optionB: { label: '妥协缩减', effect: '缩减器院规模，但效果有限' },
+      },
+      {
+        id: 'tech-institute-step-2',
+        kind: 'step',
+        title: '设立分院',
+        body: '在地方设立分院（如福建火器院、江南机械院）。培养本土技术人才，翻译西方科技书籍。',
         costGold: 300000,
         costManpower: 500,
         duration: 3,
@@ -588,8 +749,19 @@ export const REFORM_BROWSE_DATA: Reform[] = [
         requiredRoles: ['地方官', '技术人员'],
       },
       {
-        name: '推广技术',
-        description: '刊印图册，公开基础工艺，推广成功技术。',
+        id: 'tech-institute-challenge-2',
+        kind: 'challenge',
+        title: '核心技术人员去世',
+        body: '器院核心技术负责人去世，技术传承中断。新招工匠经验不足，研发停滞。',
+        severity: 3,
+        optionA: { label: '紧急招募', effect: '紧急招募新技术人员，但需要时间适应' },
+        optionB: { label: '暂停研发', effect: '暂停研发，保留现有成果，但技术停滞' },
+      },
+      {
+        id: 'tech-institute-step-3',
+        kind: 'step',
+        title: '推广技术',
+        body: '刊印图册，公开基础工艺，推广成功技术。建立技术推广机制，持续投入。',
         costGold: 200000,
         costManpower: 300,
         duration: 3,
@@ -597,26 +769,20 @@ export const REFORM_BROWSE_DATA: Reform[] = [
         boostConditions: ['建立技术推广机制', '持续投入'],
         requiredRoles: ['器院官员', '工匠'],
       },
+      {
+        id: 'tech-institute-challenge-3',
+        kind: 'challenge',
+        title: '财政困难',
+        body: '朝廷财政困难，要求削减器院经费。器院面临停摆风险。',
+        severity: 2,
+        optionA: { label: '坚持投入', effect: '从其他部门挪用经费，但遭到抵制' },
+        optionB: { label: '妥协缩减', effect: '缩减器院规模，但研发停滞' },
+      },
     ],
     prerequisites: [
       '朝廷有决心',
       '有得力官员主持',
       '有持续投入',
-    ],
-    challenges: [
-      '保守派反对（认为奇技淫巧）',
-      '技术保密困难',
-      '核心技术人员去世或被调离',
-    ],
-    failureConditions: [
-      '核心技术人员去世',
-      '保守派弹劾主持官员',
-      '朝廷财政困难中断经费',
-    ],
-    failureConsequences: [
-      '器院流于形式',
-      '技术未进步',
-      '投入银两浪费',
     ],
     expectedBenefits: '技术进步，军器、农具质量提升',
   },
@@ -628,10 +794,12 @@ export const REFORM_BROWSE_DATA: Reform[] = [
     proposers: ['毕自严'],
     totalDuration: 3,
     summary: '建立交叉验账制度，不同衙门相互核对账目，防止贪腐。',
-    steps: [
+    cards: [
       {
-        name: '建立核对制度',
-        description: '建立多级账目核对制度，引入复式记账法。',
+        id: 'audit-system-step-1',
+        kind: 'step',
+        title: '建立核对制度',
+        body: '建立多级账目核对制度，引入复式记账法。从西方学习复式记账，培训审计人员。',
         costGold: 50000,
         costManpower: 100,
         duration: 1,
@@ -640,8 +808,19 @@ export const REFORM_BROWSE_DATA: Reform[] = [
         requiredRoles: ['户部侍郎', '都察院御史'],
       },
       {
-        name: '设立审计机构',
-        description: '设立独立审计机构，实行交叉审计。',
+        id: 'audit-system-challenge-1',
+        kind: 'challenge',
+        title: '官员相互包庇',
+        body: '官员相互包庇，账目造假。审计人员发现漏洞，但被上级压下。',
+        severity: 2,
+        optionA: { label: '严厉查处', effect: '处决贪腐官员，但官场人心惶惶' },
+        optionB: { label: '从轻发落', effect: '罚俸降级，但贪腐依旧' },
+      },
+      {
+        id: 'audit-system-step-2',
+        kind: 'step',
+        title: '设立审计机构',
+        body: '设立独立审计机构，实行交叉审计。给予审计人员独立地位，建立举报机制。',
         costGold: 100000,
         costManpower: 200,
         duration: 1,
@@ -650,8 +829,19 @@ export const REFORM_BROWSE_DATA: Reform[] = [
         requiredRoles: ['审计官员', '御史'],
       },
       {
-        name: '推广至地方',
-        description: '先在户部、兵部等关键部门试点，逐步推广至地方。',
+        id: 'audit-system-challenge-2',
+        kind: 'challenge',
+        title: '御史被收买',
+        body: '审计御史被地方官收买，上报虚假数据。都察院发现后弹劾。',
+        severity: 2,
+        optionA: { label: '严厉惩处', effect: '处决贪腐御史，但审计系统瘫痪' },
+        optionB: { label: '从轻发落', effect: '罚俸降级，但贪腐依旧' },
+      },
+      {
+        id: 'audit-system-step-3',
+        kind: 'step',
+        title: '推广至地方',
+        body: '先在户部、兵部等关键部门试点，逐步推广至地方。对贪污者严厉惩处，建立标准化账目格式。',
         costGold: 150000,
         costManpower: 500,
         duration: 1,
@@ -659,37 +849,33 @@ export const REFORM_BROWSE_DATA: Reform[] = [
         boostConditions: ['对贪污者严厉惩处', '建立标准化账目格式'],
         requiredRoles: ['各省巡按御史', '地方官'],
       },
+      {
+        id: 'audit-system-challenge-3',
+        kind: 'challenge',
+        title: '地方官集体抵制',
+        body: '地方官集体抵制审计：「账目乃地方事务，中央无权干涉。」扬言若强行审计，将集体辞职。',
+        severity: 3,
+        optionA: { label: '强硬推行', effect: '撤换不配合官员，但人手不足，政务停滞' },
+        optionB: { label: '妥协保留', effect: '暂不推广至地方，审计效果有限' },
+      },
     ],
     prerequisites: [
       '朝廷有决心',
       '有清廉御史主持',
       '有惩罚制度',
     ],
-    challenges: [
-      '官员相互包庇',
-      '御史可能被收买',
-      '地方执行层面崩溃',
-    ],
-    failureConditions: [
-      '主持官员去职',
-      '地方官集体抵制',
-      '御史被收买',
-    ],
-    failureConsequences: [
-      '账目依旧混乱',
-      '贪腐不止',
-      '朝廷财政继续流失',
-    ],
     expectedBenefits: '减少贪腐，提高财政透明度',
   },
 ]
 
-/** 改革类别元数据 */
-export const REFORM_CATEGORY_META = {
+export const REFORM_CATEGORY_META: Record<
+  Reform['category'],
+  { name: string; icon: string; color: string }
+> = {
   财政: { name: '财政', icon: '💰', color: '#d4a574' },
   军事: { name: '军事', icon: '⚔️', color: '#8b4513' },
   人事: { name: '人事', icon: '👥', color: '#6b8e23' },
   农业: { name: '农业', icon: '🌾', color: '#228b22' },
   工业: { name: '工业', icon: '🔧', color: '#708090' },
   监察: { name: '监察', icon: '📋', color: '#4682b4' },
-} as const
+}
