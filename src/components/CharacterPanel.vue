@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { RESOURCE_KEYS, RESOURCE_META } from '../composables/useGame'
-import { ATTRIBUTE_META, STATUS_META } from '../data/characters'
+import { STATUS_META } from '../data/characters'
 import { portraitOf } from '../data/portraits'
 import type { CharView, ResourceKey } from '../types'
+import AttributeRadar from './AttributeRadar.vue'
 
 const props = defineProps<{
   characters: CharView[]
@@ -96,11 +97,7 @@ function faceOf(id: string) {
         </span>
 
         <span class="stats">
-          <span v-for="a in ATTRIBUTE_META" :key="a.key" class="stat" :title="a.hint">
-            <span class="sl">{{ a.label }}</span>
-            <span class="bar"><i :style="{ width: `${v.char.attributes[a.key]}%` }"></i></span>
-            <span class="sv">{{ v.char.attributes[a.key] }}</span>
-          </span>
+          <AttributeRadar :attributes="v.char.attributes" variant="card" />
         </span>
       </button>
     </div>
@@ -323,45 +320,8 @@ function faceOf(id: string) {
 }
 
 .stats {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-  margin-top: 8px;
-}
-
-.stat {
-  display: grid;
-  grid-template-columns: 2.1em minmax(0, 1fr) 1.9em;
-  align-items: center;
-  gap: 5px;
-}
-
-.sl {
-  font-family: var(--font-kai);
-  font-size: 11px;
-  color: var(--ink-3);
-}
-
-.bar {
-  height: 5px;
-  overflow: hidden;
-  background: rgba(171, 142, 95, 0.22);
-  border-radius: 1px;
-}
-
-.bar i {
   display: block;
-  height: 100%;
-  background: linear-gradient(90deg, #c1483d, var(--cinnabar));
-  border-radius: 1px;
-}
-
-.sv {
-  font-family: var(--font-kai);
-  font-size: 11.5px;
-  font-variant-numeric: tabular-nums;
-  color: var(--ink-2);
-  text-align: right;
+  margin-top: 4px;
 }
 
 .char-card.dim {
