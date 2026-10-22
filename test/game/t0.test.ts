@@ -20,7 +20,7 @@ afterEach(() => {
 const fullFlags = () => Object.fromEntries(REFORM_REQUIREMENTS.map((flag) => [flag, 1]))
 
 describe('T0 国用积弊', () => {
-  const slots = [12, 18, 21, 38]
+  const slots = [18, 32, 36, 60]
   const crisisCards = ALL_EVENTS.filter(card => card.id.startsWith('k-'))
 
   it('当积弊候选接入时，十二张卡只占四议，不增加中兴条件或覆盖原有成果', () => {

@@ -1,21 +1,107 @@
 import { FinaleBranch, Flag } from '../types'
 import type { GameEvent, StoryChapter } from '../types'
-import { chapterStart } from '../composables/slots'
 
 /**
- * 全部篇章。事件按史事年份编年直排：编年键 = 第 time.year 年 * 5 + order - 1，
- * 步骤从键起依次占位；同年同序（编年键相同）的篇章按数组顺序接续，故插入新史事时
- * 改 order 或调数组位置即可，不必再算空闲槽位。
+ * 全部篇章。牌序按各章的 (year, order) 排序，再按篇章在数组中的先后接续；
+ * 每年能容纳多少议不设上限，牌堆键只是排序后的连续序号，不参与纪年换算。
  * 步骤内候选按数组顺序取首张符合条件者（requires 全无候选则整步略过）；单步分组的 id/name 取自该组首张候选。
  * 2026-10 由旧 chapters/reforms/events 工厂数据一次性生成（含 F1-F5 修复），此后手工维护。
  */
+/**
+ * 天启七年八月序幕：与「宫门定策」同属天启七年，篇章内按步骤顺序展开。
+ */
+
+
 export const CHAPTERS: StoryChapter[] = [
+
+  {
+    id: "xinwang",
+    name: "信邸承统",
+    time: { year: 0, order: 1 },
+    stepTimes: [{ year: 0, order: 1 }, { year: 0, order: 2 }, { year: 0, order: 3 }, { year: 0, order: 4 }],
+    steps: [
+      [
+          {
+            id: 'prelude-bingta',
+            avatar: '🛏️',
+            name: '病榻托孤',
+            text: '天启七年八月，皇兄病重，召你入乾清宫。他无子，兄终弟及，你是唯一在世的皇弟。榻前他说：「吾弟当为尧舜。」又嘱「善事中宫、忠贤宜委用」。这句「委用」是托孤，也是枷锁：当面应下，魏忠贤便有了挟遗命自重之名；当面推辞，又怕皇兄疑你盼他早死。',
+            left: {
+              label: '伏地泣辞：不给魏忠贤遗命口实',
+              effects: { court: -2, people: 3 },
+              response: '你伏地涕泣，再三推辞，说不敢当尧舜之誉，只愿皇兄静养。朱由校看着你，没再逼问；帘外的魏忠贤却把「再三推辞」四个字记在心里。',
+            },
+            right: {
+              label: '叩首受命：当面应下委用忠贤',
+              effects: { court: 4, people: -2 },
+              response: '你顿首受命，说愿承祖宗基业。朱由校点头，命你善事中宫、委用忠贤；你应下了，心里却把「委用」二字掂了又掂。',
+            },
+          },
+      ],
+      [
+          {
+            id: 'prelude-yizhao',
+            avatar: '📜',
+            name: '遗诏迎立',
+            text: '八月二十二日申时，朱由校驾崩，遗诏迎立信王。内阁辅臣具笺劝进；魏忠贤却已派人到信府，催你即刻从东华门入宫。随他入门，名分当夜就定，宫门却在他手里；等百官齐集，名分更正，今夜宫门可能不开。',
+            left: {
+              label: '随魏忠贤连夜入宫，先定名分',
+              effects: { court: 5, people: -2 },
+              response: '你随魏忠贤入宫，名分当夜而定。宫门、司礼监仍是他的人；你坐在乾清宫，听见外面锁钥响，知道今夜不会太平。',
+            },
+            right: {
+              label: '闭门等内阁百官，名分要正',
+              effects: { court: 2, people: 3 },
+              response: '你先在信府受了内阁劝进笺，等百官齐集，才从东华门入宫。名分迟了半日，却让天下看见：迎立你的是祖制与内阁，不只是魏忠贤。',
+            },
+          },
+      ],
+      [
+          {
+            id: 'prelude-quanjin',
+            avatar: '🏛️',
+            name: '三辞三让',
+            text: '劝进笺已到第三道。依礼，你还得再辞一次；可魏忠贤已把即位仪注备好，司礼监的人等在门外。再辞，是给百官看名分；不辞，是给魏忠贤看速度。夜长梦多，你只能选一头。',
+            left: {
+              label: '再辞一次，把名分做足',
+              effects: { court: 3, people: 3 },
+              response: '你把劝进笺退回三次，第三次才允。礼部官员松了口气，说这才像祖宗旧制；魏忠贤却嫌你拖，暗里催了几回。',
+            },
+            right: {
+              label: '不再辞让，连夜受命',
+              effects: { court: -3, people: -3 },
+              response: '你没有再辞，当日受命。名分早定了半日，礼部却低声议论：新君急于正位，连三辞的旧例都省了。',
+            },
+          },
+      ],
+      [
+          {
+            id: 'prelude-maibing',
+            avatar: '🍞',
+            name: '袖饼入宫',
+            text: '入宫前，皇嫂张嫣告诫你：宫里的饮食未必干净。你袖中藏着几张麦饼。宫门内，魏忠贤的人已备好膳食；吃，是示以不疑；不吃，是告诉他，你从第一夜就防着他。',
+            left: {
+              label: '袖饼入宫，一口宫膳也不吃',
+              effects: { court: 2, people: 3 },
+              response: '你把麦饼藏在袖中，进了乾清宫。内侍端来膳食，你只说国丧未除、不进荤酒；夜里饿了，就掰一块麦饼。左右看见，知道新君连一口水都不肯轻信。',
+            },
+            right: {
+              label: '照常进膳，先示以不疑',
+              effects: { court: -2, people: -4 },
+              response: '你照常入宫，内侍端上膳食。你动了筷子，却吃得极少；每道菜经谁的手，你并不知道。当夜你听见门外脚步声，几次坐起，终究没有睡稳。',
+            },
+          },
+      ],
+    ],
+  },
+
 
   // ── 天启七年 ──
   {
     id: "wei",
     name: "宫门定策",
-    time: { year: 0, order: 1 },
+    time: { year: 0, order: 5 },
+    stepTimes: [{ year: 0, order: 5 }, { year: 0, order: 6 }, { year: 0, order: 7 }, { year: 0, order: 8 }, { year: 0, order: 9 }, { year: 0, order: 10 }, { year: 0, order: 11 }],
     steps: [
       [
         {
@@ -24,12 +110,12 @@ export const CHAPTERS: StoryChapter[] = [
           avatar: "🐉",
           text: "你入了宫，魏忠贤已捧着玉玺在乾清宫等你。他掌司礼监，替皇帝批红、传旨，东厂缉捕、宫门启闭也归他管；他请你当晚就受玺即位。宫里宫外都是他的班底，你身边只有信王府跟来的几名旧人。是先受玺、让他照旧掌司礼监，还是先在宫外停一夜，把九门锁钥换成自己的人？",
           left: {
-            label: "受玺即位，仍让他掌司礼监",
+            label: "受玺，仍用魏忠贤，秉烛犒军",
             effects: { court: 6, law: -6, army: 2, gold: -2 },
             response: "你连夜受玺即位，玉玺从他手里接过，司礼监和东厂照旧归他管。头一道旨意是安抚：九门和宫里当值的将士各给赏赐，银子从太仓和内库支出。当夜你没有睡，只命人点着蜡烛，独坐在乾清宫，听着外头的巡逻声；每一班禁卫经过，都叫人给酒食，直到窗纸发白。名分当天就定了，可批红和传旨都经他的手。",
           },
           right: {
-            label: "先在宫外停一夜，换掉九门锁钥",
+            label: "停一夜，换九门，再入宫",
             effects: { court: -4, law: 6, gold: -6, people: 4 },
             response: "你在宫门外停了大半夜，只说要辞让，趁夜把九门锁钥和当夜的值守换成了信王府跟来的旧人，多赏的银子从内库支出；天未亮才入宫。入宫后你没有直接安寝，秉烛坐到晨光透窗，犒赏当夜的值守。魏忠贤觉出不对，却说不出哪里变了。",
             sets: [Flag.密换九门],
@@ -328,6 +414,7 @@ export const CHAPTERS: StoryChapter[] = [
     id: "institute",
     name: "器院立局",
     time: { year: 1, order: 4 },
+    stepTimes: [{ year: 1, order: 4 }, { year: 1, order: 5 }, { year: 2, order: 1 }, { year: 2, order: 2 }],
     steps: [
       [
         {
@@ -613,6 +700,7 @@ export const CHAPTERS: StoryChapter[] = [
     id: "yuan",
     name: "袁崇焕之狱",
     time: { year: 2, order: 4 },
+    stepTimes: [{ year: 2, order: 4 }, { year: 2, order: 5 }, { year: 3, order: 1 }],
     steps: [
       [
         {
@@ -1260,6 +1348,7 @@ export const CHAPTERS: StoryChapter[] = [
     id: "wuqiao",
     name: "吴桥兵变",
     time: { year: 4, order: 4 },
+    stepTimes: [{ year: 4, order: 4 }, { year: 4, order: 5 }, { year: 5, order: 1 }, { year: 5, order: 2 }],
     steps: [
       [
         {
@@ -1453,6 +1542,7 @@ export const CHAPTERS: StoryChapter[] = [
     id: "g-huoqi-fazhan",
     name: "火器技术发展",
     time: { year: 5, order: 2 },
+    stepTimes: [{ year: 5, order: 2 }, { year: 5, order: 3 }],
     steps: [
       [
         {
@@ -1530,6 +1620,7 @@ export const CHAPTERS: StoryChapter[] = [
     id: "dalinghe",
     name: "大凌河之战",
     time: { year: 4, order: 5 },
+    stepTimes: [{ year: 4, order: 5 }, { year: 5, order: 1 }],
     steps: [
       [
         {
@@ -1578,6 +1669,7 @@ export const CHAPTERS: StoryChapter[] = [
     id: "shipping",
     name: "海贸立约",
     time: { year: 5, order: 3 },
+    stepTimes: [{ year: 5, order: 3 }, { year: 5, order: 4 }, { year: 5, order: 5 }, { year: 6, order: 1 }],
     steps: [
       [
         {
@@ -2095,6 +2187,7 @@ export const CHAPTERS: StoryChapter[] = [
     id: "g-caizheng-gaige",
     name: "财政改革深化",
     time: { year: 8, order: 1 },
+    stepTimes: [{ year: 8, order: 1 }, { year: 8, order: 2 }, { year: 8, order: 3 }],
     steps: [
       [
         {
@@ -2277,6 +2370,7 @@ export const CHAPTERS: StoryChapter[] = [
     id: "relief",
     name: "工赈与收编",
     time: { year: 8, order: 4 },
+    stepTimes: [{ year: 8, order: 4 }, { year: 8, order: 5 }, { year: 9, order: 1 }, { year: 9, order: 2 }],
     steps: [
       [
         {
@@ -2685,6 +2779,7 @@ export const CHAPTERS: StoryChapter[] = [
     id: "workshop",
     name: "精密工坊攻关",
     time: { year: 10, order: 4 },
+    stepTimes: [{ year: 10, order: 4 }, { year: 10, order: 5 }, { year: 11, order: 1 }, { year: 11, order: 2 }, { year: 11, order: 3 }],
     steps: [
       [
         {
@@ -2921,6 +3016,7 @@ export const CHAPTERS: StoryChapter[] = [
     id: "shangluo",
     name: "商洛山中",
     time: { year: 11, order: 4 },
+    stepTimes: [{ year: 11, order: 4 }, { year: 11, order: 5 }, { year: 11, order: 6 }],
     steps: [
       [
         {
@@ -3074,6 +3170,7 @@ export const CHAPTERS: StoryChapter[] = [
     id: "gucheng",
     name: "谷城安置",
     time: { year: 12, order: 1 },
+    stepTimes: [{ year: 12, order: 1 }, { year: 12, order: 2 }, { year: 12, order: 3 }],
     steps: [
       [
         {
@@ -3203,6 +3300,7 @@ export const CHAPTERS: StoryChapter[] = [
     id: "jinzhou-supply",
     name: "锦州粮道",
     time: { year: 12, order: 4 },
+    stepTimes: [{ year: 12, order: 4 }, { year: 12, order: 5 }, { year: 13, order: 1 }],
     steps: [
       [
         {
@@ -3324,6 +3422,7 @@ export const CHAPTERS: StoryChapter[] = [
     id: "epidemic",
     name: "大疫防治",
     time: { year: 13, order: 2 },
+    stepTimes: [{ year: 13, order: 2 }, { year: 13, order: 3 }, { year: 13, order: 4 }],
     steps: [
       [
         {
@@ -3439,6 +3538,7 @@ export const CHAPTERS: StoryChapter[] = [
     id: "famine",
     name: "中原大饥",
     time: { year: 13, order: 4 },
+    stepTimes: [{ year: 13, order: 4 }, { year: 13, order: 5 }],
     steps: [
       [
         {
@@ -3488,6 +3588,7 @@ export const CHAPTERS: StoryChapter[] = [
     id: "luoyang",
     name: "洛阳告急",
     time: { year: 14, order: 1 },
+    stepTimes: [{ year: 14, order: 1 }, { year: 14, order: 2 }, { year: 14, order: 3 }],
     steps: [
       [
         {
@@ -3591,6 +3692,7 @@ export const CHAPTERS: StoryChapter[] = [
     id: "river",
     name: "开封河患",
     time: { year: 13, order: 5 },
+    stepTimes: [{ year: 13, order: 5 }, { year: 14, order: 1 }, { year: 14, order: 2 }],
     steps: [
       [
         {
@@ -3751,6 +3853,7 @@ export const CHAPTERS: StoryChapter[] = [
     id: "songjin",
     name: "松锦军议",
     time: { year: 14, order: 3 },
+    stepTimes: [{ year: 14, order: 3 }, { year: 14, order: 4 }, { year: 14, order: 5 }],
     steps: [
       [
         {
@@ -3885,6 +3988,7 @@ export const CHAPTERS: StoryChapter[] = [
     id: "peace",
     name: "公开议和",
     time: { year: 15, order: 1 },
+    stepTimes: [{ year: 15, order: 1 }, { year: 15, order: 2 }, { year: 15, order: 3 }],
     steps: [
       [
         {
@@ -4064,6 +4168,7 @@ export const CHAPTERS: StoryChapter[] = [
     id: "chuanting",
     name: "孙传庭整军",
     time: { year: 15, order: 4 },
+    stepTimes: [{ year: 15, order: 4 }, { year: 15, order: 5 }, { year: 16, order: 1 }],
     steps: [
       [
         {
@@ -4207,6 +4312,7 @@ export const CHAPTERS: StoryChapter[] = [
     id: "succession",
     name: "新政查验与储君承诺",
     time: { year: 16, order: 2 },
+    stepTimes: [{ year: 16, order: 2 }, { year: 16, order: 3 }, { year: 16, order: 4 }, { year: 16, order: 5 }],
     steps: [
       [
         {
@@ -4367,6 +4473,7 @@ export const CHAPTERS: StoryChapter[] = [
     id: "nanqian",
     name: "南迁之议",
     time: { year: 17, order: 1 },
+    stepTimes: [{ year: 17, order: 1 }, { year: 17, order: 2 }],
     steps: [
       [
         {
@@ -4507,14 +4614,54 @@ export const CHAPTERS: StoryChapter[] = [
 /** 全部事件的平铺视图（含终章候选），人物事件表与提示求解器共用 */
 export const ALL_EVENTS: GameEvent[] = CHAPTERS.flatMap((chapter) => chapter.steps.flat())
 
-/** 事件 id → 最早可落槽位（范围篇章取年期首槽），供测试与人物纪年反查 */
+/** 一个牌堆步骤：key 是按真实纪年排完序后的连续序号，year 是该章所属年份 */
+export interface ChronologyEntry {
+  key: number
+  year: number
+  chapter: StoryChapter
+  step: number
+  cards: GameEvent[]
+}
+
+/**
+ * 按章所属年份、年内序、步骤号排序；同序同步的篇章再按数组先后接续。
+ * 排序只用真实纪年信息，不设每年步数上限；排完后才赋连续 key。
+ */
+export const CHRONOLOGY: ChronologyEntry[] = (() => {
+  const staged = CHAPTERS.flatMap((chapter, chapterIndex) =>
+    chapter.steps.map((cards, step) => {
+      const time = chapter.stepTimes?.[step] ?? chapter.time
+      return {
+        chapter,
+        chapterIndex,
+        step,
+        year: time.year,
+        order: time.order,
+        cards,
+      }
+    }),
+  ).sort(
+    (a, b) =>
+      a.year - b.year ||
+      a.order - b.order ||
+      a.chapterIndex - b.chapterIndex,
+  )
+  return staged.map(({ chapter, step, year, cards }, key) => ({ key, year, chapter, step, cards }))
+})()
+
+/** 牌堆键 → 天启七年/崇祯年（0 = 天启七年，17 = 崇祯十七年） */
+export const KEY_YEARS: number[] = CHRONOLOGY.map((entry) => entry.year)
+
+/** 牌堆键 → 年份；键越界时退回天启七年，避免旧存档或空牌堆报错 */
+export function yearOf(key: number): number {
+  return KEY_YEARS[key] ?? 0
+}
+
+/** 事件 id → 该事件在牌堆中的连续键，供测试与人物纪年反查 */
 export const EVENT_SLOT: Record<string, number> = (() => {
   const slots: Record<string, number> = {}
-  for (const chapter of CHAPTERS) {
-    const start = chapterStart(chapter.time)
-    chapter.steps.forEach((candidates, step) => {
-      for (const event of candidates) slots[event.id] = start + step
-    })
+  for (const entry of CHRONOLOGY) {
+    for (const event of entry.cards) slots[event.id] = entry.key
   }
   return slots
 })()

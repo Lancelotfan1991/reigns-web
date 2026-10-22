@@ -4,7 +4,7 @@ import { ALL_EVENTS, EVENT_SLOT } from '../../src/data/chapters'
 import { findLifeVerdict, resolveFate } from '../../src/composables/fates'
 import { addFlags } from '../../src/composables/simulation'
 import { useGame } from '../../src/composables/useGame'
-import { yearOf } from '../../src/composables/slots'
+import { yearOf } from '../../src/data/chapters'
 import type { FateCtx } from '../../src/composables/fates'
 import { CharStatus, Flag, Side } from '../../src/types'
 import type { Decision, GameEvent } from '../../src/types'
@@ -17,7 +17,7 @@ for (const card of ALL_EVENTS) {
 }
 const cards = [...pool.values()]
 
-/** 卡所属槽位的崇祯纪年 */
+/** 卡所属牌序的崇祯纪年 */
 function yearOfCard(card: GameEvent): number {
   return yearOf(EVENT_SLOT[card.id])
 }

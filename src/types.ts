@@ -235,6 +235,8 @@ export interface StoryChapter {
   id: string
   name: string
   time: ChapterTime
+  /** 多步篇章逐步的纪年；一步一章可省略，不能靠起始时间加步骤推算 */
+  stepTimes?: ChapterTime[]
   steps: GameEvent[][]
 }
 

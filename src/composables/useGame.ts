@@ -28,7 +28,7 @@ import type {
   Verdict,
 } from '../types'
 import type { DealResult, DealState, SimState } from './simulation'
-import { yearOf } from './slots'
+import { yearOf } from '../data/chapters'
 
 export { AXIS_KEYS, RESOURCE_KEYS, TOTAL_STEPS, UNREST_LINE }
 
@@ -251,7 +251,7 @@ export function useGame(options: GameOptions = {}) {
   const bestYears = ref(loadBest())
   /** 本局已做出的决策，供人物系统推导 */
   const decisions = ref<Decision[]>([])
-  /** 旗标计数：关键抉择写下的痕迹，决定后续槽位发哪张分叉卡 */
+  /** 旗标计数：关键抉择写下的痕迹，决定后续牌序发哪张分叉卡 */
   const flags = ref<Record<string, number>>({})
   /** 本局牌堆进度：篇章直排后牌序即数据顺序，与推演共用同一份，故 god 模式能照真实牌序算到底 */
   let dealState: DealState = { seq: 0 }
@@ -316,10 +316,8 @@ export function useGame(options: GameOptions = {}) {
     return set
   })
 
-  function startGame(prologue?: Effects) {
-    resources.value = prologue
-      ? applyToResources(initialResources(), prologue, 0, false, false)
-      : initialResources()
+  function startGame() {
+    resources.value = initialResources()
     flags.value = {}
     dealState = { seq: 0 }
     lastYear = -1

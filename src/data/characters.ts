@@ -73,7 +73,7 @@ export const CHARACTERS: Character[] = [
     expertise: ['厂卫', '权术', '宫禁'],
     traits: ['猜狠', '骄横'],
     born: 1568,
-    events: ['s-tuogu', 's-gongnv', 's-qingci-dongchang', 's-kesi', 's-cui', 's-impeach-wei', 's-wei', 's-wei-rash', 's-wei-failed', 's-wei-stalled', 's-wei-coup', 's-ni-an'],
+    events: ['prelude-bingta', 's-tuogu', 's-gongnv', 's-qingci-dongchang', 's-kesi', 's-cui', 's-impeach-wei', 's-wei', 's-wei-rash', 's-wei-failed', 's-wei-stalled', 's-wei-coup', 's-ni-an'],
     fates: [
       { event: 's-wei', side: Side.Left, status: CharStatus.Dead, seal: '缢', note: '宫门有己人、文书照章程：你先免崔呈秀，逮牌出宫，他夜缢于阜城旅邸' },
       { event: 's-wei', side: Side.Right, status: CharStatus.Alive, seal: '留', note: '只革东厂，司礼监如故。他知道朝廷几乎办了他，从此奏疏出入先看他颜色' },

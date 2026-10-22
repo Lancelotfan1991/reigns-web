@@ -2,7 +2,6 @@
 import { computed, defineAsyncComponent, onMounted, onUnmounted, ref } from 'vue'
 import CharSheet from './components/CharSheet.vue'
 import GameCard from './components/GameCard.vue'
-import Prologue from './components/Prologue.vue'
 import ResourceBadge from './components/ResourceBadge.vue'
 import VerdictSheet from './components/VerdictSheet.vue'
 import { useCharacters } from './composables/useCharacters'
@@ -17,9 +16,9 @@ import {
   useGame,
 } from './composables/useGame'
 import { CharStatus, EndingKind, Side } from './types'
-import type { Effects, ResourceKey } from './types'
+import type { ResourceKey } from './types'
 
-type Screen = 'start' | 'prologue' | 'play' | 'over'
+type Screen = 'start' | 'play' | 'over'
 
 /** 执行判定试玩：本地加 ?check=1 时，关键政令掷 2d6；默认关闭 */
 const CHECKS = new URLSearchParams(window.location.search).get('check') === '1'
@@ -99,11 +98,7 @@ function isActive(key: ResourceKey) {
 }
 
 function start() {
-  screen.value = 'prologue'
-}
-
-function enterGame(effects: Effects) {
-  game.startGame(effects)
+  game.startGame()
   dragDx.value = 0
   screen.value = 'play'
 }
@@ -186,12 +181,9 @@ function openReforms() {
   <!-- 皇舆图：#/map 独立成页 -->
   <MapPage v-else-if="isMap" />
 
-  <div v-else class="app" :class="{ 'app-prelude': screen === 'prologue' }">
+  <div v-else class="app">
     <!-- 卡牌图谱：?atlas=1 时打开，占满全屏，不叠游戏三屏 -->
     <CardAtlas v-if="CardAtlas" />
-
-    <!-- 入宫前的信邸序幕：四页抉择，随后发第一张宫门牌 -->
-    <Prologue v-else-if="screen === 'prologue'" @done="enterGame" />
 
     <!-- 开始界面 -->
     <section v-else-if="screen === 'start'" class="screen start-screen">
@@ -396,20 +388,6 @@ function openReforms() {
   display: flex;
   flex-direction: column;
   overflow: hidden;
-}
-
-/* 序幕是独立整屏，不受游戏栏宽与回纹边框限制 */
-.app.app-prelude {
-  max-width: none;
-  height: auto;
-  min-height: 100dvh;
-  padding: 0;
-  overflow: visible;
-}
-
-.app.app-prelude::before,
-.app.app-prelude::after {
-  display: none;
 }
 
 /* 上下回纹装裱 */

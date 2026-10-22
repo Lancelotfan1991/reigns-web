@@ -6,11 +6,11 @@ import type { CharView, Deed } from '../types'
 import { resolveFate } from './fates'
 import type { Fate } from './fates'
 import type { Game } from './useGame'
-import { yearOf } from './slots'
+import { yearOf } from '../data/chapters'
 
 interface EventMeta {
   title: string
-  /** 卡所属槽位的崇祯纪年 */
+  /** 卡所属牌序的崇祯纪年 */
   year: number
   labels: Record<Side, string>
 }

@@ -1,8 +1,8 @@
-import { CHAPTERS } from '../data/chapters'
-import { FINALE_YEAR, chapterStart, yearOf } from './slots'
+import { CHRONOLOGY, yearOf } from '../data/chapters'
+import { FINALE_YEAR } from './era'
 import { FinaleBranch, Flag, Side } from '../types'
 import type { AxisKey, Effects, FlagRule, GameEvent, ResourceKey, StoryChapter } from '../types'
-export { FINALE_YEAR, YEAR_SLOTS, yearOf, slotOfPosition } from './slots'
+export { FINALE_YEAR, yearOf }
 
 /** 四象：归零与满格同样致命 */
 export const AXIS_KEYS: AxisKey[] = ['court', 'law', 'army', 'gold']
@@ -48,20 +48,10 @@ export interface DeckEntry {
 }
 
 /**
- * 编年直排：全部篇章的步骤按「年 + 年内序号」排序成一条牌堆，同年同位（并键）按篇章数组顺序先后落座。
- * 年份即键的年份，纪年与旧槽位制一致；并键让新篇章能插进已占满的年份。
+ * 编年直排：篇章已按 (year, order) 排好，牌堆键是连续序号；
+ * 每一步的年份由 CHRONOLOGY 显式携带，不再由键做乘除换算。
  */
-export const DECK: DeckEntry[] = (() => {
-  const entries: DeckEntry[] = []
-  for (const chapter of CHAPTERS) {
-    const start = chapterStart(chapter.time)
-    chapter.steps.forEach((cards, step) => entries.push({ key: start + step, chapter, step, cards }))
-  }
-  return entries
-    .map((entry, index) => ({ entry, index }))
-    .sort((a, b) => a.entry.key - b.entry.key || a.index - b.index)
-    .map(({ entry }) => entry)
-})()
+export const DECK: DeckEntry[] = CHRONOLOGY
 
 /** 牌堆总步数：推演的最大深度 */
 export const TOTAL_STEPS = DECK.length
