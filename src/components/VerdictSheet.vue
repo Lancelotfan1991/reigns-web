@@ -12,6 +12,13 @@ const emit = defineEmits<{ continue: [] }>()
 /** 此议判了谁的生死；没有则仍是通用批红页 */
 const life = computed(() => props.verdict.life)
 
+/** 执行判定结果：仅 ?check=1 的关键政令才有 */
+const execution = computed(() => props.verdict.execution)
+
+function signed(value: number) {
+  return value >= 0 ? `+${value}` : `${value}`
+}
+
 /** 生死页分两步：先看人，再看政 */
 const lifePage = ref<'person' | 'verdict'>('person')
 
@@ -35,7 +42,7 @@ function onNext() {
 </script>
 
 <template>
-  <section class="verdict-sheet" :class="{ 'life-sheet': !!life }" aria-label="本议批红">
+  <section class="verdict-sheet" :class="{ 'life-sheet': !!life, 'has-exec': !!execution }" aria-label="本议批红">
     <span class="band"></span>
 
     <!-- ====== 人物退场页（仅 life 存在时的第一屏） ====== -->
@@ -98,6 +105,21 @@ function onNext() {
       </template>
 
       <p class="response" tabindex="0" aria-label="批红正文，可上下滚动">{{ props.verdict.response }}</p>
+
+      <section v-if="execution" class="exec-block" :class="`exec-${execution.tier}`">
+        <div class="exec-head">
+          <span class="exec-seal">判</span>
+          <span class="exec-meta"><span class="exec-kind">{{ execution.kind }} · </span>阻力：{{ execution.obstacle }}<span class="exec-diff">（{{ execution.difficulty }}级）</span></span>
+          <span class="exec-label">{{ execution.label }}</span>
+        </div>
+        <div class="exec-dice">
+          <span class="die">{{ execution.dice[0] }}</span>
+          <span class="die">{{ execution.dice[1] }}</span>
+          <span class="exec-calc">骰子 {{ execution.diceTotal }} ＋ 修正 {{ signed(execution.modifier) }} ＝ {{ execution.total }}</span>
+          <span class="exec-chance">顺利办成 {{ execution.chance }}%</span>
+        </div>
+        <p class="exec-report">{{ execution.report }}</p>
+      </section>
 
       <ul v-if="props.verdict.lines.length" class="ledger">
         <li v-for="line in props.verdict.lines" :key="line.key">
@@ -370,6 +392,143 @@ function onNext() {
   border-bottom: 1px solid var(--line-soft);
 }
 
+/* 有执行结果时，批红正文随整页滚动，不缩成一小块滚动区 */
+.has-exec .response {
+  flex: none;
+  overflow: visible;
+}
+
+/* 执行结果：骰子、算式与落地情况，附在政令原文之后 */
+.exec-block {
+  flex: none;
+  width: 100%;
+  margin-top: 10px;
+  padding: 8px 11px 10px;
+  text-align: left;
+  background: rgba(255, 250, 240, 0.5);
+  border-top: 1px solid var(--line-soft);
+  border-bottom: 1px solid var(--line-soft);
+  box-shadow: inset 3px 0 0 var(--line-soft);
+}
+
+.exec-head {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-family: var(--font-kai);
+}
+
+.exec-seal {
+  flex: none;
+  width: 20px;
+  height: 20px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--cinnabar);
+  border: 1.5px solid var(--cinnabar);
+  border-radius: 2px;
+  transform: rotate(-5deg);
+}
+
+.exec-meta {
+  min-width: 0;
+  font-size: 11px;
+  letter-spacing: 0.2px;
+  color: var(--ink-3);
+}
+
+.exec-label {
+  flex: none;
+  margin-left: auto;
+  padding: 1px 7px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  white-space: nowrap;
+  color: var(--ink-2);
+  border: 1px solid currentColor;
+  border-radius: 2px;
+}
+
+.exec-dice {
+  margin-top: 7px;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.die {
+  width: 22px;
+  height: 22px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-kai);
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--ink);
+  background: var(--paper-hi);
+  border: 1.5px solid var(--line);
+  border-radius: 3px;
+  box-shadow: 0 1px 2px rgba(41, 33, 26, 0.18);
+  animation: die-drop 0.28s cubic-bezier(0.2, 0.9, 0.3, 1.2);
+}
+
+.die:nth-child(2) {
+  animation-delay: 0.06s;
+}
+
+@keyframes die-drop {
+  from {
+    transform: translateY(-8px) rotate(-14deg);
+    opacity: 0;
+  }
+}
+
+.exec-calc {
+  font-size: 11.5px;
+  letter-spacing: 0.3px;
+  color: var(--ink-3);
+}
+
+.exec-chance {
+  margin-left: auto;
+  font-size: 10.5px;
+  letter-spacing: 0.3px;
+  color: var(--ink-3);
+}
+
+.exec-report {
+  margin-top: 6px;
+  font-family: var(--font-kai);
+  font-size: 14.5px;
+  line-height: 1.8;
+  text-align: justify;
+  color: var(--ink);
+}
+
+.exec-success {
+  background: rgba(171, 132, 48, 0.06);
+  box-shadow: inset 3px 0 0 var(--ochre);
+}
+
+.exec-success .exec-label {
+  color: var(--ochre);
+}
+
+.exec-fail {
+  background: rgba(168, 50, 42, 0.05);
+  box-shadow: inset 3px 0 0 var(--cinnabar);
+}
+
+.exec-fail .exec-label {
+  color: var(--cinnabar);
+}
+
 .ledger {
   flex: none;
   width: 100%;
@@ -500,6 +659,32 @@ function onNext() {
     line-height: 1.8;
   }
 
+  .exec-block {
+    margin-top: 7px;
+    padding: 5px 8px 7px;
+  }
+
+  .exec-dice {
+    margin-top: 4px;
+  }
+
+  .die {
+    width: 19px;
+    height: 19px;
+    font-size: 12px;
+  }
+
+  .exec-meta,
+  .exec-calc {
+    font-size: 10.5px;
+  }
+
+  .exec-report {
+    margin-top: 4px;
+    font-size: 13px;
+    line-height: 1.65;
+  }
+
   .ledger {
     margin-top: 7px;
     gap: 3px 8px;
@@ -516,6 +701,13 @@ function onNext() {
   }
 }
 
+/* 手机宽度放不下阻力等级，先收掉；桌面仍保留 */
+@media (max-width: 430px) {
+  .exec-diff {
+    display: none;
+  }
+}
+
 @media (max-width: 360px) {
   .head {
     gap: 6px;
@@ -524,6 +716,11 @@ function onNext() {
 
   .tag {
     letter-spacing: 1px;
+  }
+
+  /* 再窄就只留阻力来源，政令类型也收掉 */
+  .exec-kind {
+    display: none;
   }
 }
 </style>

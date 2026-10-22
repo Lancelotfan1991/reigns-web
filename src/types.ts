@@ -143,6 +143,59 @@ export enum Flag {
  */
 export type FlagRule = Flag | { flag: Flag; min: number }
 
+/** 执行判定：只判政令能否落地，不判抉择对错 */
+export type ExecutionKind = '加征' | '赈济' | '整顿' | '军令' | '人事'
+
+export type ExecutionTier = 'success' | 'partial' | 'fail'
+
+/** 判定三档之一：完全办成沿用抉择本身的效果，部分办成与失败另写 */
+export interface ExecutionOutcome {
+  /** 结果标签：办成/部分办成/没能办成…… */
+  label: string
+  /** 执行结果正文 */
+  report: string
+  /** 不填则沿用抉择本身的数值影响 */
+  effects?: Effects
+  /** 额外旗标；抉择本身的 sets 始终照记 */
+  sets?: Flag[]
+}
+
+export interface ExecutionCheck {
+  kind: ExecutionKind
+  /** 阻力来源：东江镇/士绅/州县官吏/百姓承受力…… */
+  obstacle: string
+  difficulty: 1 | 2 | 3 | 4
+  /** 承办官 id；不填按部院承办 */
+  executor?: string
+  /** 判定模式下替代原 response 的「只述旨意」文本 */
+  decision: string
+  success: ExecutionOutcome
+  partial: ExecutionOutcome
+  fail: ExecutionOutcome
+}
+
+export interface ExecutionPreview {
+  kind: ExecutionKind
+  obstacle: string
+  difficulty: number
+  /** 顺利办成的概率（0-100） */
+  chance: number
+}
+
+export interface ExecutionResult {
+  kind: ExecutionKind
+  obstacle: string
+  difficulty: number
+  dice: [number, number]
+  diceTotal: number
+  modifier: number
+  total: number
+  tier: ExecutionTier
+  label: string
+  report: string
+  chance: number
+}
+
 export interface Choice {
   /** 滑动时显示的决策印章文字 */
   label: string
@@ -153,6 +206,8 @@ export interface Choice {
   finale?: FinaleBranch
   /** 此选择写下的旗标：决定后续年份哪些分叉卡会登场 */
   sets?: Flag[]
+  /** 执行判定：仅少数有阻力的关键政令标注 */
+  check?: ExecutionCheck
 }
 
 export interface GameEvent {
@@ -230,6 +285,8 @@ export interface Verdict {
   lines: VerdictLine[]
   /** 此议判了谁的生死；非生死之议为 null */
   life: LifeVerdict | null
+  /** 关键政令的执行判定；例行公事为 undefined */
+  execution?: ExecutionResult
   /** 此议已定国运：读完批红即入结局 */
   ended: boolean
 }

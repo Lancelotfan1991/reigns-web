@@ -3,7 +3,7 @@ import { computed, ref } from 'vue'
 import type { Advice } from '../composables/useHint'
 import { cardPortrait } from '../data/portraits'
 import { Side } from '../types'
-import type { ChapterProgress, GameEvent } from '../types'
+import type { ChapterProgress, ExecutionPreview, GameEvent } from '../types'
 
 const props = defineProps<{
   event: GameEvent
@@ -16,6 +16,8 @@ const props = defineProps<{
   knownNames?: string[]
   /** 连续篇章进度：非篇章内为 null */
   chapter?: ChapterProgress | null
+  /** 执行判定原型：两侧掷骰前顺利办成的概率，仅 ?check=1 时传入 */
+  checkPreviews?: { left: ExecutionPreview | null; right: ExecutionPreview | null } | null
 }>()
 
 const emit = defineEmits<{
@@ -166,6 +168,24 @@ defineExpose({ fly })
     <h2 class="name">{{ event.name }}</h2>
     <div class="rule"><span class="fleuron"></span></div>
     <p class="text" tabindex="0" aria-label="塘报正文，可上下滚动"><span class="body"><span v-if="lead" class="lead-char">{{ lead }}</span><template v-for="(seg, i) in textSegments" :key="i"><a v-if="seg.link" class="char-link" href="#" role="button" @click.prevent.stop="$emit('char-click', seg.link)" @pointerdown.stop>{{ seg.text }}</a><template v-else>{{ seg.text }}</template></template></span></p>
+    <div v-if="checkPreviews" class="check-row" aria-label="执行判定：左右两侧顺利办成的概率">
+      <span class="check-chip" :class="{ muted: !checkPreviews.left }">
+        <b>左</b>
+        <template v-if="checkPreviews.left">
+          <span class="check-kind">{{ checkPreviews.left.kind }} · </span>阻力：{{ checkPreviews.left.obstacle }}
+          <em><span class="check-word">顺利办成 </span>{{ checkPreviews.left.chance }}%</em>
+        </template>
+        <template v-else>不用判定</template>
+      </span>
+      <span class="check-chip" :class="{ muted: !checkPreviews.right }">
+        <b>右</b>
+        <template v-if="checkPreviews.right">
+          <span class="check-kind">{{ checkPreviews.right.kind }} · </span>阻力：{{ checkPreviews.right.obstacle }}
+          <em><span class="check-word">顺利办成 </span>{{ checkPreviews.right.chance }}%</em>
+        </template>
+        <template v-else>不用判定</template>
+      </span>
+    </div>
     <div class="swipe-hint">◀ 左滑 ・ 右滑 ▶</div>
   </div>
 </template>
@@ -433,6 +453,60 @@ defineExpose({ fly })
   color: var(--ink-3);
 }
 
+/* 执行判定：掷骰前把阻力来源与顺利办成的概率写在卡上 */
+.check-row {
+  flex: none;
+  width: 100%;
+  margin-top: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-family: var(--font-kai);
+  font-size: 10.5px;
+  letter-spacing: 0.3px;
+  color: var(--ink-3);
+}
+
+.check-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 7px;
+  white-space: nowrap;
+  color: var(--ink-2);
+  border: 1px solid rgba(171, 132, 48, 0.55);
+  border-radius: 3px;
+  background: rgba(255, 250, 240, 0.72);
+}
+
+.check-chip b {
+  padding: 0 3px;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0;
+  color: var(--paper-hi);
+  background: var(--ochre);
+  border-radius: 2px;
+}
+
+.check-chip em {
+  font-style: normal;
+  font-weight: 700;
+  color: var(--cinnabar);
+}
+
+.check-chip.muted {
+  color: var(--ink-3);
+  border-style: dashed;
+  border-color: var(--line-soft);
+  opacity: 0.72;
+}
+
+.check-chip.muted b {
+  background: var(--ink-3);
+}
+
 /* 批红双印：左用白文（朱底白字），右用朱文（白底朱字） */
 .stamp {
   position: absolute;
@@ -508,6 +582,16 @@ defineExpose({ fly })
   .swipe-hint {
     bottom: 12px;
   }
+
+  .check-row {
+    margin-top: 5px;
+    font-size: 10px;
+  }
+
+  .check-chip {
+    padding: 1px 5px;
+    gap: 3px;
+  }
 }
 
 .ring-light,
@@ -541,6 +625,26 @@ defineExpose({ fly })
     padding: 8px 10px;
     font-size: 14px;
     line-height: 1.75;
+  }
+
+  .check-row {
+    margin-top: 4px;
+    font-size: 9.5px;
+  }
+
+  .check-chip {
+    padding: 1px 4px;
+  }
+}
+
+/* 窄屏只留「阻力来源、概率」，政令类型留给结果页 */
+@media (max-width: 360px) {
+  .check-kind {
+    display: none;
+  }
+
+  .check-row {
+    gap: 6px;
   }
 }
 </style>

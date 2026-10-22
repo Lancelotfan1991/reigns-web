@@ -1,5 +1,6 @@
 import { computed, ref } from 'vue'
 import { findLifeVerdict } from './fates'
+import { previewExecution, resolveExecution } from './execution'
 import {
   AXIS_KEYS,
   FINALE_YEAR,
@@ -14,7 +15,18 @@ import {
   yearTick,
 } from './simulation'
 import { EndingKind, FinaleBranch, Flag, Side } from '../types'
-import type { AxisKey, ChapterProgress, Decision, Ending, Effects, GameEvent, ResourceKey, Verdict } from '../types'
+import type {
+  AxisKey,
+  ChapterProgress,
+  Decision,
+  Ending,
+  Effects,
+  ExecutionPreview,
+  ExecutionResult,
+  GameEvent,
+  ResourceKey,
+  Verdict,
+} from '../types'
 import type { DealResult, DealState, SimState } from './simulation'
 import { yearOf } from './slots'
 
@@ -222,7 +234,13 @@ function loadBest(): number {
   }
 }
 
-export function useGame() {
+export interface GameOptions {
+  /** 执行判定原型：只对标注了 check 的关键抉择掷骰 */
+  executionChecks?: boolean
+}
+
+export function useGame(options: GameOptions = {}) {
+  const executionChecks = options.executionChecks === true
   const resources = ref<Record<ResourceKey, number>>(initialResources())
   const currentCard = ref<GameEvent | null>(null)
   /** 当前牌的编年键；终章落定后仍停在自己的键上，故结局页的纪年不倒退 */
@@ -239,6 +257,8 @@ export function useGame() {
   let dealState: DealState = { seq: 0 }
   /** 上一议所在年份；-1 = 尚未裁决，故首议即结算第一年的岁耗 */
   let lastYear = -1
+  /** 刚结算的执行判定，供 choose 收进批红页 */
+  let lastExecution: ExecutionResult | undefined
   /** 牌堆走完（只发生在甲申终章抉择之后） */
   const deckDone = ref(false)
   /** 当前手上这张牌所属的篇章步骤；单步分组也是篇章，展示层按步骤数过滤 */
@@ -301,6 +321,7 @@ export function useGame() {
     flags.value = {}
     dealState = { seq: 0 }
     lastYear = -1
+    lastExecution = undefined
     currentCard.value = dealCard() ?? null
     deckDone.value = currentCard.value === null
     ending.value = null
@@ -313,6 +334,15 @@ export function useGame() {
     const card = currentCard.value
     if (!card) return {}
     return side === Side.Left ? card.left.effects : card.right.effects
+  }
+
+  /** 判定模式下，某侧关键政令掷骰前顺利办成的概率；无判定返回 null */
+  function previewCheck(side: Side): ExecutionPreview | null {
+    const card = currentCard.value
+    if (!card || !executionChecks) return null
+    const choice = side === Side.Left ? card.left : card.right
+    if (!choice.check) return null
+    return previewExecution(choice.check, resources.value)
   }
 
   function applyEffects(effects: Effects): Record<ResourceKey, number> {
@@ -357,21 +387,25 @@ export function useGame() {
     const turn = turnInYear.value
     const when = `${yearText.value} ${turn === null ? '甲申终章' : `第 ${turn} 议`}`
     verdict.value = null
+    lastExecution = undefined
     settle(card, side)
 
     const choice = side === Side.Left ? card.left : card.right
+    // 判定模式下批红只陈述政令本身，成败交给执行结果，避免两段叙述互相打架
+    const response = executionChecks && choice.check ? choice.check.decision : choice.response
     // 史实终章的收尾由结局页承担，无批红文字时不插一张空页
-    if (!choice.response) return
+    if (!response) return
     verdict.value = {
       cardName: card.name,
       choiceLabel: choice.label,
-      response: choice.response,
+      response,
       when,
       chapter: progress ? { name: progress.name, step: progress.step, total: progress.total } : null,
       lines: RESOURCE_KEYS
         .filter((key) => key !== 'people' && before[key] !== resources.value[key])
         .map((key) => ({ key, from: before[key], to: resources.value[key] })),
       life: findLifeVerdict(card, { now: year.value, decided: decisionByEvent.value, flags: flags.value }),
+      execution: lastExecution,
       ended: isOver.value,
     }
   }
@@ -380,9 +414,12 @@ export function useGame() {
   function settle(card: GameEvent, side: Side) {
     const choice = side === Side.Left ? card.left : card.right
     decisions.value.push({ eventId: card.id, side, year: year.value })
-    const next = applyEffects(choice.effects)
+    const resolution =
+      executionChecks && choice.check ? resolveExecution(choice.check, choice, resources.value) : null
+    lastExecution = resolution?.result
+    const next = applyEffects(resolution?.effects ?? choice.effects)
     lastYear = year.value
-    flags.value = addFlags(flags.value, choice.sets)
+    flags.value = addFlags(flags.value, [...(choice.sets ?? []), ...(resolution?.extraSets ?? [])])
 
     // 终章分支：按国势数值决定南渡、决战、坚守成败
     if (choice.finale === FinaleBranch.Coup) {
@@ -498,6 +535,7 @@ export function useGame() {
     choose,
     dismissVerdict,
     previewEffects,
+    previewCheck,
     snapshot,
   }
 }

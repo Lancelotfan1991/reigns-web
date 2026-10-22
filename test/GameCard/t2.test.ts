@@ -55,3 +55,27 @@ it('当拖动未达到阈值时，会留在当前卡片', async () => {
     wrapper.unmount()
   }
 })
+
+it('判定卡在卡面写明两侧的阻力来源与成功率，不用判定的例行选项明确标出', () => {
+  const wrapper = mount(GameCard, {
+    props: {
+      event: card,
+      interactive: true,
+      checkPreviews: {
+        left: { kind: '整顿', obstacle: '东江镇', difficulty: 2, chance: 58 },
+        right: null,
+      },
+    },
+  })
+  try {
+    const chips = wrapper.findAll('.check-chip')
+    expect(chips).toHaveLength(2)
+    expect(chips[0].text()).toContain('整顿')
+    expect(chips[0].text()).toContain('阻力：东江镇')
+    expect(chips[0].text()).toContain('顺利办成 58%')
+    expect(chips[1].text()).toContain('不用判定')
+    expect(chips[1].classes()).toContain('muted')
+  } finally {
+    wrapper.unmount()
+  }
+})

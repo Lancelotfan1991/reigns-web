@@ -20,7 +20,9 @@ import type { ResourceKey } from './types'
 
 type Screen = 'start' | 'play' | 'over'
 
-const game = useGame()
+/** 执行判定试玩：本地加 ?check=1 时，关键政令掷 2d6；默认关闭 */
+const CHECKS = new URLSearchParams(window.location.search).get('check') === '1'
+const game = useGame({ executionChecks: CHECKS })
 const chars = useCharacters(game)
 /** 皇舆图独立成页：#/map，按需加载，不占游戏主包 */
 const route = useRoute()
@@ -40,11 +42,19 @@ const GOD = new URLSearchParams(window.location.search).get('god') === '1'
 const CardAtlas = new URLSearchParams(window.location.search).has('atlas')
   ? defineAsyncComponent(() => import('./components/CardAtlas.vue'))
   : null
-const { advice, pending: advicePending } = useHint(game, GOD)
+const { advice, pending: advicePending } = useHint(game, GOD && !CHECKS)
 const screen = ref<Screen>('start')
 const cardRef = ref<InstanceType<typeof GameCard> | null>(null)
 const sheetCharId = ref<string | null>(null)
 const tipOpen = ref(false)
+
+/** 判定模式下给卡面用的左右成功率；本卡无关键政令时不显示判定行 */
+const checkPreviews = computed(() => {
+  if (!CHECKS || !game.currentCard.value) return null
+  const left = game.previewCheck(Side.Left)
+  const right = game.previewCheck(Side.Right)
+  return left || right ? { left, right } : null
+})
 
 /** 已识别人物名：卡面正文中匹配到的名字高亮可点 */
 const knownNames = computed(() =>
@@ -294,6 +304,8 @@ function openReforms() {
         <span v-if="game.workshopsSupplied.value">工坊供械：抵消军心岁耗</span>
       </p>
 
+      <p v-if="CHECKS" class="check-mode">试玩：关键政令要掷两颗骰子，决定能办到什么程度；顺利办成的机会随国势和承办官员变化。</p>
+
       <div class="card-zone">
         <div class="stack-back back-2"></div>
         <div class="stack-back back-1"></div>
@@ -308,6 +320,7 @@ function openReforms() {
           :advice-pending="advicePending"
           :known-names="knownNames"
           :chapter="game.chapter.value"
+          :check-previews="checkPreviews"
           @choose="onChoose"
           @drag="(v: number) => (dragDx = v)"
           @char-click="onCharClick"
@@ -809,6 +822,20 @@ function openReforms() {
   font-size: 10.5px;
   letter-spacing: 1px;
   color: var(--ink-3);
+}
+
+/* 执行判定试玩横幅：只在 ?check=1 时出现 */
+.check-mode {
+  flex: none;
+  padding: 2px 8px;
+  font-family: var(--font-kai);
+  font-size: 10.5px;
+  letter-spacing: 0.5px;
+  text-align: center;
+  color: var(--ochre);
+  background: rgba(171, 132, 48, 0.08);
+  border: 1px dashed rgba(171, 132, 48, 0.55);
+  border-radius: 3px;
 }
 
 .card-zone {

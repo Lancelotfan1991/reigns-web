@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest'
 import { mount } from '@vue/test-utils'
 import VerdictSheet from '../../src/components/VerdictSheet.vue'
 import { CharStatus } from '../../src/types'
-import type { LifeVerdict, Verdict } from '../../src/types'
+import type { ExecutionResult, LifeVerdict, Verdict } from '../../src/types'
 
 const WEI: LifeVerdict = {
   charId: 'wei',
@@ -29,7 +29,7 @@ const XIONG: LifeVerdict = {
   pending: true,
 }
 
-function sheet(life: LifeVerdict | null) {
+function sheet(life: LifeVerdict | null, execution?: ExecutionResult) {
   const verdict: Verdict = {
     cardName: '谷城安置要查到户',
     choiceLabel: '按原营交粮，先稳住头领',
@@ -38,6 +38,7 @@ function sheet(life: LifeVerdict | null) {
     chapter: null,
     lines: [{ key: 'gold', from: 52, to: 58 }],
     life,
+    execution,
     ended: false,
   }
   return mount(VerdictSheet, { props: { verdict } })
@@ -85,5 +86,31 @@ describe('生死页版式', () => {
     expect(wrapper.find('.life').exists()).toBe(false)
     expect(wrapper.get('.name').text()).toBe('谷城安置要查到户')
     expect(wrapper.get('.chosen').text()).toBe('按原营交粮，先稳住头领')
+    expect(wrapper.find('.exec-block').exists()).toBe(false)
+  })
+
+  it('有执行判定时，批红页附骰子点数、算式与执行结果', () => {
+    const execution: ExecutionResult = {
+      kind: '整顿',
+      obstacle: '东江镇',
+      difficulty: 2,
+      dice: [3, 3],
+      diceTotal: 6,
+      modifier: 1,
+      total: 7,
+      tier: 'partial',
+      label: '只办成一部分',
+      report: '官员到了岛上，毛文龙只让清点外围营伍；核减的数量不到三成。',
+      chance: 58,
+    }
+    const wrapper = sheet(null, execution)
+    const block = wrapper.get('.exec-block')
+    expect(block.classes()).toContain('exec-partial')
+    expect(wrapper.get('.exec-label').text()).toBe('只办成一部分')
+    expect(wrapper.get('.exec-meta').text()).toContain('阻力：东江镇')
+    expect(wrapper.findAll('.die').map((die) => die.text())).toEqual(['3', '3'])
+    expect(wrapper.get('.exec-calc').text()).toBe('骰子 6 ＋ 修正 +1 ＝ 7')
+    expect(wrapper.get('.exec-chance').text()).toBe('顺利办成 58%')
+    expect(wrapper.get('.exec-report').text()).toContain('不到三成')
   })
 })
