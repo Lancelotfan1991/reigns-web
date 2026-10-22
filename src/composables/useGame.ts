@@ -316,8 +316,10 @@ export function useGame(options: GameOptions = {}) {
     return set
   })
 
-  function startGame() {
-    resources.value = initialResources()
+  function startGame(prologue?: Effects) {
+    resources.value = prologue
+      ? applyToResources(initialResources(), prologue, 0, false, false)
+      : initialResources()
     flags.value = {}
     dealState = { seq: 0 }
     lastYear = -1
