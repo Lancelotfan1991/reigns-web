@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { computed, defineAsyncComponent, onMounted, onUnmounted, ref } from 'vue'
+import Awakening from './components/Awakening.vue'
 import CharSheet from './components/CharSheet.vue'
+import Epigraph from './components/Epigraph.vue'
 import GameCard from './components/GameCard.vue'
 import ResourceBadge from './components/ResourceBadge.vue'
 import VerdictSheet from './components/VerdictSheet.vue'
@@ -18,7 +20,7 @@ import {
 import { CharStatus, EndingKind, Side } from './types'
 import type { ResourceKey } from './types'
 
-type Screen = 'start' | 'play' | 'over'
+type Screen = 'start' | 'epigraph' | 'awakening' | 'play' | 'over'
 
 /** 执行判定试玩：本地加 ?check=1 时，关键政令掷 2d6；默认关闭 */
 const CHECKS = new URLSearchParams(window.location.search).get('check') === '1'
@@ -44,6 +46,8 @@ const CardAtlas = new URLSearchParams(window.location.search).has('atlas')
   : null
 const { advice, pending: advicePending } = useHint(game, GOD && !CHECKS)
 const screen = ref<Screen>('start')
+/** 第一次从信邸开局才放扉页与苏醒两页，死后重开不再重复 */
+let introSeen = false
 const cardRef = ref<InstanceType<typeof GameCard> | null>(null)
 const sheetCharId = ref<string | null>(null)
 const tipOpen = ref(false)
@@ -100,6 +104,11 @@ function isActive(key: ResourceKey) {
 function start() {
   game.startGame()
   dragDx.value = 0
+  if (!introSeen) {
+    introSeen = true
+    screen.value = 'epigraph'
+    return
+  }
   screen.value = 'play'
 }
 
@@ -121,6 +130,20 @@ function continueVerdict() {
 
 function onKey(e: KeyboardEvent) {
   if (isMap.value || isDisasters.value || isWars.value || isCharacters.value || isReforms.value) return
+  if (screen.value === 'epigraph') {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault()
+      screen.value = 'awakening'
+    }
+    return
+  }
+  if (screen.value === 'awakening') {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault()
+      screen.value = 'play'
+    }
+    return
+  }
   if (tipOpen.value) {
     if (e.key === 'Escape') tipOpen.value = false
     return
@@ -181,9 +204,15 @@ function openReforms() {
   <!-- 皇舆图：#/map 独立成页 -->
   <MapPage v-else-if="isMap" />
 
-  <div v-else class="app">
+  <div v-else class="app" :class="{ 'app-cinematic': screen === 'epigraph' || screen === 'awakening' }">
     <!-- 卡牌图谱：?atlas=1 时打开，占满全屏，不叠游戏三屏 -->
     <CardAtlas v-if="CardAtlas" />
+
+    <!-- 扉页：只有一句话，数秒后自动进入苏醒页 -->
+    <Epigraph v-else-if="screen === 'epigraph'" @enter="screen = 'awakening'" />
+
+    <!-- 苏醒页：从现代记忆睁眼，落在信王府 -->
+    <Awakening v-else-if="screen === 'awakening'" @enter="screen = 'play'" />
 
     <!-- 开始界面 -->
     <section v-else-if="screen === 'start'" class="screen start-screen">
@@ -388,6 +417,20 @@ function openReforms() {
   display: flex;
   flex-direction: column;
   overflow: hidden;
+}
+
+/* 扉页与苏醒页占满整屏，不受游戏栏宽与回纹边框限制 */
+.app.app-cinematic {
+  max-width: none;
+  height: auto;
+  min-height: 100dvh;
+  padding: 0;
+  overflow: visible;
+}
+
+.app.app-cinematic::before,
+.app.app-cinematic::after {
+  display: none;
 }
 
 /* 上下回纹装裱 */

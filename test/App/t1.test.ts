@@ -9,6 +9,18 @@ import { seedRandom } from '../game/helpers'
 type AppWrapper = ReturnType<typeof mount<typeof App>>
 const verdictSelector = '[aria-label="本议批红"]'
 
+async function enterStart(wrapper: AppWrapper) {
+  await wrapper.get('.epigraph').trigger('click')
+  await nextTick()
+  await wrapper.get('.awakening .enter').trigger('click')
+  await nextTick()
+}
+
+async function enterGame(wrapper: AppWrapper) {
+  await wrapper.findAll('button').find((button) => button.text() === '入宫即位')!.trigger('click')
+  await enterStart(wrapper)
+}
+
 /** 飞牌裁决：停在属于这一议的批红页 */
 async function flyChoice(wrapper: AppWrapper, side: 0 | 1) {
   await wrapper.get('footer').findAll('button')[side].trigger('click')
@@ -46,7 +58,7 @@ afterEach(() => {
 it('当打开人物弹窗时，方向键不会裁决卡片，关闭后仍可继续', async () => {
   const wrapper = mount(App)
   try {
-    await wrapper.findAll('button').find((button) => button.text() === '入宫即位')!.trigger('click')
+    await enterGame(wrapper)
     const title = wrapper.get('h2').text()
     await wrapper.findAll('.char-link').find((el) => el.text() === '魏忠贤')!.trigger('click')
     expect(wrapper.get('button[aria-label="关闭"]').isVisible()).toBe(true)
@@ -72,7 +84,7 @@ it('当批红页上按方向键或回车时，只翻回决策页不裁决下一�
   vi.spyOn(gameModule, 'useGame').mockReturnValue(game)
   const wrapper = mount(App)
   try {
-    await wrapper.findAll('button').find((button) => button.text() === '入宫即位')!.trigger('click')
+    await enterGame(wrapper)
     await flyChoice(wrapper, 0)
     expect(game.decisions.value).toHaveLength(1)
     window.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight' }))
