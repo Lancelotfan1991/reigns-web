@@ -338,6 +338,7 @@ export enum Camp {
   Steppe = '塞外',
   ImperialClan = '宗藩',
   Western = '西学',
+  Southwest = '西南',
 }
 
 /** 人物五维才具的键；只评能力，不评忠奸与立场 */
