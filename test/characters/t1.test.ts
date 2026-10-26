@@ -32,7 +32,7 @@ describe('T1 人物改革事迹与登场', () => {
     }
   })
 
-  it('当加载人物谱时，44 人五维才具齐备且都在五的倍数刻度上', () => {
+  it('当加载人物谱时，67 人五维才具齐备且都在五的倍数刻度上', () => {
     expect(ATTRIBUTE_META.map((a) => a.key)).toEqual([
       'military',
       'strategy',
@@ -40,7 +40,7 @@ describe('T1 人物改革事迹与登场', () => {
       'economy',
       'culture',
     ])
-    expect(CHARACTERS.length).toBe(44)
+    expect(CHARACTERS.length).toBe(67)
 
     for (const char of CHARACTERS) {
       for (const { key } of ATTRIBUTE_META) {
