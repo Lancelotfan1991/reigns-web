@@ -43,7 +43,7 @@ it('打开改革后按卡轮播：编号、翻页、圆点跳转与触摸滑动�
     expect(wrapper.get('.card-indicator').text()).toBe(`6 / ${reform.cards.length}`)
 
     await wrapper.get('.close-btn').trigger('click')
-    await wrapper.findAll('.reform-card')[1].trigger('click')
+    await wrapper.findAll('.reform-card')[2].trigger('click')
     expect(wrapper.get('.card-indicator').text()).toBe(`1 / ${reform.cards.length}`)
   } finally {
     wrapper.unmount()

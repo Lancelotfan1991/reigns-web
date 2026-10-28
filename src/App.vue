@@ -33,11 +33,15 @@ const isDisasters = computed(() => route.value === '/disasters')
 const isWars = computed(() => route.value === '/wars')
 const isCharacters = computed(() => route.value === '/characters')
 const isReforms = computed(() => route.value === '/reforms')
+const isReformPlan = computed(() => route.value === '/reform-plan')
+const isEmperor = computed(() => route.value === '/emperor')
 const MapPage = defineAsyncComponent(() => import('./components/MapPage.vue'))
 const DisasterPage = defineAsyncComponent(() => import('./components/DisasterPage.vue'))
 const WarPage = defineAsyncComponent(() => import('./components/WarPage.vue'))
 const CharacterPage = defineAsyncComponent(() => import('./components/CharacterPage.vue'))
 const ReformPage = defineAsyncComponent(() => import('./components/ReformPage.vue'))
+const ReformPlanPage = defineAsyncComponent(() => import('./components/ReformPlanPage.vue'))
+const EmperorPanel = defineAsyncComponent(() => import('./components/EmperorPanel.vue'))
 /** 上帝模式：只在本地加 ?god=1 时打开，正式玩家看不到任何痕迹 */
 const GOD = new URLSearchParams(window.location.search).get('god') === '1'
 /** 卡牌图谱：本地加 ?atlas=1 时打开。defineAsyncComponent 懒加载，主包不含图谱代码 */
@@ -129,7 +133,7 @@ function continueVerdict() {
 }
 
 function onKey(e: KeyboardEvent) {
-  if (isMap.value || isDisasters.value || isWars.value || isCharacters.value || isReforms.value) return
+  if (isMap.value || isDisasters.value || isWars.value || isCharacters.value || isReforms.value || isReformPlan.value || isEmperor.value) return
   if (screen.value === 'epigraph') {
     if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault()
@@ -186,14 +190,24 @@ function openWars() {
 function openReforms() {
   navigate('/reforms')
 }
+
+function openEmperor() {
+  navigate('/emperor')
+}
 </script>
 
 <template>
+  <!-- 御前：皇帝自己的三种政治资本，独立于人物志 -->
+  <EmperorPanel v-if="isEmperor" />
+
   <!-- 战事与民变：#/wars 独立成页 -->
-  <WarPage v-if="isWars" />
+  <WarPage v-else-if="isWars" />
 
   <!-- 人物志：#/characters 独立成页 -->
   <CharacterPage v-else-if="isCharacters" />
+
+  <!-- 改革总案：从初阶到改制的完整设计页 -->
+  <ReformPlanPage v-else-if="isReformPlan" />
 
   <!-- 改革方案：#/reforms 独立成页 -->
   <ReformPage v-else-if="isReforms" />
@@ -227,6 +241,13 @@ function openReforms() {
         <p v-if="game.bestYears.value > 0" class="best">前世最多撑了 {{ game.bestYears.value }} 年</p>
 
         <nav class="route-hub" aria-label="图籍与人物">
+          <button class="route-card emperor" @click="openEmperor">
+            <span class="route-mark">御</span>
+            <span class="route-copy">
+              <b>御前国势</b>
+              <small>威望 · 国力 · 民心</small>
+            </span>
+          </button>
           <button class="route-card map" @click="openMap">
             <span class="route-mark">舆</span>
             <span class="route-copy">
@@ -327,6 +348,8 @@ function openReforms() {
         />
       </header>
 
+      <button class="emperor-link" @click="openEmperor">御前 · 查看国势</button>
+
       <p v-if="game.customsFunded.value || game.workshopsSupplied.value" class="ad">
         <span v-if="game.customsFunded.value">海税入公库：抵消国库岁耗</span>
         <span v-if="game.customsFunded.value && game.workshopsSupplied.value"> · </span>
@@ -391,6 +414,7 @@ function openReforms() {
 
       <button class="btn seal inked" @click="start">再着龙袍</button>
       <button class="btn-ghost" @click="openCharacters">回看人物志</button>
+      <button class="btn-ghost" @click="openEmperor">查看御前国势</button>
       <button class="btn-ghost" @click="openMap">观看皇舆图</button>
       <button class="btn-ghost" @click="openWars">观看战事</button>
       <button class="btn-ghost" @click="openDisasters">观看灾难卡</button>
@@ -608,6 +632,10 @@ function openReforms() {
 
 .route-card.reform .route-mark {
   background: var(--ochre);
+}
+
+.route-card.emperor .route-mark {
+  background: var(--ink);
 }
 
 .route-copy {
@@ -865,6 +893,28 @@ function openReforms() {
   font-size: 10.5px;
   letter-spacing: 1px;
   color: var(--ink-3);
+}
+
+.emperor-link {
+  align-self: center;
+  flex: none;
+  margin-top: 3px;
+  padding: 2px 9px;
+  font-family: var(--font-kai);
+  font-size: 10.5px;
+  letter-spacing: 1px;
+  color: var(--ink-3);
+  background: rgba(255, 253, 248, 0.5);
+  border: 1px solid var(--line-soft);
+  border-radius: 99px;
+  cursor: pointer;
+}
+
+.emperor-link:hover,
+.emperor-link:focus-visible {
+  color: var(--cinnabar);
+  border-color: var(--cinnabar);
+  outline: none;
 }
 
 /* 执行判定试玩横幅：只在 ?check=1 时出现 */

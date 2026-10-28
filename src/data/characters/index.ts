@@ -7,6 +7,7 @@ import { QING_CHARACTERS } from './qing'
 import { REBEL_CHARACTERS } from './rebel'
 import { OTHER_CHARACTERS } from './other'
 import { MILITARY_CHARACTERS } from './military'
+import { CORE_ROSTER } from './core'
 
 export const CHARACTERS: Character[] = [
   ...INNER_CHARACTERS,
@@ -21,6 +22,14 @@ export const CHARACTERS: Character[] = [
 export const CHAR_MAP: Record<string, Character> = Object.fromEntries(
   CHARACTERS.map((c) => [c.id, c])
 )
+
+/** 核心人物速查：按 core.ts 的顺序从正式人物表里取，不复制数据 */
+export const CORE_CHARACTER_IDS: string[] = CORE_ROSTER.map((ref) => ref.id)
+export const CORE_CHARACTERS: Character[] = CORE_CHARACTER_IDS.map((id) => CHAR_MAP[id]).filter(
+  (character): character is Character => Boolean(character),
+)
+export { CORE_ROSTER } from './core'
+export type { CoreCharacterRef } from './core'
 
 /** 按人物正名索引：关系等以中文引用人物时由此解析 */
 export const CHAR_BY_NAME: Record<string, Character> = Object.fromEntries(
