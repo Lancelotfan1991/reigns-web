@@ -34,10 +34,21 @@ const COMPLETED_KEY = 'reform-tree-completed'
 const COL_WIDTH = 112
 const ROW_HEIGHT = 94
 const NODE_SIZE = 58
+const NODE_RADIUS = NODE_SIZE / 2 + 1
+const ROOT_RADIUS = 31
 const CENTER_X = 500
 const CANVAS_WIDTH = 1000
 const CANVAS_HEIGHT = 8 * ROW_HEIGHT + 80
 const ROOT_POINT: Point = { x: CENTER_X, y: 30 }
+
+const ROOT_IDS = new Set([
+  'postal-cuts',
+  'road-water',
+  'agriculture',
+  'abolish-artisan-registry',
+  'calendar-bureau',
+  'dismiss-palace-staff',
+])
 
 const emperor = useEmperor()
 const prestige = computed(() => emperor.resources.prestige)
@@ -114,8 +125,18 @@ function nodeStyle(item: ReformAgendaItem) {
   }
 }
 
-function edgePath(from: Point, to: Point): string {
-  return `M ${from.x} ${from.y} L ${to.x} ${to.y}`
+function edgePath(from: Point, to: Point, fromRadius = NODE_RADIUS, toRadius = NODE_RADIUS): string {
+  const dx = to.x - from.x
+  const dy = to.y - from.y
+  const distance = Math.hypot(dx, dy)
+  if (distance === 0) return ''
+  const ux = dx / distance
+  const uy = dy / distance
+  const startX = from.x + ux * fromRadius
+  const startY = from.y + uy * fromRadius
+  const endX = to.x - ux * toRadius
+  const endY = to.y - uy * toRadius
+  return `M ${startX} ${startY} L ${endX} ${endY}`
 }
 
 function iconOf(item: ReformAgendaItem): string {
@@ -132,18 +153,22 @@ const edges = computed(() => {
     const layout = REFORM_LAYOUT[item.id]
     const parents = REFORM_TREE_PARENTS[item.id] ?? []
 
-    if (layout.row === 1) {
-      list.push({
-        id: `root-${item.id}`,
-        d: edgePath(ROOT_POINT, centerOf(item)),
-        state: stateOf(item),
-      })
+    if (layout.row === 1 && ROOT_IDS.has(item.id)) {
+      if (isDone(item) || available(item)) {
+        list.push({
+          id: `root-${item.id}`,
+          d: edgePath(ROOT_POINT, centerOf(item), ROOT_RADIUS, NODE_RADIUS),
+          state: stateOf(item),
+        })
+      }
     }
 
     for (const parentId of parents) {
       const parent = REFORM_AGENDA.find((entry) => entry.id === parentId)
       if (!parent || !REFORM_LAYOUT[parentId]) continue
       const parentLayout = REFORM_LAYOUT[parentId]
+      // 所有前置路径都保留，让人能看出整棵树；
+      // 锁定段用虚线，完成后再变成实线。
       // 只画相邻两格之间的短线；跨层前置改由节点上的“前置”文字说明。
       if (Math.abs(layout.col - parentLayout.col) > 1 || Math.abs(layout.row - parentLayout.row) > 1) {
         continue
@@ -259,7 +284,6 @@ const completedCount = computed(() => REFORM_AGENDA.filter((item) => isDone(item
           @click="open(item)"
         >
           <span class="node-icon" aria-hidden="true">{{ iconOf(item) }}</span>
-          <span class="node-state" aria-hidden="true">{{ isDone(item) ? '✓' : available(item) ? '+' : '×' }}</span>
           <span class="node-label">{{ item.name }}</span>
         </button>
       </div>
@@ -479,7 +503,8 @@ const completedCount = computed(() => REFORM_AGENDA.filter((item) => isDone(item
 }
 
 .tree-edges .edge-locked {
-  stroke: rgba(122, 106, 85, 0.55);
+  stroke: rgba(122, 106, 85, 0.5);
+  stroke-dasharray: 3 4;
 }
 
 .root-node {
@@ -572,32 +597,6 @@ const completedCount = computed(() => REFORM_AGENDA.filter((item) => isDone(item
   font-size: 25px;
   line-height: 1;
   filter: saturate(0.9);
-}
-
-.node-state {
-  position: absolute;
-  top: -5px;
-  right: -5px;
-  width: 16px;
-  height: 16px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-family: var(--font-serif);
-  font-size: 10px;
-  line-height: 1;
-  color: var(--paper-hi);
-  background: var(--ink-3);
-  border: 1px solid var(--paper-hi);
-  border-radius: 50%;
-}
-
-.tree-node.open .node-state {
-  background: var(--cinnabar);
-}
-
-.tree-node.done .node-state {
-  background: var(--jade);
 }
 
 .node-label {
