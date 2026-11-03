@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
 import { REFORM_BROWSE_DATA, REFORM_CATEGORY_META } from '../data/reformBrowse'
 import {
   REFORM_AGENDA,
@@ -31,15 +31,16 @@ interface Point {
 }
 
 const COMPLETED_KEY = 'reform-tree-completed'
-const COL_WIDTH = 112
-const ROW_HEIGHT = 94
-const NODE_SIZE = 58
-const NODE_RADIUS = NODE_SIZE / 2 + 1
+const TREE_COLS = 8
+const TREE_ROWS = 8
 const ROOT_RADIUS = 31
-const CENTER_X = 500
-const CANVAS_WIDTH = 1000
-const CANVAS_HEIGHT = 8 * ROW_HEIGHT + 80
-const ROOT_POINT: Point = { x: CENTER_X, y: 30 }
+const MAX_TREE_WIDTH = 1000
+const metrics = ref({
+  width: MAX_TREE_WIDTH,
+  nodeSize: 58,
+  colWidth: 112,
+  rowHeight: 94,
+})
 
 const ROOT_IDS = new Set([
   'postal-cuts',
@@ -54,6 +55,7 @@ const emperor = useEmperor()
 const prestige = computed(() => emperor.resources.prestige)
 const selected = ref<ReformAgendaItem | null>(null)
 const completed = ref<Set<string>>(new Set())
+const scroller = ref<HTMLElement | null>(null)
 const existingById = new Map(REFORM_BROWSE_DATA.map((reform) => [reform.id, reform]))
 
 const nodes = computed(() =>
@@ -68,6 +70,20 @@ const nodes = computed(() =>
 const branchColor = computed<Record<string, string>>(() =>
   Object.fromEntries(REFORM_BRANCHES.map((branch) => [branch.id, branch.color])),
 )
+
+const canvasSize = computed(() => ({
+  width: metrics.value.width,
+  height: TREE_ROWS * metrics.value.rowHeight + 20,
+}))
+
+function updateMetrics() {
+  const available = scroller.value?.clientWidth ?? MAX_TREE_WIDTH
+  const width = Math.min(MAX_TREE_WIDTH, Math.max(280, available))
+  const nodeSize = Math.round(Math.min(58, Math.max(34, width / 11.5)))
+  const colWidth = (width - nodeSize) / TREE_COLS
+  const rowHeight = Math.round(Math.min(94, Math.max(70, nodeSize + 30)))
+  metrics.value = { width, nodeSize, colWidth, rowHeight }
+}
 
 function loadCompleted() {
   if (typeof localStorage === 'undefined') return
@@ -107,25 +123,34 @@ function statusOf(item: ReformAgendaItem): string {
   return '可推行'
 }
 
+function rootPoint(): Point {
+  return { x: metrics.value.width / 2, y: 30 }
+}
+
 function centerOf(item: ReformAgendaItem): Point {
   const layout = REFORM_LAYOUT[item.id]
   return {
-    x: CENTER_X + layout.col * COL_WIDTH,
-    y: layout.row * ROW_HEIGHT + NODE_SIZE / 2,
+    x: metrics.value.width / 2 + layout.col * metrics.value.colWidth,
+    y: layout.row * metrics.value.rowHeight + metrics.value.nodeSize / 2,
   }
 }
 
 function nodeStyle(item: ReformAgendaItem) {
   const layout = REFORM_LAYOUT[item.id]
   return {
-    left: `${CENTER_X + layout.col * COL_WIDTH - NODE_SIZE / 2}px`,
-    top: `${layout.row * ROW_HEIGHT}px`,
-    width: `${NODE_SIZE}px`,
-    height: `${NODE_SIZE}px`,
+    left: `${metrics.value.width / 2 + layout.col * metrics.value.colWidth - metrics.value.nodeSize / 2}px`,
+    top: `${layout.row * metrics.value.rowHeight}px`,
+    width: `${metrics.value.nodeSize}px`,
+    height: `${metrics.value.nodeSize}px`,
   }
 }
 
-function edgePath(from: Point, to: Point, fromRadius = NODE_RADIUS, toRadius = NODE_RADIUS): string {
+function edgePath(
+  from: Point,
+  to: Point,
+  fromRadius = metrics.value.nodeSize / 2 + 1,
+  toRadius = metrics.value.nodeSize / 2 + 1,
+): string {
   const dx = to.x - from.x
   const dy = to.y - from.y
   const distance = Math.hypot(dx, dy)
@@ -157,7 +182,7 @@ const edges = computed(() => {
       if (isDone(item) || available(item)) {
         list.push({
           id: `root-${item.id}`,
-          d: edgePath(ROOT_POINT, centerOf(item), ROOT_RADIUS, NODE_RADIUS),
+          d: edgePath(rootPoint(), centerOf(item), ROOT_RADIUS, metrics.value.nodeSize / 2 + 1),
           state: stateOf(item),
         })
       }
@@ -236,7 +261,33 @@ function completeSelected() {
   selected.value = null
 }
 
-onMounted(loadCompleted)
+function centerScroll() {
+  const el = scroller.value
+  if (!el) return
+  el.scrollLeft = Math.max(0, (el.scrollWidth - el.clientWidth) / 2)
+}
+
+function syncLayout() {
+  updateMetrics()
+  nextTick(centerScroll)
+}
+
+let resizeObserver: ResizeObserver | null = null
+
+onMounted(() => {
+  loadCompleted()
+  nextTick(syncLayout)
+  window.addEventListener('resize', syncLayout)
+  if (typeof ResizeObserver !== 'undefined' && scroller.value) {
+    resizeObserver = new ResizeObserver(syncLayout)
+    resizeObserver.observe(scroller.value)
+  }
+})
+
+onBeforeUnmount(() => {
+  window.removeEventListener('resize', syncLayout)
+  resizeObserver?.disconnect()
+})
 
 const completedCount = computed(() => REFORM_AGENDA.filter((item) => isDone(item)).length)
 </script>
@@ -251,9 +302,9 @@ const completedCount = computed(() => REFORM_AGENDA.filter((item) => isDone(item
       </div>
     </div>
 
-    <div class="tree-scroll">
-      <div class="tree-canvas" :style="{ width: `${CANVAS_WIDTH}px`, height: `${CANVAS_HEIGHT}px` }">
-        <svg class="tree-edges" :viewBox="`0 0 ${CANVAS_WIDTH} ${CANVAS_HEIGHT}`" aria-hidden="true">
+    <div ref="scroller" class="tree-scroll">
+      <div class="tree-canvas" :style="{ width: `${canvasSize.width}px`, height: `${canvasSize.height}px` }">
+        <svg class="tree-edges" :viewBox="`0 0 ${canvasSize.width} ${canvasSize.height}`" aria-hidden="true">
           <path v-for="edge in edges" :key="edge.id" :d="edge.d" :class="`edge-${edge.state}`" />
         </svg>
 
@@ -278,6 +329,7 @@ const completedCount = computed(() => REFORM_AGENDA.filter((item) => isDone(item
           :style="{
             ...nodeStyle(item),
             '--branch-color': branchColor[layout.branch] ?? '#8b7355',
+            '--node-size': `${metrics.nodeSize}px`,
           }"
           :title="`${item.name} · ${statusOf(item)}`"
           :aria-label="`${item.name}：${statusOf(item)}`"
@@ -594,7 +646,7 @@ const completedCount = computed(() => REFORM_AGENDA.filter((item) => isDone(item
 }
 
 .node-icon {
-  font-size: 25px;
+  font-size: calc(var(--node-size, 58px) * 0.44);
   line-height: 1;
   filter: saturate(0.9);
 }
