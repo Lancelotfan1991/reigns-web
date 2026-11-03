@@ -4,6 +4,17 @@ import { CHARACTERS } from '../../src/data/characters'
 const byId = (id: string) => CHARACTERS.find((character) => character.id === id)
 
 describe('人物生平轨迹', () => {
+  it('王承恩与曹化淳都有明确的内廷生平节点', () => {
+    const wang = byId('wangchengen')
+    const cao = byId('caohuachun')
+    expect(wang?.track?.length).toBeGreaterThanOrEqual(2)
+    expect(cao?.track?.length).toBeGreaterThanOrEqual(3)
+    expect(wang?.track?.some((entry) => entry.note.includes('煤山'))).toBe(true)
+    expect(cao?.track?.some((entry) => entry.note.includes('东厂'))).toBe(true)
+    expect(cao?.track?.some((entry) => entry.note.includes('辩诬'))).toBe(true)
+    expect(cao?.track?.some((entry) => entry.note.includes('乡居'))).toBe(true)
+  })
+
   it('新补录的明末人物都写有至少一条生平', () => {
     const ids = [
       'caowenzhao',
