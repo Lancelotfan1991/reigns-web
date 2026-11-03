@@ -59,7 +59,309 @@ export interface ReformAgendaItem {
   risk?: string
   /** 已有详细卡组的改革；没有则为待展开的新方案。 */
   reformId?: string
+  /** 前置改革 id；必须全部完成后才能开始。 */
+  requires?: string[]
 }
+
+/** 改革树的前置关系。没有列出的默认无前置。 */
+/** 树上使用的图标；具体说明放在点击后的详情里。 */
+export const REFORM_ICONS: Record<string, string> = {
+  'postal-cuts': '🐎',
+  'calendar-bureau': '🔭',
+  agriculture: '🌾',
+  'abolish-artisan-registry': '🔨',
+  'dismiss-palace-staff': '🧹',
+  'road-water': '🛣️',
+  'open-maritime': '⛵',
+  'salt-reform': '🧂',
+  'verify-troops': '🛡️',
+  firearms: '💥',
+  'audit-system': '🧾',
+  'merchant-status': '🏪',
+  'commodity-economy': '🛒',
+  'land-survey': '📐',
+  'tech-institute': '⚙️',
+  'paper-money': '💵',
+  'reduce-clan': '🏯',
+  'exam-reform': '📚',
+  'abolish-eight-legged': '✒️',
+  'clan-employment': '👥',
+  'chongzhen-covenant': '📜',
+  'cabinet-monarchy': '🏛️',
+  'equal-field-tax': '🌾',
+  'new-army': '⚔️',
+  'national-bank': '🏦',
+  'sea-power': '⚓',
+  'new-learning': '🎓',
+  'nine-border-reform': '🏯',
+  'officer-school': '🎖️',
+  'military-land': '🏕️',
+  'local-militia': '🛡️',
+  'intel-network': '📡',
+  'abolish-three-exactions': '💸',
+  'grain-transport-sea': '🚢',
+  'unified-currency': '💰',
+  'gentry-tax': '📜',
+  'granary-system': '🏺',
+  'yellow-river': '🌊',
+  'plague-medicine': '💊',
+}
+
+export const REFORM_REQUIRES: Record<string, string[]> = {
+  'postal-cuts': [],
+  'calendar-bureau': [],
+  agriculture: [],
+  'abolish-artisan-registry': [],
+  'dismiss-palace-staff': [],
+  'road-water': [],
+
+  'open-maritime': ['road-water'],
+  'salt-reform': ['audit-system'],
+  'verify-troops': ['postal-cuts'],
+  firearms: ['calendar-bureau'],
+  'audit-system': ['dismiss-palace-staff'],
+  'merchant-status': ['abolish-artisan-registry'],
+  'commodity-economy': ['merchant-status', 'road-water'],
+  'land-survey': ['agriculture', 'audit-system'],
+  'tech-institute': ['calendar-bureau', 'abolish-artisan-registry'],
+  'paper-money': ['salt-reform', 'audit-system'],
+
+  'reduce-clan': ['land-survey'],
+  'exam-reform': ['calendar-bureau', 'tech-institute'],
+  'abolish-eight-legged': ['exam-reform'],
+  'clan-employment': ['reduce-clan'],
+
+  'local-militia': ['postal-cuts'],
+  'intel-network': ['local-militia'],
+  'nine-border-reform': ['verify-troops'],
+  'officer-school': ['nine-border-reform', 'firearms'],
+  'military-land': ['firearms'],
+  'granary-system': ['agriculture'],
+  'grain-transport-sea': ['road-water'],
+  'yellow-river': ['road-water'],
+  'plague-medicine': ['dismiss-palace-staff'],
+  'unified-currency': ['audit-system'],
+  'abolish-three-exactions': ['salt-reform', 'unified-currency'],
+  'gentry-tax': ['land-survey'],
+
+  'chongzhen-covenant': ['audit-system', 'dismiss-palace-staff'],
+  'cabinet-monarchy': ['chongzhen-covenant'],
+  'equal-field-tax': ['land-survey', 'gentry-tax'],
+  'new-army': ['verify-troops', 'firearms', 'officer-school', 'military-land'],
+  'national-bank': ['paper-money', 'audit-system', 'open-maritime', 'unified-currency'],
+  'sea-power': ['open-maritime', 'commodity-economy', 'national-bank'],
+  'new-learning': ['exam-reform', 'abolish-eight-legged', 'tech-institute'],
+}
+
+export function requiresOf(reformId: string): string[] {
+  return REFORM_REQUIRES[reformId] ?? []
+}
+
+export interface ReformBranch {
+  id: string
+  name: string
+  color: string
+  description: string
+  /** 从根到叶的纵向主线；跨分支前置仍由 requires 表示。 */
+  nodeIds: string[]
+}
+
+/**
+ * 改革树的分支布局。
+ *
+ * 每条分支是一条纵向主线，节点之间只画短连接线；
+ * 跨分支的前置条件写在节点上，不再画成长线，避免满屏蜘蛛网。
+ */
+export const REFORM_BRANCHES: ReformBranch[] = [
+  {
+    id: 'military',
+    name: '军务',
+    color: '#6b4f86',
+    description: '驿传、兵籍、火器到新军。',
+    nodeIds: [
+      'postal-cuts',
+      'verify-troops',
+      'firearms',
+      'new-army',
+      'local-militia',
+      'intel-network',
+      'nine-border-reform',
+      'officer-school',
+      'military-land',
+    ],
+  },
+  {
+    id: 'finance',
+    name: '财政',
+    color: '#a8322a',
+    description: '宫人、验账、盐政到国家银行。',
+    nodeIds: [
+      'dismiss-palace-staff',
+      'audit-system',
+      'salt-reform',
+      'paper-money',
+      'national-bank',
+      'grain-transport-sea',
+      'unified-currency',
+      'gentry-tax',
+      'abolish-three-exactions',
+    ],
+  },
+  {
+    id: 'livelihood',
+    name: '民生',
+    color: '#4b7a5c',
+    description: '试种、清丈、均田与宗室。',
+    nodeIds: [
+      'agriculture',
+      'land-survey',
+      'equal-field-tax',
+      'reduce-clan',
+      'clan-employment',
+      'granary-system',
+      'yellow-river',
+      'plague-medicine',
+    ],
+  },
+  {
+    id: 'industry',
+    name: '工商',
+    color: '#ab8430',
+    description: '匠籍、商人到商品经济。',
+    nodeIds: ['abolish-artisan-registry', 'merchant-status', 'commodity-economy'],
+  },
+  {
+    id: 'sea',
+    name: '海贸',
+    color: '#2f6b6b',
+    description: '修路、开海到海权国家。',
+    nodeIds: ['road-water', 'open-maritime', 'sea-power'],
+  },
+  {
+    id: 'learning',
+    name: '文教',
+    color: '#3a5f83',
+    description: '历局、器院、实学到新学。',
+    nodeIds: ['calendar-bureau', 'tech-institute', 'exam-reform', 'abolish-eight-legged', 'new-learning'],
+  },
+]
+
+export interface ReformLayout {
+  col: number
+  row: number
+  branch: string
+}
+
+/**
+ * 天赋树式的错位排布。
+ *
+ * 以中心根节点为原点，左右各三列；节点之间只连主前置，
+ * 跨分支前置仍在卡片上说明。这样枝丫短、分叉清楚，也不会满屏长线。
+ */
+export const REFORM_LAYOUT: Record<string, ReformLayout> = {
+  'postal-cuts': { col: -3, row: 1, branch: 'military' },
+  'road-water': { col: -2, row: 1, branch: 'sea' },
+  agriculture: { col: 0, row: 1, branch: 'livelihood' },
+  'abolish-artisan-registry': { col: 1, row: 1, branch: 'industry' },
+  'calendar-bureau': { col: 2, row: 1, branch: 'learning' },
+  'dismiss-palace-staff': { col: 3, row: 1, branch: 'finance' },
+
+  'verify-troops': { col: -3, row: 2, branch: 'military' },
+  'open-maritime': { col: -2, row: 2, branch: 'sea' },
+  'land-survey': { col: 0, row: 2, branch: 'livelihood' },
+  'merchant-status': { col: 1, row: 2, branch: 'industry' },
+  'tech-institute': { col: 2, row: 2, branch: 'learning' },
+  'audit-system': { col: 3, row: 2, branch: 'finance' },
+
+  'sea-power': { col: -3, row: 3, branch: 'sea' },
+  firearms: { col: -2, row: 3, branch: 'military' },
+  'equal-field-tax': { col: -1, row: 3, branch: 'livelihood' },
+  'reduce-clan': { col: 0, row: 3, branch: 'livelihood' },
+  'commodity-economy': { col: 1, row: 3, branch: 'industry' },
+  'exam-reform': { col: 2, row: 3, branch: 'learning' },
+  'salt-reform': { col: 3, row: 3, branch: 'finance' },
+
+  'new-army': { col: -1, row: 4, branch: 'military' },
+  'clan-employment': { col: 1, row: 4, branch: 'livelihood' },
+  'abolish-eight-legged': { col: 2, row: 4, branch: 'learning' },
+  'paper-money': { col: 3, row: 4, branch: 'finance' },
+
+  'new-learning': { col: 1, row: 5, branch: 'learning' },
+  'national-bank': { col: 2, row: 5, branch: 'finance' },
+
+  'local-militia': { col: -4, row: 2, branch: 'military' },
+  'intel-network': { col: -4, row: 3, branch: 'military' },
+  'nine-border-reform': { col: -3, row: 4, branch: 'military' },
+  'officer-school': { col: -4, row: 5, branch: 'military' },
+  'military-land': { col: -2, row: 4, branch: 'military' },
+  'granary-system': { col: -1, row: 2, branch: 'livelihood' },
+  'grain-transport-sea': { col: -1, row: 5, branch: 'finance' },
+  'yellow-river': { col: -2, row: 5, branch: 'livelihood' },
+  'plague-medicine': { col: 4, row: 2, branch: 'livelihood' },
+  'unified-currency': { col: 4, row: 3, branch: 'finance' },
+  'abolish-three-exactions': { col: 4, row: 4, branch: 'finance' },
+  'gentry-tax': { col: 0, row: 4, branch: 'finance' },
+
+  'chongzhen-covenant': { col: 0, row: 6, branch: 'regime' },
+  'cabinet-monarchy': { col: 0, row: 7, branch: 'regime' },
+}
+
+/** 天赋树主连线：只画主前置，跨分支前置用文字补充。 */
+export const REFORM_TREE_PARENTS: Record<string, string[]> = {
+  'postal-cuts': [],
+  'road-water': [],
+  agriculture: [],
+  'abolish-artisan-registry': [],
+  'calendar-bureau': [],
+  'dismiss-palace-staff': [],
+
+  'verify-troops': ['postal-cuts'],
+  'open-maritime': ['road-water'],
+  'land-survey': ['agriculture'],
+  'merchant-status': ['abolish-artisan-registry'],
+  'tech-institute': ['calendar-bureau'],
+  'audit-system': ['dismiss-palace-staff'],
+
+  'sea-power': ['open-maritime'],
+  firearms: ['verify-troops'],
+  'reduce-clan': ['land-survey'],
+  'commodity-economy': ['merchant-status'],
+  'exam-reform': ['tech-institute'],
+  'salt-reform': ['audit-system'],
+
+  'clan-employment': ['reduce-clan'],
+  'abolish-eight-legged': ['exam-reform'],
+  'paper-money': ['salt-reform'],
+
+  'new-learning': ['abolish-eight-legged'],
+  'chongzhen-covenant': [],
+
+  'cabinet-monarchy': ['chongzhen-covenant'],
+
+  'local-militia': ['postal-cuts'],
+  'intel-network': ['local-militia'],
+  'nine-border-reform': ['verify-troops'],
+  'officer-school': ['nine-border-reform'],
+  'military-land': ['firearms'],
+  'granary-system': ['agriculture'],
+  'grain-transport-sea': ['road-water'],
+  'yellow-river': ['road-water'],
+  'plague-medicine': ['dismiss-palace-staff'],
+  'unified-currency': ['audit-system'],
+  'abolish-three-exactions': ['salt-reform', 'unified-currency'],
+  'gentry-tax': ['land-survey'],
+  'new-army': ['firearms', 'officer-school', 'military-land'],
+  'equal-field-tax': ['land-survey', 'gentry-tax'],
+}
+
+/** 汇入改制的节点：多条路线在这里收束。 */
+export const REFORM_MERGE_INTO_COVENANT = [
+  'new-army',
+  'clan-employment',
+  'sea-power',
+  'new-learning',
+  'national-bank',
+]
 
 /**
  * 改革总议程。
@@ -308,6 +610,166 @@ export const REFORM_AGENDA: ReformAgendaItem[] = [
     steps: ['开宗室科举', '宗室从军', '宗室经商'],
     challenges: ['宗人府反对：A. 改宗人府 / B. 另设新署', '宗室内部争夺：A. 按才能授职 / B. 按房支分配'],
     risk: '宗室内部争权，礼法之争演变成宗室叛乱或政潮。',
+  },
+
+  // 军务支线
+  {
+    id: 'nine-border-reform',
+    name: '九边整军',
+    tier: 'middle',
+    prestige: 50,
+    category: '军事',
+    summary: '合并冗镇、裁汰冗将、统一九边号令与军饷。',
+    effect: '减少空饷与互不统属，提高边军调度效率；会得罪边镇将门。',
+    prerequisite: '完成实兵实饷，掌握兵籍与饷册',
+    steps: ['核九边兵额', '并镇裁将', '统一号令'],
+    challenges: ['边将抵制：A. 换将 / B. 保留旧将、另设监军', '军饷不足：A. 先补饷 / B. 裁军'],
+    risk: '边镇哗变，或换将后边防短期失控。',
+  },
+  {
+    id: 'officer-school',
+    name: '军官学校',
+    tier: 'advanced',
+    prestige: 60,
+    category: '军事',
+    summary: '设武备学堂，培养识字、懂火器、会参谋的军官。',
+    effect: '长期提高军官素质与协同能力；短期挤占军费。',
+    prerequisite: '九边整军已有试点，火器局可供实习',
+    steps: ['设武备学堂', '聘教习与译兵书', '派学员入营'],
+    challenges: ['旧军头反对：A. 皇帝亲阅 / B. 只在边镇试点', '学员派系：A. 按成绩授职 / B. 按门第分配'],
+    risk: '新军官被旧军头排挤，学堂变成新的朋党。',
+  },
+  {
+    id: 'military-land',
+    name: '军功授田',
+    tier: 'middle',
+    prestige: 40,
+    category: '军事',
+    summary: '按军功授田，退伍不收回，伤残给抚恤。',
+    effect: '提高募兵意愿与军心；会触动边镇土地。',
+    prerequisite: '有可授的边地、荒地或没官田',
+    steps: ['定军功等第', '勘定授田', '登记退伍抚恤'],
+    challenges: ['军头占田：A. 清退 / B. 另拨荒地', '财政不足：A. 授田代饷 / B. 减额'],
+    risk: '授田被侵占，军功田变成新的将门产业。',
+  },
+  {
+    id: 'local-militia',
+    name: '乡勇保甲',
+    tier: 'basic',
+    prestige: 20,
+    category: '军事',
+    summary: '编保甲、练乡勇，让州县有最低限度的自卫力量。',
+    effect: '补官军不及，维持地方治安；会带来地方武装化。',
+    prerequisite: '有可靠的州县官与保甲册',
+    steps: ['编保甲', '练乡勇', '定调遣规则'],
+    challenges: ['地方坐大：A. 官军节制 / B. 乡绅自统', '扰民：A. 给工食 / B. 无偿征调'],
+    risk: '乡勇变成私兵，或借保甲敲诈百姓。',
+  },
+  {
+    id: 'intel-network',
+    name: '塘报情报网',
+    tier: 'basic',
+    prestige: 20,
+    category: '军事',
+    summary: '整顿塘报、驿站与军情传递，建立核验与汇总。',
+    effect: '提高军情速度与准确度；减少中间层瞒报。',
+    prerequisite: '驿站未被裁尽，兵部有专员',
+    steps: ['整塘报线路', '设情报核验', '定期汇总'],
+    challenges: ['截报瞒报：A. 严查 / B. 换线路', '假报：A. 核实再报 / B. 先报后核'],
+    risk: '情报网变成特务网，或仍被权贵把持。',
+  },
+
+  // 财政支线
+  {
+    id: 'abolish-three-exactions',
+    name: '废除三饷',
+    tier: 'advanced',
+    prestige: 80,
+    category: '财政',
+    summary: '停辽饷、剿饷、练饷，用结构税替代，不再按亩加派。',
+    effect: '减轻底层负担，止住民变扩大；短期国库缺口巨大。',
+    prerequisite: '盐政、商税、清丈已有替代收入',
+    steps: ['核三饷旧额', '开替代税源', '分年停征'],
+    challenges: ['边军缺饷：A. 先补边饷 / B. 裁军', '士绅反对新税：A. 官绅一体 / B. 只征商税'],
+    risk: '替代税源不足，废饷变成新的加派。',
+  },
+  {
+    id: 'grain-transport-sea',
+    name: '漕运改海运',
+    tier: 'middle',
+    prestige: 50,
+    category: '财政',
+    summary: '以海运输粮替代部分运河漕运，减少淤塞与沿途漂没。',
+    effect: '降低漕粮损耗与运输时间；会触动漕帮、河工利益。',
+    prerequisite: '有海船、港口与水师护航',
+    steps: ['试运一段', '造海船、雇水手', '改漕粮比例'],
+    challenges: ['漕帮阻挠：A. 收编 / B. 强行改道', '海难：A. 加保险 / B. 退回运河'],
+    risk: '海运失败，京师粮价暴涨。',
+  },
+  {
+    id: 'unified-currency',
+    name: '统一银钱',
+    tier: 'middle',
+    prestige: 40,
+    category: '财政',
+    summary: '统一铸钱成色、平银钱比价，减少私铸与折色盘剥。',
+    effect: '改善市场与税收折算；短期可能引发钱荒。',
+    prerequisite: '户部有能力设铸钱局与验成色',
+    steps: ['定钱式成色', '设铸钱局', '平银钱比价'],
+    challenges: ['私铸：A. 严刑 / B. 收编炉户', '银荒：A. 限制囤银 / B. 开银矿'],
+    risk: '劣币驱逐良币，或铸钱变成搜刮。',
+  },
+  {
+    id: 'gentry-tax',
+    name: '官绅一体当差',
+    tier: 'advanced',
+    prestige: 80,
+    category: '财政',
+    summary: '士绅按田亩纳粮当差，取消大部分优免。',
+    effect: '大幅扩大税基；会引发士绅集体抵抗。',
+    prerequisite: '清丈完成，鱼鳞图册可信',
+    steps: ['核优免田', '定当差则例', '分省推行'],
+    challenges: ['士绅抗税：A. 铁腕 / B. 保留部分优免', '地方官包庇：A. 换官 / B. 派巡按'],
+    risk: '士绅煽动民变、闭城，或集体罢考。',
+  },
+  {
+    id: 'granary-system',
+    name: '常平仓、社仓',
+    tier: 'basic',
+    prestige: 20,
+    category: '农业',
+    summary: '丰年收粮、荒年平粜，州县设常平仓，乡村设社仓。',
+    effect: '稳定粮价、减少饥民；会占用国库与仓粮。',
+    prerequisite: '有仓廒、仓吏与籴粜本钱',
+    steps: ['修仓廒', '定籴粜价', '设社仓'],
+    challenges: ['仓吏贪腐：A. 审计 / B. 换人', '粮价波动：A. 限价 / B. 自由粜'],
+    risk: '仓粮被挪用，荒年无粮可放。',
+  },
+  {
+    id: 'yellow-river',
+    name: '黄河与北方水利',
+    tier: 'middle',
+    prestige: 40,
+    category: '农业',
+    summary: '治黄河、修北方水利，减少决口与漕运淤塞。',
+    effect: '长期提高农业与漕运安全；短期耗费国力。',
+    prerequisite: '有河工专家、民夫与粮银',
+    steps: ['勘测河道', '修堤疏浚', '设河工维护'],
+    challenges: ['工程贪腐：A. 严查 / B. 换河官', '征夫：A. 给工钱 / B. 无偿征役'],
+    risk: '大工程拖垮财政，或修堤后仍决口。',
+  },
+  {
+    id: 'plague-medicine',
+    name: '瘟疫医药局',
+    tier: 'basic',
+    prestige: 20,
+    category: '农业',
+    summary: '设医药局，疫时施药、隔离、掩骼、清洁水源。',
+    effect: '降低疫病死亡与恐慌；需要地方配合。',
+    prerequisite: '有太医院、地方医户与药料',
+    steps: ['设医药局', '储药、派医', '疫时隔离'],
+    challenges: ['地方隐瞒：A. 派御史 / B. 就地募医', '恐慌：A. 公开疫情 / B. 封锁'],
+    risk: '医疗资源被权贵占用，或隔离引发民乱。',
   },
 
   // 改制：威望 100，只决定国体路线
